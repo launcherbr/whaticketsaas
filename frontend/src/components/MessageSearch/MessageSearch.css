@@ -1,0 +1,25 @@
+.highlighted-message {
+  background-color: rgba(255, 193, 7, 0.3) !important;
+  transition: background-color 0.3s ease;
+  border-left: 4px solid #ffc107 !important;
+  animation: highlightPulse 2s ease-in-out;
+}
+
+@keyframes highlightPulse {
+  0% {
+    background-color: rgba(255, 193, 7, 0.6);
+  }
+  50% {
+    background-color: rgba(255, 193, 7, 0.3);
+  }
+  100% {
+    background-color: rgba(255, 193, 7, 0.3);
+  }
+}
+
+.search-highlight {
+  background-color: #ffeb3b;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-weight: bold;
+}

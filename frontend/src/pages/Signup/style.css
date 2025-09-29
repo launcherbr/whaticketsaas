@@ -1,0 +1,126 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+  /* overflow: hidden; */
+}
+
+.geral-signup {
+  display: flex;
+}
+.img-logo-signup {
+  width: 350px;
+  height: 100px;
+}
+
+.register {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+.paper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 500px;
+  /* max-height: 100vh; */
+}
+
+.container-signup {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  width: 100%;
+
+  padding: 10px;
+  /* max-height: 100vh; */
+}
+.h4 {
+  caret-color: rgb(52, 137, 255);
+  color: rgb(52, 137, 255);
+  column-rule-color: rgb(52, 137, 255);
+  font-size: 34px;
+  line-height: 41.99px;
+  margin: 10px 0 25px;
+}
+.span {
+  font-size: 16px;
+  line-height: 28px;
+}
+
+.container-img-signup {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+}
+
+.img-signup {
+  background-image: url(../../assets/backgroundStep.png);
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  position: fixed;
+  width: 700px;
+  height: 100vh;
+  object-fit: cover;
+}
+
+.p {
+  font-size: 12px;
+  color: #999;
+}
+.footer {
+  text-align: center;
+  margin-top: 30px;
+  margin-bottom: 20px;
+}
+.footer a {
+  text-decoration: none;
+  cursor: pointer;
+  color: #3489ff;
+}
+.footer a:hover {
+  text-decoration: underline;
+}
+
+@media screen and (max-width: 320px) {
+  .container-img-signup {
+    display: none;
+  }
+  .paper {
+    width: 300px;
+  }
+  .img-logo-signup {
+    width: 200px;
+    height: 70px;
+  }
+}
+@media screen and (max-width: 940px) {
+  .container-img-signup {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .paper {
+    max-width: 450px;
+    max-height: fit-content;
+  }
+  .img-signup {
+    width: 499px;
+  }
+}
+
+@media screen and (min-width: 1400px) {
+  .img-signup {
+    width: 50%;
+  }
+}

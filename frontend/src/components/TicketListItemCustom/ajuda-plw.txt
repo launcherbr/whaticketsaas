@@ -1,0 +1,19 @@
+✅ Alternando entre as listas de tickets no Whaticket
+
+Se você preferir utilizar a lista de tickets alternativa, siga os passos abaixo:
+
+Renomeie o arquivo atual:
+
+Vá até a pasta do frontend/components/TicketListItemCustom/ do Whaticket.
+
+Renomeie o arquivo index.js para index_old.js.
+
+Ative a versão alternativa:
+
+Renomeie o arquivo index_alternativo.js para index.js.
+
+Compile o frontend:
+
+No terminal, dentro da pasta do frontend, execute o comando:
+
+npm run build

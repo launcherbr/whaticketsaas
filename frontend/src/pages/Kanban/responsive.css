@@ -1,0 +1,17 @@
+body {
+  font-family: Arial, sans-serif; /* Aplica Arial a todo o corpo da página */
+}
+
+@media (min-width: 390px) {
+  .mobile {
+    width: 80%;
+    height: 50%;
+    border-radius: 5px;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    margin-right: -50%;
+    transform: translate(-50%, -50%);
+  }
+}
