@@ -11,8 +11,7 @@ import makeWASocket, {
   jidNormalizedUser,
   CacheStore,
   fetchLatestWaWebVersion,
-  GroupMetadata,
-  Contact as BaileysContact
+  GroupMetadata
 } from "baileys";
 import { Op } from "sequelize";
 import { FindOptions } from "sequelize/types";
@@ -24,7 +23,6 @@ import { Boom } from "@hapi/boom";
 import AppError from "../errors/AppError";
 import { getIO } from "./socket";
 import { Store } from "./store";
-import Baileys from "../models/Baileys";
 import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSession";
 import DeleteBaileysService from "../services/BaileysServices/DeleteBaileysService";
 import NodeCache from 'node-cache';
@@ -51,7 +49,6 @@ const msgCache = new NodeCache({
 type Session = WASocket & {
   id?: number;
   store?: Store;
-  contacts?: { [id: string]: BaileysContact };
 };
 
 export default function msg() {
@@ -307,50 +304,6 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
           }
         };
 
-        // =================================================================
-        // =========== INÍCIO DA NOVA ABORDAGEM PARA SALVAR CONTATOS =========
-        // =================================================================
-        
-        // Este listener irá capturar os contatos assim que forem recebidos do WhatsApp
-        // e salvá-los diretamente na base de dados.
-        wsocket.ev.on("contacts.upsert", async (contacts) => {
-          logger.info(`Recebidos ${contacts.length} contatos. Atualizando a base de dados...`);
-          try {
-            // Buscamos todos os contatos conhecidos para esta sessão
-            // A propriedade "contacts" vem do próprio wsocket, que é preenchida pelo Baileys internamente
-            const allContacts = wsocket.contacts; 
-
-            // Prepara o objeto para atualização no banco de dados
-            const contactsUpdatePayload = {
-              contacts: allContacts
-            };
-
-            // Procura um registro existente para este whatsappId
-            const baileysData = await Baileys.findOne({
-                where: { whatsappId: whatsapp.id }
-            });
-
-            if (baileysData) {
-                // Se existir, atualiza o campo de contatos
-                await baileysData.update(contactsUpdatePayload);
-            } else {
-                // Se não existir, cria um novo registro
-                await Baileys.create({
-                    ...contactsUpdatePayload,
-                    whatsappId: whatsapp.id
-                });
-            }
-            logger.info(`Contatos salvos com sucesso na base de dados para a sessão ${whatsapp.name}`);
-          } catch (err) {
-            Sentry.captureException(err);
-            logger.error({ err }, "Erro ao salvar contatos na base de dados");
-          }
-        });
-        
-        // =================================================================
-        // ============ FIM DA NOVA ABORDAGEM PARA SALVAR CONTATOS ===========
-        // =================================================================
-        
         wsocket.ev.on(
           "connection.update",
           async ({ connection, lastDisconnect, qr }) => {
