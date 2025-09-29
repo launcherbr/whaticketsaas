@@ -11,7 +11,8 @@ import makeWASocket, {
   jidNormalizedUser,
   CacheStore,
   fetchLatestWaWebVersion,
-  GroupMetadata
+  GroupMetadata,
+  Contact as BaileysContact
 } from "baileys";
 import { Op } from "sequelize";
 import { FindOptions } from "sequelize/types";
@@ -23,6 +24,7 @@ import { Boom } from "@hapi/boom";
 import AppError from "../errors/AppError";
 import { getIO } from "./socket";
 import { Store } from "./store";
+import Baileys from "../models/Baileys";
 import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSession";
 import DeleteBaileysService from "../services/BaileysServices/DeleteBaileysService";
 import NodeCache from 'node-cache';
@@ -49,6 +51,7 @@ const msgCache = new NodeCache({
 type Session = WASocket & {
   id?: number;
   store?: Store;
+  contacts?: { [id: string]: BaileysContact };
 };
 
 export default function msg() {
