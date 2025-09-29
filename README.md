@@ -51,6 +51,12 @@ Para uso comercial, revenda ou exploração da plataforma como SaaS, é obrigat�
   * [Checkout Kirvano](https://pay.kirvano.com/a5103244-08d5-418f-8221-7172849dd65f)
   * [Anúncio DFG](https://www.dfg.com.br/pt/outros/script-crm-whaticket-gold-com-saas-e-kanban-inclusos-939289065)
 
+Renovação de Acesso: 
+
+Se estiver migrando de outras versões ou precisar renovar seu acesso a nosso conteúdo, utilize o link com valor promocional.
+
+* [Loja InfinitePay](https://loja.infinitepay.io/launcher-tecnologia/ine6649-whaticket-renovacao)
+
 -----
 
 **🔄 Ver Histórico de Versões (Changelog)**
