@@ -48,7 +48,7 @@ Para garantir a melhor performance, seu servidor deve atender às seguintes espe
 Para uso comercial, revenda ou exploração da plataforma como SaaS, é obrigatória a aquisição de uma licença.
 
   * [Loja InfinitePay](https://loja.infinitepay.io/launcher-tecnologia/aep0253-script-crm-whaticket-gold-com-saas-e-kanba/)
-  * [Checkout Kirvano](https://pay.kirvano.com/a5103244-08d5-418f-8221-717289dd65f)
+  * [Checkout Kirvano](https://pay.kirvano.com/a5103244-08d5-418f-8221-7172849dd65f)
   * [Anúncio DFG](https://www.dfg.com.br/pt/outros/script-crm-whaticket-gold-com-saas-e-kanban-inclusos-939289065)
 
 -----
