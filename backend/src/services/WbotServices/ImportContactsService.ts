@@ -17,11 +17,12 @@ const ImportContactsService = async (companyId: number): Promise<void> => {
   const defaultWhatsapp = await GetDefaultWhatsApp(companyId);
   const wbot = getWbot(defaultWhatsapp.id);
 
-  let phoneContacts;
+  let phoneContacts: any; // Declarada aqui para ser acessível em todo o escopo da função
 
   try {
     const contactsString = await ShowBaileysService(wbot.id);
-    const phoneContacts = JSON.parse(JSON.stringify(contactsString.contacts));
+    // Atribui o valor à variável do escopo superior, em vez de criar uma nova
+    phoneContacts = JSON.parse(JSON.stringify(contactsString.contacts));
 
     const publicFolder = path.resolve(__dirname, "..", "..", "..", "public");
     const companyFolder = path.join(publicFolder, `company${companyId}`);
@@ -35,19 +36,29 @@ const ImportContactsService = async (companyId: number): Promise<void> => {
     }
 
     const beforeFilePath = path.join(companyFolder, 'contatos_antes.txt');
-    await writeFileAsync(beforeFilePath, JSON.stringify(phoneContacts, null, 2));
-    console.log(`O arquivo contatos_antes.txt foi criado na pasta company${companyId}!`);
+    // Garante que phoneContacts não seja undefined antes de escrever
+    if (phoneContacts) {
+      await writeFileAsync(beforeFilePath, JSON.stringify(phoneContacts, null, 2));
+      console.log(`O arquivo contatos_antes.txt foi criado na pasta company${companyId}!`);
+    }
 
   } catch (err) {
     Sentry.captureException(err);
     logger.error(`Could not get whatsapp contacts from phone. Err: ${err}`);
   }
 
+  // Verifica se phoneContacts tem dados antes de prosseguir
+  if (!phoneContacts) {
+    logger.error("phoneContacts is undefined, skipping remaining processing.");
+    return;
+  }
+  
   const publicFolder = path.resolve(__dirname, "..", "..", "..", "public");
   const companyFolder = path.join(publicFolder, `company${companyId}`);
   const afterFilePath = path.join(companyFolder, 'contatos_depois.txt');
   
   try {
+    // Agora a variável phoneContacts está acessível aqui com o valor correto
     await writeFileAsync(afterFilePath, JSON.stringify(phoneContacts, null, 2));
   } catch (err) {
     logger.error(`Failed to write contacts to file: ${err}`);
