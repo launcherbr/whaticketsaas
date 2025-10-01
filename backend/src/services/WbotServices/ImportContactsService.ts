@@ -1,5 +1,3 @@
-// src/services/ContactServices/ImportContactsService.ts
-
 import * as Sentry from "@sentry/node";
 import { isArray, isObject } from "lodash";
 import GetDefaultWhatsApp from "../../helpers/GetDefaultWhatsApp";
