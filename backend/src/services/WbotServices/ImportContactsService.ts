@@ -1,97 +1,93 @@
 import * as Sentry from "@sentry/node";
-import { isArray, isObject } from "lodash";
 import GetDefaultWhatsApp from "../../helpers/GetDefaultWhatsApp";
+import { getWbot } from "../../libs/wbot";
 import Contact from "../../models/Contact";
 import { logger } from "../../utils/logger";
-import GetWbotContactService from "../BaileysServices/GetWbotContactService";
+import ShowBaileysService from "../BaileysServices/ShowBaileysService";
 import CreateContactService from "../ContactServices/CreateContactService";
+import { isString, isArray } from "lodash";
+import path from "path";
+import fs from 'fs';
+import { promisify } from 'util';
+
+const writeFileAsync = promisify(fs.writeFile);
+const mkdirAsync = promisify(fs.mkdir);
 
 const ImportContactsService = async (companyId: number): Promise<void> => {
-  logger.info("==============================================");
-  logger.info("INICIANDO SERVIÇO DE IMPORTAÇÃO DE CONTATOS");
-
   const defaultWhatsapp = await GetDefaultWhatsApp(companyId);
-  logger.info(`Usando WhatsApp padrão: ID ${defaultWhatsapp.id}`);
+  const wbot = getWbot(defaultWhatsapp.id);
 
-  let phoneContacts: any[] = [];
+  let phoneContacts;
 
   try {
-    logger.info("Passo 1: Buscando contatos da sessão ativa do wbot...");
-    const contactsObj = await GetWbotContactService(defaultWhatsapp.id);
+    const contactsString = await ShowBaileysService(wbot.id);
+    phoneContacts = JSON.parse(JSON.stringify(contactsString.contacts));
 
-    // LOG CRÍTICO: Vamos ver os dados brutos que recebemos
-    logger.info({ rawContacts: contactsObj }, "Dados brutos recebidos do GetWbotContactService.");
-
-    if (isObject(contactsObj)) {
-      const numberOfContactsInObject = Object.keys(contactsObj).length;
-      logger.info(`Passo 2: ${numberOfContactsInObject} contatos encontrados no objeto. Convertendo para array...`);
-      phoneContacts = Object.values(contactsObj);
-    } else {
-      logger.warn("AVISO: O serviço não retornou um objeto de contatos válido.");
-    }
+    const publicFolder = path.resolve(__dirname, "..", "..", "..", "public");
+    const companyFolder = path.join(publicFolder, `company${companyId}`);
     
-    logger.info(`Passo 3: Conversão concluída. Total de contatos no array: ${phoneContacts.length}`);
+    // Create company folder if it doesn't exist
+    try {
+      await mkdirAsync(companyFolder, { recursive: true });
+    } catch (err) {
+      logger.error(`Failed to create company folder: ${err}`);
+      throw err;
+    }
+
+    const beforeFilePath = path.join(companyFolder, 'contatos_antes.txt');
+    await writeFileAsync(beforeFilePath, JSON.stringify(phoneContacts, null, 2));
+    console.log(`O arquivo contatos_antes.txt foi criado na pasta company${companyId}!`);
 
   } catch (err) {
     Sentry.captureException(err);
-    logger.error({ err }, "ERRO CRÍTICO ao buscar contatos da sessão wbot.");
-    logger.info("SERVIÇO DE IMPORTAÇÃO INTERROMPIDO DEVIDO A ERRO.");
-    logger.info("==============================================");
-    return;
+    logger.error(`Could not get whatsapp contacts from phone. Err: ${err}`);
   }
 
-  if (isArray(phoneContacts) && phoneContacts.length > 0) {
-    logger.info("Passo 4: Iniciando processamento do loop de contatos...");
-    let importedCount = 0;
-    let skippedCount = 0;
+  const publicFolder = path.resolve(__dirname, "..", "..", "..", "public");
+  const companyFolder = path.join(publicFolder, `company${companyId}`);
+  const afterFilePath = path.join(companyFolder, 'contatos_depois.txt');
+  
+  try {
+    await writeFileAsync(afterFilePath, JSON.stringify(phoneContacts, null, 2));
+  } catch (err) {
+    logger.error(`Failed to write contacts to file: ${err}`);
+    throw err;
+  }
 
-    for (const contact of phoneContacts) {
-      const { id, name, notify, pushname } = contact;
+  const phoneContactsList = isString(phoneContacts)
+    ? JSON.parse(phoneContacts)
+    : phoneContacts;
 
-      if (!id || id.includes("g.us") || id.includes("status")) {
-        // logger.info(`- Contato ${id || 'sem ID'} pulado (é grupo, status ou sem ID).`);
-        skippedCount++;
-        continue;
-      }
-
+  if (isArray(phoneContactsList)) {
+    phoneContactsList.forEach(async ({ id, name, notify }) => {
+      if (id === "status@broadcast" || id.includes("g.us")) return;
       const number = id.replace(/\D/g, "");
-      const contactName = name || notify || pushname;
 
-      if (!contactName) {
-        // logger.info(`- Contato ${number} pulado (não tem nome identificável).`);
-        skippedCount++;
-        continue;
-      }
+      const existingContact = await Contact.findOne({
+        where: { number, companyId }
+      });
 
-      // Se passou pelos filtros, processa
-      try {
-        const existingContact = await Contact.findOne({ where: { number, companyId } });
-
-        if (existingContact) {
-          if (existingContact.name !== contactName) {
-            await existingContact.update({ name: contactName });
-            // logger.info(`> Contato ${number} atualizado com novo nome: ${contactName}`);
-          }
-        } else {
-          await CreateContactService({ number, name: contactName, companyId });
-          // logger.info(`> Contato ${number} (${contactName}) criado com sucesso.`);
+      if (existingContact) {
+        // Atualiza o nome do contato existente
+        existingContact.name = name || notify;
+        await existingContact.save();
+      } else {
+        // Criar um novo contato
+        try {
+          await CreateContactService({
+            number,
+            name: name || notify,
+            companyId
+          });
+        } catch (error) {
+          Sentry.captureException(error);
+          logger.warn(
+            `Could not get whatsapp contacts from phone. Err: ${error}`
+          );
         }
-        importedCount++;
-      } catch (error) {
-        Sentry.captureException(error);
-        logger.warn(`Erro ao processar o contato ${number}: ${error}`);
       }
-    }
-    logger.info(`Passo 5: Processamento do loop concluído.`);
-    logger.info(`Resultado: ${importedCount} contatos processados (criados/atualizados).`);
-    logger.info(`Resultado: ${skippedCount} contatos pulados (grupos, status, etc).`);
-
-  } else {
-    logger.warn("AVISO: Nenhum contato encontrado para processar após a conversão.");
+    });
   }
-
-  logger.info("SERVIÇO DE IMPORTAÇÃO DE CONTATOS FINALIZADO.");
-  logger.info("==============================================");
 };
 
 export default ImportContactsService;
