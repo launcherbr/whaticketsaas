@@ -12,7 +12,7 @@ import makeWASocket, {
   CacheStore,
   fetchLatestWaWebVersion,
   GroupMetadata,
-  Contact as BaileysContact // <-- 1. IMPORTADO O TIPO DE CONTATO DO BAILEYS
+  Contact as BaileysContact
 } from "baileys";
 import { Op } from "sequelize";
 import { FindOptions } from "sequelize/types";
@@ -47,7 +47,6 @@ const msgCache = new NodeCache({
   useClones: false
 });
 
-// <-- 2. TIPO DE SESSÃO ATUALIZADO
 type Session = WASocket & {
   id?: number;
   store?: Store;
@@ -185,7 +184,6 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
         const { id, name, provider } = whatsappUpdate;
 
         const { version, isLatest } = await fetchLatestWaWebVersion({});
-        // const { version, isLatest } = await fetchLatestBaileysVersion();
         const isLegacy = provider === "stable" ? true : false;
 
         logger.info(`using WA v${version.join(".")}, isLatest: ${isLatest}`);
@@ -252,13 +250,13 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
         // ====== INÍCIO DA LÓGICA DE CRIAÇÃO DO NOSSO CONTACT STORE =======
         // =====================================================================
         
-        // 1. Inicializa o nosso armazenamento de contatos na sessão
         wsocket.contactStore = {};
         
-        // 2. Ouve o evento 'contacts.set' para a carga inicial
-        wsocket.ev.on('contacts.set', ({ contacts }) => {
+        // Ouve o evento 'messaging-history.set' para a carga inicial de dados
+        wsocket.ev.on('messaging-history.set', (history) => {
+          const { contacts } = history;
           logger.info(`=================================================`);
-          logger.info(`Recebido evento 'contacts.set' com ${contacts.length} contatos.`);
+          logger.info(`Recebido evento 'messaging-history.set' com ${contacts.length} contatos.`);
           
           for (const contact of contacts) {
             if (contact.id) {
@@ -269,12 +267,11 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
           logger.info(`=================================================`);
         });
         
-        // 3. Ouve o evento 'contacts.upsert' para atualizações futuras
+        // Ouve o evento 'contacts.upsert' para atualizações futuras
         wsocket.ev.on('contacts.upsert', (contacts) => {
           logger.info(`Recebido evento 'contacts.upsert' com ${contacts.length} contatos (atualização).`);
           for (const contact of contacts) {
              if (contact.id) {
-               // Mescla o contato novo com o existente para não perder dados
                wsocket.contactStore[contact.id] = { ...(wsocket.contactStore[contact.id] || {}), ...contact };
              }
           }
@@ -284,7 +281,6 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
         // =====================================================================
         // ======== FIM DA LÓGICA DE CRIAÇÃO DO NOSSO CONTACT STORE ========
         // =====================================================================
-
 
         // PATCH ESPECÍFICO - Converter objetos Object() para Buffer
         const originalBufferFrom = Buffer.from;
