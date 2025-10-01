@@ -11,7 +11,8 @@ import makeWASocket, {
   jidNormalizedUser,
   CacheStore,
   fetchLatestWaWebVersion,
-  GroupMetadata
+  GroupMetadata,
+  Contact as BaileysContact
 } from "baileys";
 import { Op } from "sequelize";
 import { FindOptions } from "sequelize/types";
