@@ -4,7 +4,7 @@ import GetDefaultWhatsApp from "../../helpers/GetDefaultWhatsApp";
 import Contact from "../../models/Contact";
 import { logger } from "../../utils/logger";
 import GetWbotContactService from "../BaileysServices/GetWbotContactService"; // <-- MUDANÇA AQUI
-import CreateContactService from "./CreateContactService";
+import CreateContactService from "../ContactServices/CreateContactService";
 
 const ImportContactsService = async (companyId: number): Promise<void> => {
   const defaultWhatsapp = await GetDefaultWhatsApp(companyId);
