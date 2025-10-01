@@ -50,7 +50,7 @@ const msgCache = new NodeCache({
 type Session = WASocket & {
   id?: number;
   store?: Store;
-  contacts?: { [id: string]: BaileysContact };
+  contactStore?: { [id: string]: BaileysContact }; // <-- NOSSA PROPRIEDADEwsocket = makeWASocket({
 };
 
 export default function msg() {
@@ -249,8 +249,7 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
           cachedGroupMetadata,
         });
 
-
-        
+               
 
         // PATCH ESPECÍFICO - Converter objetos Object() para Buffer
         const originalBufferFrom = Buffer.from;
