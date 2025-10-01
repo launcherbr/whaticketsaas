@@ -12,7 +12,7 @@ import makeWASocket, {
   CacheStore,
   fetchLatestWaWebVersion,
   GroupMetadata,
-  Contact as BaileysContact
+  Contact as BaileysContact // <-- 1. IMPORTADO O TIPO DE CONTATO DO BAILEYS
 } from "baileys";
 import { Op } from "sequelize";
 import { FindOptions } from "sequelize/types";
@@ -47,11 +47,13 @@ const msgCache = new NodeCache({
   useClones: false
 });
 
+// <-- 2. TIPO DE SESSÃO ATUALIZADO
 type Session = WASocket & {
   id?: number;
   store?: Store;
-  contactStore?: { [id: string]: BaileysContact }; // <-- NOSSA PROPRIEDADEwsocket = makeWASocket({
+  contactStore?: { [id: string]: BaileysContact }; // Nossa propriedade personalizada
 };
+
 
 export default function msg() {
   return {
@@ -195,9 +197,6 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
           lidMappingStore?: LIDMappingStore;
         } = null;
         
-        // Removido makeInMemoryStore que não existe mais na versão 6.7.16
-        // Usando apenas caches externos conforme exemplo oficial
-
         const { state, saveState } = await authState(whatsapp);
 
         const userDevicesCache: CacheStore = new NodeCache();
@@ -211,8 +210,8 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
         })
 
          const lidMappingStore = new LIDMappingStore(
-          signalKeyStore as any, // Cast temporário para compatibilidade
-          logger // Passar o logger como segundo parâmetro
+          signalKeyStore as any, 
+          logger 
         );
 
         const cachedGroupMetadata = async (jid: string):  Promise<GroupMetadata> => {
@@ -248,35 +247,61 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
           shouldIgnoreJid: jid => isJidBroadcast(jid),
           cachedGroupMetadata,
         });
+        
+        // =====================================================================
+        // ====== INÍCIO DA LÓGICA DE CRIAÇÃO DO NOSSO CONTACT STORE =======
+        // =====================================================================
+        
+        // 1. Inicializa o nosso armazenamento de contatos na sessão
+        wsocket.contactStore = {};
+        
+        // 2. Ouve o evento 'contacts.set' para a carga inicial
+        wsocket.ev.on('contacts.set', ({ contacts }) => {
+          logger.info(`=================================================`);
+          logger.info(`Recebido evento 'contacts.set' com ${contacts.length} contatos.`);
+          
+          for (const contact of contacts) {
+            if (contact.id) {
+              wsocket.contactStore[contact.id] = contact;
+            }
+          }
+          logger.info(`Nosso contactStore agora tem ${Object.keys(wsocket.contactStore).length} contatos.`);
+          logger.info(`=================================================`);
+        });
+        
+        // 3. Ouve o evento 'contacts.upsert' para atualizações futuras
+        wsocket.ev.on('contacts.upsert', (contacts) => {
+          logger.info(`Recebido evento 'contacts.upsert' com ${contacts.length} contatos (atualização).`);
+          for (const contact of contacts) {
+             if (contact.id) {
+               // Mescla o contato novo com o existente para não perder dados
+               wsocket.contactStore[contact.id] = { ...(wsocket.contactStore[contact.id] || {}), ...contact };
+             }
+          }
+          logger.info(`Nosso contactStore foi atualizado para ${Object.keys(wsocket.contactStore).length} contatos.`);
+        });
+        
+        // =====================================================================
+        // ======== FIM DA LÓGICA DE CRIAÇÃO DO NOSSO CONTACT STORE ========
+        // =====================================================================
 
-               
 
         // PATCH ESPECÍFICO - Converter objetos Object() para Buffer
         const originalBufferFrom = Buffer.from;
         Buffer.from = function(value: any, ...args: any[]) {
           try {
-            // Interceptar APENAS objetos Object() que não são válidos para Buffer.from
             if (typeof value === 'object' && value !== null && 
                 !Array.isArray(value) && 
                 !Buffer.isBuffer(value) && 
-                !(value instanceof Uint8Array) &&  // NÃO interceptar Uint8Array
-                !(value instanceof ArrayBuffer) &&  // NÃO interceptar ArrayBuffer
-                value.constructor === Object) {     // APENAS objetos Object()
+                !(value instanceof Uint8Array) && 
+                !(value instanceof ArrayBuffer) &&
+                value.constructor === Object) {
               
-              // console.log(`🚨 INTERCEPTADO Buffer.from com objeto Object() inválido:`, {
-              //   type: typeof value,
-              //   constructor: value.constructor?.name,
-              //   keys: Object.keys(value),
-              //   value: value
-              // });
-              
-              // Tentar converter o objeto Object() para array e depois para Buffer
               try {
                 const keys = Object.keys(value);
                 const isNumericKeys = keys.every(key => /^\d+$/.test(key));
                 
                 if (isNumericKeys) {
-                  // Converter objeto com chaves numéricas para array
                   const maxIndex = Math.max(...keys.map(k => parseInt(k)));
                   const array = new Array(maxIndex + 1);
                   
@@ -300,7 +325,6 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
             return originalBufferFrom.call(this, value, ...args);
           } catch (error) {
             console.error(`❌ Erro no Buffer.from interceptado:`, error);
-            // Retornar Buffer vazio como fallback
             return Buffer.from([]);
           }
         };
@@ -310,7 +334,6 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
           async ({ connection, lastDisconnect, qr }) => {
             logger.info(`Socket ${name} Connection Update: ${connection}`);
             
-            // Log detalhado de desconexões
             if (lastDisconnect) {
               const error = lastDisconnect.error as Boom;
               const statusCode = error?.output?.statusCode;
@@ -322,7 +345,6 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                 timestamp: new Date().toISOString()
               });
 
-              // Tratamento específico para erros de stream do Baileys
               if (statusCode === 515) {
                 logger.warn(`Erro 515 (stream errored) para ${name} - Problema de rede, tentando reconexão rápida`);
               } else if (statusCode === 401) {
@@ -333,9 +355,7 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
             const disconect = (lastDisconnect?.error as Boom)?.output?.statusCode;
 
             if (connection === "close") {
-              // Tratamento específico para diferentes tipos de erro
               if (disconect === 515) {
-                // Erro 515: stream errored - problema de rede, reconexão rápida
                 logger.warn(`Erro 515 (stream) para ${name} - Reconexão rápida`);
                 removeWbot(id, false);
                 scheduleReconnect(whatsapp, 3000, "erro 515 - stream");
@@ -343,7 +363,6 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
               }
               
               if (disconect === 401) {
-                // Erro 401: device_removed - dispositivo foi removido, precisa de novo QR
                 logger.warn(`Erro 401 (device_removed) para ${name} - Limpando sessão para novo QR`);
                 await whatsapp.update({ status: "PENDING", session: "", number: "" });
                 removeWbot(id, false);
@@ -361,20 +380,17 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
               if (disconect === 403) {
                 logger.warn(`Erro 403 detectado para ${name}. Tentando reconexão inteligente...`);
                 
-                // NÃO deletar dados imediatamente - tentar reconectar primeiro
                 const attempts = reconnectAttempts.get(id) || 0;
                 
-                if (attempts < 5) { // Máximo 5 tentativas
+                if (attempts < 5) { 
                   logger.info(`Tentativa ${attempts + 1} de reconexão para ${name}`);
                   reconnectAttempts.set(id, attempts + 1);
                   
-                  // Tentar reconectar sem deletar dados
                   const delay = [2000, 5000, 10000, 30000, 60000][attempts];
                   scheduleReconnect(whatsapp, delay, `erro 403 - tentativa ${attempts + 1}`);
                   
-                  return; // NÃO deletar dados ainda
+                  return;
                 } else {
-                  // Após 5 tentativas, então deletar dados
                   logger.error(`Máximo de tentativas atingido para ${name}. Deletando sessão.`);
                   await whatsapp.update({ status: "PENDING", session: "", number: "" });
                   removeWbot(id, false);
@@ -405,7 +421,6 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
             }
 
             if (connection === "open") {
-              // Limpar tentativas de reconexão e rate limiting quando conectar com sucesso
               reconnectAttempts.delete(id);
               lastReconnectTime.delete(id);
               
@@ -534,9 +549,6 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
         );
 
          wsocket.lidMappingStore = lidMappingStore;
-
-        // Removida a linha que vinculava o store ao socket
-        // store.bind(wsocket.ev);
       })();
     } catch (error) {
       Sentry.captureException(error);
