@@ -50,6 +50,7 @@ const msgCache = new NodeCache({
 type Session = WASocket & {
   id?: number;
   store?: Store;
+  contacts?: { [id: string]: BaileysContact };
 };
 
 export default function msg() {
