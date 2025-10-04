@@ -61,9 +61,10 @@ Se estiver migrando de outras versões ou precisar renovar seu acesso a nosso co
 
 **🔄 Ver Histórico de Versões (Changelog)**
 
-#### **Versão 6.3.0** (`20/09/2025`)
+#### **Versão 6.3.1** (`20/09/2025`)
 
   * Correção de bugs relacionados a JID/LID.
+  * Melhorias de Performance
 
 #### **Versão 6.0.0** (`16/04/2025`)
 
