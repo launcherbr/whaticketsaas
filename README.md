@@ -64,7 +64,6 @@ Se estiver migrando de outras versões ou precisar renovar seu acesso a nosso co
 #### **Versão 6.3.0** (`20/09/2025`)
 
   * Correção de bugs relacionados a JID/LID.
-  * Correção de Importação de Contatos.
 
 #### **Versão 6.0.0** (`16/04/2025`)
 
