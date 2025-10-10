@@ -16,31 +16,31 @@ export const getContactIdentifier = (contact: any): string => {
   // verificar se o contact esta limpo ou veio direto do banco de dados
   // se veio do banco de dados, pode ser que esteja null ou undefined
   // então tratar isso
-  if (!contact) {
-    console.log('Contact é nulo ou indefinido:', contact);
-    return '';
-  }else if (contact?.dataValues) {
-    contact = contact.dataValues;
-  }
-  // console.log('Contact recebido em getContactIdentifier:', contact);
-  if (contact?.lid) {
-    console.log('Usando LID para envio:', contact.lid);
-    return contact.lid;
-  } else {
-    console.log('Usando JID para envio:', contact.number);
-    return contact.number;
-  }
-};
-// if (!contact) {
-//   console.log('Contact é nulo ou indefinido:', contact);
-//   return '';
-// }else if (contact?.dataValues) {
-//   contact = contact.dataValues;
-// }
-// // console.log('Contact recebido em getContactIdentifier:', contact);
-// console.log('Usando NUMBER para envio:', contact.number);
-// return contact.number;
+//   if (!contact) {
+//     console.log('Contact é nulo ou indefinido:', contact);
+//     return '';
+//   }else if (contact?.dataValues) {
+//     contact = contact.dataValues;
+//   }
+//   // console.log('Contact recebido em getContactIdentifier:', contact);
+//   if (contact?.lid) {
+//     console.log('Usando LID para envio:', contact.lid);
+//     return contact.lid;
+//   } else {
+//     console.log('Usando JID para envio:', contact.number);
+//     return contact.number;
+//   }
 // };
+if (!contact) {
+  console.log('Contact é nulo ou indefinido:', contact);
+  return '';
+}else if (contact?.dataValues) {
+  contact = contact.dataValues;
+}
+// console.log('Contact recebido em getContactIdentifier:', contact);
+console.log('Usando NUMBER para envio:', contact.number);
+return contact.number;
+};
 
 
 // Função helper para construir o endereço de envio
