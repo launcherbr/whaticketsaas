@@ -536,7 +536,7 @@ const getSenderMessage = (
   return senderId && jidNormalizedUser(senderId);
 };
 
-const getContactMessage = async (msg: WAMessage, wbot: Session) => {
+const getContactMessage = async (msg: proto.IWebMessageInfo, wbot: Session) => {
   try {
     const isGroup = msg.key.remoteJid.includes("g.us");
 
@@ -1570,7 +1570,7 @@ export const handleRating = async (
 };
 
 
-const handleChartbot = async (ticket: Ticket, msg: WAMessage, wbot: Session, dontReadTheFirstQuestion = false) => {
+const handleChartbot = async (ticket: Ticket, msg: proto.IWebMessageInfo, wbot: Session, dontReadTheFirstQuestion = false) => {
   const queue = await Queue.findByPk(ticket.queueId, {
     include: [
       {
