@@ -23,13 +23,14 @@ const SetTicketMessagesAsRead = async (ticket: Ticket): Promise<void> => {
     });
 
     if (getJsonMessage.length > 0) {
-      const lastMessages: proto.IWebMessageInfo = JSON.parse(
-        JSON.stringify(getJsonMessage[0].dataJson)
+      // O dataJson já é uma string JSON, não precisa de stringify
+      const lastMessage: proto.IWebMessageInfo = JSON.parse(
+        getJsonMessage[0].dataJson
       );
 
-      if (lastMessages.key && lastMessages.key.fromMe === false) {
+      if (lastMessage.key && lastMessage.key.fromMe === false) {
         await (wbot as WASocket).chatModify(
-          { markRead: true, lastMessages: [lastMessages] },
+          { markRead: true, lastMessages: [{ key: lastMessage.key }] }, // <-- CORREÇÃO APLICADA AQUI
           `${ticket.contact.number}@${
             ticket.isGroup ? "g.us" : "s.whatsapp.net"
           }`
