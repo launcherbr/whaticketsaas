@@ -541,8 +541,8 @@ const getContactMessage = async (msg: proto.IWebMessageInfo, wbot: Session) => {
     const isGroup = msg.key.remoteJid.includes("g.us");
 
     // Obter JID e LID usando as funções seguras do global.ts
-    const jid = await getJidFromMessage(msg, wbot);
-    const lid = await getLidFromMessage(msg, wbot);
+    const jid = await getJidFromMessage(msg as WAMessage, wbot);
+    const lid = await getLidFromMessage(msg as WAMessage, wbot);
 
     // Validação dos dados obtidos
     if (!jid || typeof jid !== 'string') {
@@ -583,7 +583,7 @@ const downloadMedia = async (msg: proto.IWebMessageInfo) => {
   let buffer
   try {
     buffer = await downloadMediaMessage(
-      msg,
+      msg as WAMessage,
       'buffer',
       {}
     )
