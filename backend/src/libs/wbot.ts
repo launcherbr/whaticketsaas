@@ -180,8 +180,8 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
 
         const { id, name, provider } = whatsappUpdate;
 
-        const { version, isLatest } = await fetchLatestWaWebVersion({});
-        // const { version, isLatest } = await fetchLatestBaileysVersion();
+        //const { version, isLatest } = await fetchLatestWaWebVersion({});
+        const { version, isLatest } = await fetchLatestBaileysVersion();
         const isLegacy = provider === "stable" ? true : false;
 
         logger.info(`using WA v${version.join(".")}, isLatest: ${isLatest}`);
