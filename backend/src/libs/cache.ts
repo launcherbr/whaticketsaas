@@ -1,6 +1,6 @@
 import Redis from "ioredis";
 import { REDIS_URI_CONNECTION } from "../config/redis";
-// import util from "util"; // REMOVIDO - Não é mais necessário
+// import util from "util"; // REMOVIDO
 import * as crypto from "crypto";
 
 const redis = new Redis(REDIS_URI_CONNECTION);
@@ -42,36 +42,36 @@ export function set(
 ) {
   // const setPromisefy = util.promisify(redis.set).bind(redis); // REMOVIDO
   if (option !== undefined && optionValue !== undefined) {
-    // return setPromisefy(key, value, option, optionValue); // ALTERADO
-    return redis.set(key, value, option, optionValue); // CORRETO
+    // CORRIGIDO: Adicionado 'as any' para o 'option'
+    return redis.set(key, value, option as any, optionValue);
   }
 
-  // return setPromisefy(key, value); // ALTERADO
-  return redis.set(key, value); // CORRETO
+  // CORRIGIDO: Chamada direta
+  return redis.set(key, value);
 }
 
 export function get(key: string) {
   // const getPromisefy = util.promisify(redis.get).bind(redis); // REMOVIDO
-  // return getPromisefy(key); // ALTERADO
-  return redis.get(key); // CORRETO
+  // CORRIGIDO: Chamada direta
+  return redis.get(key);
 }
 
 export function getKeys(pattern: string) {
   // const getKeysPromisefy = util.promisify(redis.keys).bind(redis); // REMOVIDO
-  // return getKeysPromisefy(pattern); // ALTERADO
-  return redis.keys(pattern); // CORRETO
+  // CORRIGIDO: Chamada direta
+  return redis.keys(pattern);
 }
 
 export function del(key: string) {
   // const delPromisefy = util.promisify(redis.del).bind(redis); // REMOVIDO
-  // return delPromisefy(key); // ALTERADO
-  return redis.del(key); // CORRETO
+  // CORRIGIDO: Chamada direta
+  return redis.del(key);
 }
 
 export async function delFromPattern(pattern: string) {
   const all = await getKeys(pattern);
   for (let item of all) {
-    del(item); // Isso já retorna uma Promise
+    del(item);
   }
 }
 
