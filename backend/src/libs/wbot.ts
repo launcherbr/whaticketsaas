@@ -29,6 +29,21 @@ import NodeCache from 'node-cache';
 import Contact from "../models/Contact";
 import Ticket from "../models/Ticket";
 import { LIDMappingStore } from "baileys/lib/Signal/lid-mapping";
+import { proto } from "baileys";
+import { SignalDataTypeMap } from "baileys";
+import GroupEncryptionService from "../services/BaileysServices/GroupEncryptionService";
+
+const KEY_MAP: { [T in keyof SignalDataTypeMap]: string } = {
+  "pre-key": "preKeys",
+  session: "sessions",
+  "sender-key": "senderKeys",
+  "app-state-sync-key": "appStateSyncKeys",
+  "app-state-sync-version": "appStateVersions",
+  "sender-key-memory": "senderKeyMemory",
+  "lid-mapping": "lidMapping",
+  "device-list": "deviceList"
+};
+
 const loggerBaileys = MAIN_LOGGER.child({});
 loggerBaileys.level = "error";
 
@@ -201,6 +216,35 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
         const userDevicesCache: CacheStore = new NodeCache();
         const signalKeyStore = makeCacheableSignalKeyStore(state.keys, logger, userDevicesCache);
 
+        // Verificar e inicializar chaves Signal para grupos se necessário
+        if (!state.keys) {
+          logger.warn(`Chaves Signal não encontradas para ${name}, inicializando...`);
+          // Forçar inicialização das chaves se não existirem
+          state.keys = {
+            get: (type, ids) => {
+              const key = KEY_MAP[type];
+              return ids.reduce((dict: any, id) => {
+                let value = (state.keys as any)[key]?.[id];
+                if (value) {
+                  if (type === "app-state-sync-key") {
+                    value = proto.Message.AppStateSyncKeyData.create(value);
+                  }
+                  dict[id] = value;
+                }
+                return dict;
+              }, {});
+            },
+            set: (data: any) => {
+              for (const i in data) {
+                const key = KEY_MAP[i as keyof SignalDataTypeMap];
+                (state.keys as any)[key] = (state.keys as any)[key] || {};
+                Object.assign((state.keys as any)[key], data[i]);
+              }
+              saveState();
+            }
+          };
+        }
+
         const groupCache = new NodeCache({
           stdTTL: 3600,
           maxKeys: 10000,
@@ -209,8 +253,8 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
         })
 
          const lidMappingStore = new LIDMappingStore(
-          signalKeyStore as any, // Cast temporário para compatibilidade
-          logger // Passar o logger como segundo parâmetro
+          signalKeyStore as any,
+          logger
         );
 
         const cachedGroupMetadata = async (jid: string):  Promise<GroupMetadata> => {
@@ -262,19 +306,12 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                 !(value instanceof ArrayBuffer) &&  // NÃO interceptar ArrayBuffer
                 value.constructor === Object) {     // APENAS objetos Object()
               
-              // console.log(`🚨 INTERCEPTADO Buffer.from com objeto Object() inválido:`, {
-              //   type: typeof value,
-              //   constructor: value.constructor?.name,
-              //   keys: Object.keys(value),
-              //   value: value
-              // });
-              
               // Tentar converter o objeto Object() para array e depois para Buffer
               try {
                 const keys = Object.keys(value);
                 const isNumericKeys = keys.every(key => /^\d+$/.test(key));
                 
-                if (isNumericKeys) {
+                if (isNumericKeys && keys.length > 0) {
                   // Converter objeto com chaves numéricas para array
                   const maxIndex = Math.max(...keys.map(k => parseInt(k)));
                   const array = new Array(maxIndex + 1);
@@ -287,20 +324,22 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                   console.log(`✅ Convertido objeto Object() para Buffer (${buffer.length} bytes)`);
                   return buffer;
                 } else {
-                  console.log(`⚠️ Objeto Object() não tem chaves numéricas, retornando Buffer vazio`);
-                  return Buffer.from([]);
+                  console.log(`⚠️ Objeto Object() não tem chaves numéricas válidas, usando Buffer original`);
+                  // Em vez de retornar Buffer vazio, tentar usar o valor original
+                  return originalBufferFrom.call(this, value, ...args);
                 }
               } catch (conversionError) {
                 console.error(`❌ Erro ao converter objeto Object() para Buffer:`, conversionError);
-                return Buffer.from([]);
+                // Em vez de retornar Buffer vazio, tentar usar o valor original
+                return originalBufferFrom.call(this, value, ...args);
               }
             }
             
             return originalBufferFrom.call(this, value, ...args);
           } catch (error) {
             console.error(`❌ Erro no Buffer.from interceptado:`, error);
-            // Retornar Buffer vazio como fallback
-            return Buffer.from([]);
+            // Em vez de retornar Buffer vazio, tentar usar o valor original
+            return originalBufferFrom.call(this, value, ...args);
           }
         };
 
@@ -478,6 +517,62 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
           }
         );
         wsocket.ev.on("creds.update", saveState);
+
+        // Tratamento específico para erros de criptografia de grupos
+        wsocket.ev.on("messages.upsert", async (m) => {
+          try {
+            // Log para debug de mensagens de grupo
+            if (m.messages && m.messages.length > 0) {
+              const firstMsg = m.messages[0];
+              if (firstMsg.key.remoteJid?.endsWith("@g.us")) {
+                logger.debug(`Mensagem de grupo recebida: ${firstMsg.key.remoteJid}`);
+              }
+            }
+          } catch (error) {
+            logger.error("Erro ao processar mensagem de grupo:", error);
+            
+            // Tentar tratar erro de criptografia se for mensagem de grupo
+            if (m.messages && m.messages.length > 0) {
+              const firstMsg = m.messages[0];
+              if (firstMsg.key.remoteJid?.endsWith("@g.us")) {
+                await GroupEncryptionService.handleGroupEncryptionError(
+                  error,
+                  firstMsg.key.remoteJid,
+                  wsocket
+                );
+              }
+            }
+          }
+        });
+
+        // Interceptar erros globais de criptografia
+        const originalSendMessage = wsocket.sendMessage;
+        wsocket.sendMessage = async (jid: string, content: any, options?: any) => {
+          try {
+            return await originalSendMessage.call(wsocket, jid, content, options);
+          } catch (error) {
+            // Se for erro de criptografia em grupo, tentar tratar
+            if (jid.endsWith("@g.us")) {
+              const handled = await GroupEncryptionService.handleGroupEncryptionError(
+                error,
+                jid,
+                wsocket
+              );
+              
+              if (handled) {
+                // Tentar enviar novamente após tratamento
+                try {
+                  return await originalSendMessage.call(wsocket, jid, content, options);
+                } catch (retryError) {
+                  logger.error(`Erro persistente ao enviar mensagem para grupo ${jid}:`, retryError);
+                  throw retryError;
+                }
+              }
+            }
+            
+            throw error;
+          }
+        };
 
         wsocket.ev.on(
           "presence.update",
