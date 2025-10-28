@@ -61,6 +61,11 @@ Se estiver migrando de outras versões ou precisar renovar seu acesso a nosso co
 
 **🔄 Ver Histórico de Versões (Changelog)**
 
+#### **Versão 6.3.2** (`28/09/2025`)
+
+  * Correção de criptografia de grupos
+  * Correções lib/wbot.ts
+
 #### **Versão 6.3.1** (`20/09/2025`)
 
   * Correção de bugs relacionados a JID/LID.
