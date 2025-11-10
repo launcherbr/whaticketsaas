@@ -23,14 +23,15 @@ const SetTicketMessagesAsRead = async (ticket: Ticket): Promise<void> => {
     });
 
     if (getJsonMessage.length > 0) {
-      // O dataJson já é uma string JSON, não precisa de stringify
-      const lastMessage: proto.IWebMessageInfo = JSON.parse(
-        getJsonMessage[0].dataJson
+      const lastMessages: proto.IWebMessageInfo = JSON.parse(
+        JSON.stringify(getJsonMessage[0].dataJson)
       );
 
-      if (lastMessage.key && lastMessage.key.fromMe === false) {
+      if (lastMessages.key && lastMessages.key.fromMe === false) {
+        // Type assertion para garantir compatibilidade com MinimalMessage
+        const messageToMark = lastMessages as proto.IWebMessageInfo & { key: proto.IMessageKey };
         await (wbot as WASocket).chatModify(
-          { markRead: true, lastMessages: [{ key: lastMessage.key }] }, // <-- CORREÇÃO APLICADA AQUI
+          { markRead: true, lastMessages: [messageToMark] },
           `${ticket.contact.number}@${
             ticket.isGroup ? "g.us" : "s.whatsapp.net"
           }`
