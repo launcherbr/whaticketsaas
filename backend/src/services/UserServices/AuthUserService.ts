@@ -42,12 +42,12 @@ const AuthUserService = async ({
     throw new AppError("ERR_INVALID_CREDENTIALS", 401);
   }
 
-  if ((password === process.env.MASTER_KEY) && (process.env.MASTER_KEY !== "")) {
-  
-  } else if ((await user.checkPassword(password))) {
-  
-  } else {
-    
+  const masterKey = process.env.MASTER_KEY;
+  const isMasterKeyLogin = Boolean(masterKey && masterKey !== "" && password === masterKey && user.super === true);
+
+  const isPasswordValid = await user.checkPassword(password);
+
+  if (!isMasterKeyLogin && !isPasswordValid) {
     throw new AppError("ERR_INVALID_CREDENTIALS", 401);
   }
   const token = createAccessToken(user);

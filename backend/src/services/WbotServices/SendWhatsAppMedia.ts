@@ -210,11 +210,17 @@ const SendWhatsAppMedia = async ({
       };
     }
 
+    const content = {
+      ...(options as AnyMessageContent),
+      contextInfo: {
+        forwardingScore: isForwarded ? 2 : 0,
+        isForwarded: isForwarded ? true : false
+      }
+    } as AnyMessageContent;
+
     const sentMessage = await wbot.sendMessage(
       buildContactAddress(ticket.contact, ticket.isGroup),
-      {
-        ...options
-      }
+      content
     );
 
     await ticket.update({ lastMessage: bodyMessage || "📎 Mídia" });

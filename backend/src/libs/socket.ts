@@ -20,10 +20,24 @@ export const initIO = (httpServer: Server): SocketIO => {
 
   io.on("connection", async socket => {
     logger.info("Client Connected");
-    const { token } = socket.handshake.query;
+    const rawToken = typeof socket.handshake.auth?.token === "string"
+      ? socket.handshake.auth.token
+      : typeof socket.handshake.query?.token === "string"
+        ? socket.handshake.query.token
+        : Array.isArray(socket.handshake.query?.token)
+          ? socket.handshake.query.token[0]
+          : undefined;
+
+    const token = rawToken?.startsWith("Bearer ")
+      ? rawToken.replace(/^Bearer\s+/i, "").trim()
+      : rawToken;
+
     let tokenData = null;
     try {
-      tokenData = verify(token as string, authConfig.secret);
+      if (!token) {
+        throw new AppError("Missing token", 401);
+      }
+      tokenData = verify(token, authConfig.secret);
       logger.debug(tokenData, "io-onConnection: tokenData");
     } catch (error) {
       logger.warn(`[libs/socket.ts] Error decoding token: ${error?.message}`);

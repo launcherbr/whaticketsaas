@@ -106,21 +106,28 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const { contactId, status, userId, queueId, whatsappId }: TicketData = req.body;
   const { companyId } = req.user;
 
-  const ticket = await CreateTicketService({
-    contactId,
-    status,
-    userId,
-    companyId,
-    queueId,
-    whatsappId
-  });
+  try {
+    const ticket = await CreateTicketService({
+      contactId,
+      status,
+      userId,
+      companyId,
+      queueId,
+      whatsappId
+    });
 
-  const io = getIO();
-  io.to(ticket.status).emit(`company-${companyId}-ticket`, {
-    action: "update",
-    ticket
-  });
-  return res.status(200).json(ticket);
+    const io = getIO();
+    io.to(ticket.status).emit(`company-${companyId}-ticket`, {
+      action: "update",
+      ticket
+    });
+    return res.status(200).json(ticket);
+  } catch (error: any) {
+    if (error.message && error.message.includes("TICKET_ALREADY_OPEN")) {
+      return res.status(409).json({ error: error.message });
+    }
+    throw error;
+  }
 };
 
 export const kanban = async (req: Request, res: Response): Promise<Response> => {
@@ -203,14 +210,20 @@ export const update = async (
   const ticketData: TicketData = req.body;
   const { companyId } = req.user;
 
-  const { ticket } = await UpdateTicketService({
-    ticketData,
-    ticketId,
-    companyId
-  });
+  try {
+    const { ticket } = await UpdateTicketService({
+      ticketData,
+      ticketId,
+      companyId
+    });
 
-
-  return res.status(200).json(ticket);
+    return res.status(200).json(ticket);
+  } catch (error: any) {
+    if (error.message && error.message.includes("TICKET_ALREADY_OPEN")) {
+      return res.status(409).json({ error: error.message });
+    }
+    throw error;
+  }
 };
 
 export const remove = async (

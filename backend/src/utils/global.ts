@@ -1,4 +1,4 @@
-import { WAMessage, WASocket } from "baileys";
+import { WAMessage, WASocket, proto } from "baileys";
 import { LIDMappingStore } from "baileys/lib/Signal/lid-mapping";
 
 import { Store } from "../libs/store";
@@ -51,9 +51,19 @@ export const buildContactAddress = (contact: any, isGroup: boolean): string => {
   return `${contactId}${domain}`;
 };
 
-export const getJidFromMessage = async (message: WAMessage, wbot: Session): Promise<string> => {
+export const getJidFromMessage = async (message: WAMessage | proto.IWebMessageInfo, wbot: Session): Promise<string> => {
+  // Garantir que a mensagem tem a propriedade key
+  if (!message || !message.key) {
+    throw new Error('Mensagem inválida: propriedade key não encontrada');
+  }
+  
   const { key } = message;
-  const { remoteJid, remoteJidAlt, participantAlt, participant } = key;
+  const { remoteJid, participant } = key;
+  // Verificar se key tem propriedades estendidas (remoteJidAlt, participantAlt)
+  const keyExtended = key as any;
+  const remoteJidAlt = keyExtended.remoteJidAlt;
+  const participantAlt = keyExtended.participantAlt;
+  
   let jid = '';
 
   // Prioridade: JID > LID > PN
@@ -102,9 +112,18 @@ const getLIDMappingStore = (wbot: Session): any => {
     return null;
   }
 };
-export const getLidFromMessage = async (message: WAMessage, wbot: Session): Promise<string> => {
+export const getLidFromMessage = async (message: WAMessage | proto.IWebMessageInfo, wbot: Session): Promise<string> => {
+  // Garantir que a mensagem tem a propriedade key
+  if (!message || !message.key) {
+    throw new Error('Mensagem inválida: propriedade key não encontrada');
+  }
+  
   const { key } = message;
-  const { remoteJid, remoteJidAlt, participantAlt, participant } = key;
+  const { remoteJid, participant } = key;
+  // Verificar se key tem propriedades estendidas (remoteJidAlt, participantAlt)
+  const keyExtended = key as any;
+  const remoteJidAlt = keyExtended.remoteJidAlt;
+  const participantAlt = keyExtended.participantAlt;
 
   let lid = '';
 

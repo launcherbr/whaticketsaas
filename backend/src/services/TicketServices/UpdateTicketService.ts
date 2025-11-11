@@ -4,7 +4,6 @@ import CheckContactOpenTickets from "../../helpers/CheckContactOpenTickets";
 import SetTicketMessagesAsRead from "../../helpers/SetTicketMessagesAsRead";
 import { getIO } from "../../libs/socket";
 import Ticket from "../../models/Ticket";
-import Setting from "../../models/Setting";
 import Queue from "../../models/Queue";
 import ShowTicketService from "./ShowTicketService";
 import ShowWhatsAppService from "../WhatsappService/ShowWhatsAppService";
@@ -12,13 +11,15 @@ import SendWhatsAppMessage from "../WbotServices/SendWhatsAppMessage";
 import FindOrCreateATicketTrakingService from "./FindOrCreateATicketTrakingService";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
 import { verifyMessage } from "../WbotServices/wbotMessageListener";
-import ListSettingsServiceOne from "../SettingServices/ListSettingsServiceOne"; 
-import ShowUserService from "../UserServices/ShowUserService"; 
+import ListSettingsServiceOne from "../SettingServices/ListSettingsServiceOne"; //NOVO PLW DESIGN//
+import ShowUserService from "../UserServices/ShowUserService"; //NOVO PLW DESIGN//
 import { isNil } from "lodash";
 import Whatsapp from "../../models/Whatsapp";
-import { Op } from "sequelize";
+import User from "../../models/User";
+import { Op, QueryTypes } from "sequelize";
 import AppError from "../../errors/AppError";
 import { buildContactAddress } from "../../utils/global";
+import formatBody from "../../helpers/Mustache";
 
 
 interface TicketData {
@@ -82,6 +83,19 @@ const UpdateTicketService = async ({
     const oldUserId = ticket.user?.id;
     const oldQueueId = ticket.queueId;
 
+    // Verificar se o ticket já está aberto por outro usuário
+    if (status === "open" && userId && oldStatus === "open" && oldUserId && oldUserId !== userId) {
+      // Buscar informações do usuário que está atendendo
+      const currentUser = await User.findByPk(oldUserId, {
+        attributes: ["id", "name", "email"]
+      });
+      
+      throw new AppError(
+        `TICKET_ALREADY_OPEN|${currentUser?.name || "Atendente"}|${oldUserId}`,
+        409
+      );
+    }
+
     if (oldStatus === "closed" || Number(whatsappId) !== ticket.whatsappId) {
       // let otherTicket = await Ticket.findOne({
       //   where: {
@@ -120,6 +134,7 @@ const UpdateTicketService = async ({
   // Envia a mensagem de avaliação apenas se o ticket não estiver em status 'pendente'
   if (
     ticket.status !== "pending" &&  // Adiciona a verificação para evitar avaliação em status pendente
+    !ticket.isGroup &&
     !ticket.contact.isGroup &&
     !ticket.contact.disableBot &&
     settingEvaluation?.value === "enabled"
@@ -154,6 +169,7 @@ const UpdateTicketService = async ({
     ticketTraking.finishedAt = moment().toDate();
 
     if (
+      !ticket.isGroup &&
       !ticket.contact.isGroup &&
       !ticket.contact.disableBot &&
       !isNil(complationMessage) &&
@@ -183,68 +199,49 @@ const UpdateTicketService = async ({
     }
 
     const settingsTransfTicket = await ListSettingsServiceOne({ companyId: companyId, key: "sendMsgTransfTicket" });
+    const settingsTransfTicketMessage = await ListSettingsServiceOne({ companyId: companyId, key: "sendMsgTransfTicketMessage" });
+    const transferTemplateDefault = "{{ms}} {{name}}, seu atendimento foi transferido. Departamento: {{queue}}. Atendente: {{agent}}.";
+    const transferTemplate = settingsTransfTicketMessage?.value?.trim() || transferTemplateDefault;
 
-    if (settingsTransfTicket?.value === "enabled") {
-      // Mensagem de transferencia da FILA
-      if (oldQueueId !== queueId && oldUserId === userId && !isNil(oldQueueId) && !isNil(queueId)) {
+    const settingsGreetingAccepted = await ListSettingsServiceOne({ companyId: companyId, key: "sendGreetingAccepted" });
+    const settingsGreetingAcceptedMessage = await ListSettingsServiceOne({ companyId: companyId, key: "sendGreetingAcceptedMessage" });
+    const greetingTemplateDefault = "{{ms}} {{name}}, meu nome é {{agent}} e vou prosseguir com seu atendimento!";
+    const greetingTemplate = settingsGreetingAcceptedMessage?.value?.trim() || greetingTemplateDefault;
 
-        const queue = await Queue.findByPk(queueId);
+    const hasQueueTransfer =
+      !isNil(oldQueueId) && !isNil(queueId) && oldQueueId !== queueId;
+    const hasAgentTransfer =
+      !isNil(oldUserId) && !isNil(userId) && oldUserId !== userId;
+
+    if (
+      settingsTransfTicket?.value === "enabled" &&
+      transferTemplate &&
+      (hasQueueTransfer || hasAgentTransfer) &&
+      !ticket.isGroup &&
+      !ticket.contact.isGroup
+    ) {
+      const queue = !isNil(queueId) ? await Queue.findByPk(queueId) : null;
+      const oldQueue = !isNil(oldQueueId) ? await Queue.findByPk(oldQueueId) : null;
+      const newAgent = !isNil(userId) ? await ShowUserService(userId) : null;
+      const previousAgent = !isNil(oldUserId) ? await ShowUserService(oldUserId) : null;
+
+      const messageBody = formatBody(transferTemplate, ticket.contact, {
+        queue: queue?.name || "",
+        agent: newAgent?.name || "",
+        previousAgent: previousAgent?.name || "",
+        previousQueue: oldQueue?.name || ""
+      });
+
+      if (messageBody.trim()) {
         const wbot = await GetTicketWbot(ticket);
-        const msgtxt = "*Mensagem automática*:\nVocê foi transferido para o departamento *" + queue?.name + "*\naguarde, já vamos te atender!";
-
         const queueChangedMessage = await wbot.sendMessage(
           buildContactAddress(ticket.contact, ticket.isGroup),
           {
-            text: msgtxt
+            text: messageBody
           }
         );
         await verifyMessage(queueChangedMessage, ticket, ticket.contact);
       }
-      else
-        // Mensagem de transferencia do ATENDENTE
-        if (oldUserId !== userId && oldQueueId === queueId && !isNil(oldUserId) && !isNil(userId)) {
-          const wbot = await GetTicketWbot(ticket);
-          const nome = await ShowUserService(ticketData.userId);
-          const msgtxt = "*Mensagem automática*:\nFoi transferido para o atendente *" + nome.name + "*\naguarde, já vamos te atender!";
-
-          const queueChangedMessage = await wbot.sendMessage(
-            buildContactAddress(ticket.contact, ticket.isGroup),
-            {
-              text: msgtxt
-            }
-          );
-          await verifyMessage(queueChangedMessage, ticket, ticket.contact);
-        }
-        else
-          // Mensagem de transferencia do ATENDENTE e da FILA
-          if (oldUserId !== userId && !isNil(oldUserId) && !isNil(userId) && oldQueueId !== queueId && !isNil(oldQueueId) && !isNil(queueId)) {
-            const wbot = await GetTicketWbot(ticket);
-            const queue = await Queue.findByPk(queueId);
-            const nome = await ShowUserService(ticketData.userId);
-            const msgtxt = "*Mensagem automática*:\nVocê foi transferido para o departamento *" + queue?.name + "* e contará com a presença de *" + nome.name + "*\naguarde, já vamos te atender!";
-
-            const queueChangedMessage = await wbot.sendMessage(
-              buildContactAddress(ticket.contact, ticket.isGroup),
-              {
-                text: msgtxt
-              }
-            );
-            await verifyMessage(queueChangedMessage, ticket, ticket.contact);
-          } else
-            if (oldUserId !== undefined && isNil(userId) && oldQueueId !== queueId && !isNil(queueId)) {
-
-              const queue = await Queue.findByPk(queueId);
-              const wbot = await GetTicketWbot(ticket);
-              const msgtxt = "*Mensagem automática*:\nVocê foi transferido para o departamento *" + queue?.name + "*\naguarde, já vamos te atender!";
-
-              const queueChangedMessage = await wbot.sendMessage(
-                buildContactAddress(ticket.contact, ticket.isGroup),
-                {
-                  text: msgtxt
-                }
-              );
-              await verifyMessage(queueChangedMessage, ticket, ticket.contact);
-            }      
     }
 
     await ticket.update({
@@ -276,6 +273,33 @@ const UpdateTicketService = async ({
         whatsappId,
         userId: ticket.userId
       });
+
+      if (
+        settingsGreetingAccepted?.value === "enabled" &&
+        greetingTemplate &&
+        !ticket.isGroup &&
+        !ticket.contact.isGroup &&
+        ticket.contact.disableBot !== true &&
+        oldStatus !== "open"
+      ) {
+        const queue = ticket.queueId ? await Queue.findByPk(ticket.queueId) : null;
+        const newAgent = ticket.userId ? await ShowUserService(ticket.userId) : null;
+        const greetingBody = formatBody(greetingTemplate, ticket.contact, {
+          queue: queue?.name || "",
+          agent: newAgent?.name || ""
+        });
+
+        if (greetingBody.trim()) {
+          const wbot = await GetTicketWbot(ticket);
+          const sentMessage = await wbot.sendMessage(
+            buildContactAddress(ticket.contact, ticket.isGroup),
+            {
+              text: greetingBody
+            }
+          );
+          await verifyMessage(sentMessage, ticket, ticket.contact);
+        }
+      }
     }
 
     await ticketTraking.save();

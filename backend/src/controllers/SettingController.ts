@@ -15,6 +15,8 @@ import UpdateSettingService from "../services/SettingServices/UpdateSettingServi
 import ListSettingsService from "../services/SettingServices/ListSettingsService";
 import ShowSettingsService from "../services/SettingServices/ShowSettingsService";
 
+const SUPER_ADMIN_COMPANY_ID = Number(process.env.SUPER_ADMIN_COMPANY_ID || 1);
+
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { companyId } = req.user;
 
@@ -60,7 +62,7 @@ export const show = async (
 ): Promise<Response> => {
 
   //const { companyId } = req.user;
-  const companyId = 1;
+  const companyId = SUPER_ADMIN_COMPANY_ID;
   const { settingKey } = req.params;
   
 
@@ -88,7 +90,7 @@ export const mediaUpload = async (
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
-  if (companyId !== 1) {
+  if (companyId !== SUPER_ADMIN_COMPANY_ID) {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
@@ -99,32 +101,44 @@ export const mediaUpload = async (
 };
 
 
-export const certUpload = async (
+export const gerencianetCertUpload = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const { body } = req.body;
-  const { companyId } = req.user;
+  const { companyId, profile, id: userId } = req.user;
 
-  const userId = req.user.id;
   const requestUser = await User.findByPk(userId);
 
-  if (requestUser.super === false) {
+  if (!requestUser?.super) {
     throw new AppError("você nao tem permissão para esta ação!");
   }
 
-  if (req.user.profile !== "admin") {
+  if (profile !== "admin") {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
-  if (companyId !== 1) {
+  if (companyId !== SUPER_ADMIN_COMPANY_ID) {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
-  const files = req.files as Express.Multer.File[];
-  const file = head(files);
-  console.log(file);
-  return res.send({ mensagem: "Arquivo Anexado" });
+  const file = req.file as Express.Multer.File | undefined;
+
+  if (!file) {
+    throw new AppError("Nenhum certificado foi enviado.", 400);
+  }
+
+  const certKey = path.parse(file.filename).name;
+
+  const setting = await UpdateSettingService({
+    key: "gerencianetPixCert",
+    value: certKey,
+    companyId: SUPER_ADMIN_COMPANY_ID
+  });
+
+  return res.status(200).json({
+    filename: file.filename,
+    setting
+  });
 };
 
 
@@ -147,7 +161,7 @@ export const docUpload = async (
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
-  if (companyId !== 1) {
+  if (companyId !== SUPER_ADMIN_COMPANY_ID) {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 

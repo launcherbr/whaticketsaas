@@ -163,6 +163,9 @@ export const listPlan = async (req: Request, res: Response): Promise<Response> =
   const { id } = req.params;
 
   const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new AppError("ERR_SESSION_EXPIRED", 401);
+  }
   const [, token] = authHeader.split(" ");
   const decoded = verify(token, authConfig.secret);
   const { id: requestUserId, profile, companyId } = decoded as TokenPayload;
@@ -184,6 +187,9 @@ export const indexPlan = async (req: Request, res: Response): Promise<Response> 
   const { searchParam, pageNumber } = req.query as IndexQuery;
 
   const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new AppError("ERR_SESSION_EXPIRED", 401);
+  }
   const [, token] = authHeader.split(" ");
   const decoded = verify(token, authConfig.secret);
   const { id, profile, companyId } = decoded as TokenPayload;

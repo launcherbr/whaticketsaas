@@ -34,7 +34,7 @@ const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
 const useStyles = makeStyles(theme => ({
 	mainWrapper: {
-		backgroundColor: theme.palette.bordabox, 
+		backgroundColor: theme.palette.bordabox,
 		display: "flex",
 		flexDirection: "column",
 		alignItems: "center",

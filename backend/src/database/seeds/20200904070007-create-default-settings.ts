@@ -32,6 +32,22 @@ module.exports = {
 						  
 						},	
 						{
+						  key: "sendMsgTransfTicketMessage",
+						  value: "{{ms}} {{name}}, seu atendimento foi transferido. Departamento: {{queue}}. Atendente: {{agent}}.",
+						  companyId: 1,
+						  createdAt: new Date(),
+						  updatedAt: new Date(),
+						  
+						},
+						{
+						  key: "sendGreetingAcceptedMessage",
+						  value: "{{ms}} {{name}}, meu nome é {{agent}} e vou prosseguir com seu atendimento!",
+						  companyId: 1,
+						  createdAt: new Date(),
+						  updatedAt: new Date(),
+						  
+						},
+						{
 						  key: "sendGreetingMessageOneQueues",
 						  value: "disabled",
 						  companyId: 1,

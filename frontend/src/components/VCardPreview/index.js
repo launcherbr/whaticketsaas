@@ -130,14 +130,26 @@ const VCardPreview = ({ contact, numbers }) => {
                 contactId = data.existingContact.id;
             }
 
-            const { data: ticket } = await api.post("/tickets", {
-                contactId,
-                queueId,
-                userId: user.id,
-                status: "open",
-            });
-            
-            history.push(`/tickets/${ticket.uuid}`);
+            try {
+                const { data: ticket } = await api.post("/tickets", {
+                    contactId,
+                    queueId,
+                    userId: user.id,
+                    status: "open",
+                });
+                
+                history.push(`/tickets/${ticket.uuid}`);
+            } catch (err) {
+                // Verificar se é erro de ticket já aberto
+                const errorMessage = err?.response?.data?.error || err?.message || "";
+                if (errorMessage.includes("TICKET_ALREADY_OPEN")) {
+                    const parts = errorMessage.split("|");
+                    const userName = parts.length >= 2 ? parts[1] : "Nenhum atendente";
+                    toastError(`${userName} está atendendo esse ticket`);
+                } else {
+                    toastError(err);
+                }
+            }
         } catch (err) {
             toastError(err);
         }

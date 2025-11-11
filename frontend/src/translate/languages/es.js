@@ -15,6 +15,7 @@ const messages = {
         buttons: {
           submit: "Registrarse",
           login: "¿Ya tienes una cuenta? ¡Inicia sesión!",
+          register: "¡Regístrate ahora!",
         },
       },
       login: {
@@ -119,6 +120,42 @@ const messages = {
           actions: "Acciones",
           session: "Sesión",
         },
+        whatsappModal: {
+          title: {
+            add: "Añadir WhatsApp",
+            edit: "Editar WhatsApp",
+          },
+          tabs: {
+            general: "General",
+            messages: "Mensajes",
+            assessments: "Evaluaciones",
+            integrations: "Integraciones",
+            schedules: "Horario de atención",
+          },
+          form: {
+            name: "Nombre",
+            default: "Predeterminado",
+            sendIdQueue: "Cola",
+            timeSendQueue: "Redirigir a la cola en X minutos",
+            queueRedirection: "Redirección de Cola",
+            outOfHoursMessage: "Mensaje fuera de horario",
+            queueRedirectionDesc: "Selecciona una cola a la que se redirigirán los contactos que no tienen cola",
+            prompt: "Prompt",
+            expiresTicket: "Cerrar chats abiertos después de X minutos",
+            expiresInactiveMessage: "Mensaje de cierre por inactividad",
+            greetingMessage: "Mensaje de bienvenida",
+            complationMessage: "Mensaje de finalización",
+          },
+          buttons: {
+            okAdd: "Añadir",
+            okEdit: "Guardar",
+            cancel: "Cancelar",
+          },
+          success: "WhatsApp guardado con éxito.",
+        },
+        qrCode: {
+          message: "Escanea el código QR para iniciar la sesión",
+        },
       },
       whatsappModal: {
         title: {
@@ -145,7 +182,6 @@ const messages = {
           expiresInactiveMessage: "Mensaje de cierre por inactividad",
           greetingMessage: "Mensaje de bienvenida",
           complationMessage: "Mensaje de finalización",
-          sendIdQueue: "Cola",
         },
         buttons: {
           okAdd: "Añadir",
@@ -165,18 +201,13 @@ const messages = {
         },
         searchPlaceholder: "Buscar...",
         confirmationModal: {
-          deleteTitle: "Eliminar ",
+          deleteTitle: "Eliminar",
           deleteAllTitle: "Eliminar Todos",
           importTitle: "Importar contactos",
           deleteMessage: "¿Estás seguro de que deseas eliminar este contacto? Todos los tickets relacionados se perderán.",
           deleteAllMessage: "¿Estás seguro de que deseas eliminar todos los contactos? Todos los tickets relacionados se perderán.",
-          importMessage: "¿Quieres importar todos los contactos de tu teléfono?",
-        },
-        confirmationModal: {
-          importTitlte: "Importar contactos",
           importMessage: "Esta acción importará los contactos guardados en la agenda de WhatsApp. Algunos modelos pueden no permitir esta funcionalidad o según tu configuración de privacidad. ¡Verifica el resultado en 1 hora!",
-          deleteTitle: "Eliminar",
-          deleteMessage: "¿Estás seguro de que deseas eliminar este contacto? Todos los tickets relacionados se perderán.",
+          importTitlte: "Importar contactos",
         },
         buttons: {
           import: "Importar Contactos",
@@ -643,11 +674,10 @@ const messages = {
           message: "Respuesta",
           save: "Guardar",
           cancel: "Cancelar",
-          geral: "Permitir edición",
+          geral: "Global",
           add: "Añadir",
           edit: "Editar",
           visao: "Permitir ver",
-          geral: 'Global',
         },
         table: {
           shortcode: "Atajo",

@@ -31,6 +31,7 @@ import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
 import Button from "@material-ui/core/Button";
 import Box from "@material-ui/core/Box";
+import Typography from "@material-ui/core/Typography";
 
 import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
@@ -621,6 +622,110 @@ const CustomInput = (props) => {
   );
 };
 
+const GeminiSuggestions = ({ suggestions, loading, onSuggestionClick, onClose }) => {
+  const classes = useStyles();
+  const containerRef = useRef(null);
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const [maxScroll, setMaxScroll] = useState(0);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      setMaxScroll(containerRef.current.scrollWidth - containerRef.current.clientWidth);
+    }
+  }, [suggestions]);
+
+  const handleScroll = (direction) => {
+    if (!containerRef.current) return;
+    
+    const container = containerRef.current;
+    const scrollAmount = 200;
+    
+    if (direction === 'left') {
+      container.scrollLeft -= scrollAmount;
+    } else {
+      container.scrollLeft += scrollAmount;
+    }
+    
+    setTimeout(() => {
+      setScrollPosition(container.scrollLeft);
+    }, 300);
+  };
+
+  if (!suggestions || suggestions.length === 0) {
+    if (loading) {
+      return (
+        <div className={classes.quickMessagesWrapper}>
+          <div style={{ padding: '10px', textAlign: 'center', color: '#666' }}>
+            Carregando sugestões...
+          </div>
+        </div>
+      );
+    }
+    return null;
+  }
+
+  return (
+    <div className={classes.quickMessagesWrapper}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        padding: '5px 10px',
+        backgroundColor: '#f5f5f5',
+        borderBottom: '1px solid #e0e0e0'
+      }}>
+        <Typography variant="caption" style={{ fontWeight: 600, color: '#666' }}>
+          Sugestões do Gemini
+        </Typography>
+        <IconButton 
+          size="small" 
+          onClick={onClose}
+          style={{ padding: '4px' }}
+        >
+          <ClearIcon fontSize="small" />
+        </IconButton>
+      </div>
+      {scrollPosition > 0 && (
+        <IconButton 
+          className={`${classes.navButton} left`}
+          onClick={() => handleScroll('left')}
+        >
+          <ChevronLeft />
+        </IconButton>
+      )}
+
+      <div 
+        className={classes.quickMessagesContainer} 
+        ref={containerRef}
+        onScroll={(e) => setScrollPosition(e.target.scrollLeft)}
+      >
+        {suggestions.map((suggestion, index) => (
+          <Button
+            key={index}
+            variant="contained"
+            disableElevation
+            className={classes.quickMessageButton}
+            onClick={() => onSuggestionClick(suggestion)}
+            style={{ backgroundColor: '#4285f4' }}
+          >
+            <Message className="start-icon" />
+            {suggestion}
+          </Button>
+        ))}
+      </div>
+
+      {scrollPosition < maxScroll && (
+        <IconButton 
+          className={`${classes.navButton} right`}
+          onClick={() => handleScroll('right')}
+        >
+          <ChevronRight />
+        </IconButton>
+      )}
+    </div>
+  );
+};
+
 const QuickMessages = ({ quickMessages, handleQuickMessageClick, inputMessage }) => {
   const classes = useStyles();
   const containerRef = useRef(null);
@@ -778,6 +883,16 @@ const MessageInputCustom = (props) => {
   const [quickMessages, setQuickMessages] = useState([]);
   const { list: listQuickMessages } = useQuickMessages();
 
+  const [geminiSuggestions, setGeminiSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const lastPromptRef = useRef("");
+  const suggestionsCacheRef = useRef(new Map()); // Cache de sugestões
+  const lastRequestTimeRef = useRef(0); // Controle de rate limiting
+  const requestCountRef = useRef(0); // Contador de requisições
+  const MIN_TIME_BETWEEN_REQUESTS = 2000; // 2 segundos entre requisições
+  const MIN_CHARS_FOR_REQUEST = 3; // Mínimo de 3 caracteres após "!"
+
   useEffect(() => {
     inputRef.current.focus();
   }, [replyingMessage]);
@@ -790,6 +905,9 @@ const MessageInputCustom = (props) => {
       setMedias([]);
       setSelectedMedias([]);
       setReplyingMessage(null);
+      setShowSuggestions(false);
+      setGeminiSuggestions([]);
+      lastPromptRef.current = "";
     };
   }, [ticketId, setReplyingMessage]);
 
@@ -801,6 +919,126 @@ const MessageInputCustom = (props) => {
     }
     fetchData();
   }, []);
+
+  // Detectar "!" e buscar sugestões com cache e rate limiting
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      const trimmedMessage = inputMessage.trim();
+      
+      // Verificar se começa com "!" e tem pelo menos 2 caracteres
+      if (trimmedMessage.startsWith("!") && trimmedMessage.length > 1) {
+        const prompt = trimmedMessage.substring(1).trim(); // Texto após "!"
+        
+        // Verificar se tem caracteres suficientes
+        if (prompt.length < MIN_CHARS_FOR_REQUEST) {
+          setShowSuggestions(false);
+          setGeminiSuggestions([]);
+          return;
+        }
+        
+        if (prompt.length > 0) {
+          // Verificar cache primeiro
+          const cacheKey = prompt.toLowerCase();
+          const cachedSuggestions = suggestionsCacheRef.current.get(cacheKey);
+          
+          if (cachedSuggestions) {
+            // Usar sugestões do cache
+            setGeminiSuggestions(cachedSuggestions);
+            setShowSuggestions(true);
+            lastPromptRef.current = prompt;
+            return;
+          }
+          
+          // Verificar rate limiting
+          const now = Date.now();
+          const timeSinceLastRequest = now - lastRequestTimeRef.current;
+          
+          if (timeSinceLastRequest < MIN_TIME_BETWEEN_REQUESTS && lastRequestTimeRef.current > 0) {
+            // Aguardar antes de fazer nova requisição
+            // Não fazer requisição agora, apenas mostrar loading
+            setShowSuggestions(true);
+            setLoadingSuggestions(true);
+            return;
+          }
+          
+          // Verificar se o prompt mudou para evitar requisições desnecessárias
+          if (lastPromptRef.current !== prompt && !loadingSuggestions) {
+            setLoadingSuggestions(true);
+            setShowSuggestions(true);
+            lastPromptRef.current = prompt;
+            lastRequestTimeRef.current = now;
+            requestCountRef.current += 1;
+            
+            try {
+              const response = await api.post("/gemini/suggestions", {
+                prompt: prompt
+              });
+              if (response.data && response.data.suggestions) {
+                const suggestions = response.data.suggestions;
+                setGeminiSuggestions(suggestions);
+                // Armazenar no cache (expira após 5 minutos)
+                suggestionsCacheRef.current.set(cacheKey, suggestions);
+                setTimeout(() => {
+                  suggestionsCacheRef.current.delete(cacheKey);
+                }, 5 * 60 * 1000); // 5 minutos
+              } else {
+                throw new Error("Resposta inválida do servidor");
+              }
+            } catch (error) {
+              console.error("Erro ao buscar sugestões:", error);
+              const errorMessage = error?.response?.data?.error || 
+                                 error?.message || 
+                                 "Erro ao buscar sugestões do Gemini. Verifique se o token está configurado corretamente.";
+              
+              // Verificar se é erro 429 (rate limit)
+              if (error?.response?.status === 429 || errorMessage.includes("Resource exhausted") || errorMessage.includes("429") || errorMessage.includes("Limite de requisições")) {
+                toastError("Limite de requisições excedido. Aguarde alguns segundos antes de tentar novamente.");
+                // Limpar cache para forçar nova tentativa depois
+                suggestionsCacheRef.current.delete(cacheKey);
+                // Aguardar mais tempo antes da próxima tentativa (30 segundos)
+                lastRequestTimeRef.current = now + 30000;
+                // Mostrar sugestões padrão enquanto aguarda
+                const defaultSuggestions = [
+                  "Olá! Como posso ajudá-lo hoje?",
+                  "Bem-vindo! Em que posso ser útil?",
+                  "Oi! Estou aqui para ajudar.",
+                  "Olá! Fico feliz em poder ajudar você.",
+                  "Oi! Como posso tornar seu dia melhor?"
+                ];
+                setGeminiSuggestions(defaultSuggestions);
+                setShowSuggestions(true);
+                // Não limpar o prompt para permitir nova tentativa depois
+              } else {
+                toastError(errorMessage);
+                setShowSuggestions(false);
+                setGeminiSuggestions([]);
+                lastPromptRef.current = "";
+              }
+            } finally {
+              setLoadingSuggestions(false);
+            }
+          } else if (!showSuggestions && prompt.length > 0) {
+            // Se não está mostrando mas deveria, mostrar
+            setShowSuggestions(true);
+          }
+        } else {
+          // Se só tem "!" sem texto, esconder sugestões
+          setShowSuggestions(false);
+          setGeminiSuggestions([]);
+          lastPromptRef.current = "";
+        }
+      } else if (!trimmedMessage.startsWith("!") && showSuggestions) {
+        // Se não começa mais com "!", esconder sugestões
+        setShowSuggestions(false);
+        setGeminiSuggestions([]);
+        lastPromptRef.current = "";
+      }
+    };
+
+    // Aumentar debounce para 1000ms (1 segundo) para reduzir requisições
+    const timeoutId = setTimeout(fetchSuggestions, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [inputMessage, loadingSuggestions, showSuggestions]);
 
   const handleOpenModalForward = () => {
     if (selectedMessages.length === 0) {
@@ -1020,6 +1258,30 @@ const MessageInputCustom = (props) => {
         toastError(err);
       }
     }
+  };
+
+  const handleGeminiSuggestionClick = (suggestion) => {
+    setInputMessage(suggestion);
+    setShowSuggestions(false);
+    setGeminiSuggestions([]);
+    lastPromptRef.current = "";
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
+  const handleCloseSuggestions = () => {
+    setShowSuggestions(false);
+    setGeminiSuggestions([]);
+    // Remover apenas o "!" e manter o resto do texto se houver
+    const currentText = inputMessage.trim();
+    if (currentText.startsWith("!")) {
+      const textAfterExclamation = currentText.substring(1).trim();
+      setInputMessage(textAfterExclamation);
+    } else {
+      setInputMessage("");
+    }
+    lastPromptRef.current = "";
   };
 
   const handleUploadMedia = async (e) => {
@@ -1244,7 +1506,17 @@ const MessageInputCustom = (props) => {
             />
           )}
           
-          {quickMessages.length > 0 && (
+          {/* Sugestões do Gemini */}
+          {showSuggestions && (
+            <GeminiSuggestions
+              suggestions={geminiSuggestions}
+              loading={loadingSuggestions}
+              onSuggestionClick={handleGeminiSuggestionClick}
+              onClose={handleCloseSuggestions}
+            />
+          )}
+          
+          {quickMessages.length > 0 && !showSuggestions && (
             <QuickMessages 
               quickMessages={quickMessages} 
               handleQuickMessageClick={handleQuickMessageClick}

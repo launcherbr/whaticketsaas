@@ -69,6 +69,7 @@ export default function Pricing(props) {
     setFieldValue,
     setActiveStep,
     activeStep,
+    companyId: companyIdProp
   } = props;
 
   const handleChangeAdd = (event, newValue) => {
@@ -113,7 +114,16 @@ export default function Pricing(props) {
   const [storagePlans, setStoragePlans] = React.useState([]);
   const [customValuePlans, setCustomValuePlans] = React.useState(49.00);
   const [loading, setLoading] = React.useState(false);
-  const companyId = localStorage.getItem("companyId");
+  const normalizeId = (value) => {
+    if (!value || value === "undefined" || value === "null") {
+      return null;
+    }
+    return value;
+  };
+
+  const companyIdLocalRaw = typeof window !== "undefined" ? localStorage.getItem("companyId") : null;
+  const companyIdLocal = normalizeId(companyIdLocalRaw);
+  const companyId = normalizeId(companyIdProp) || companyIdLocal;
 
   useEffect(() => {
     async function fetchData() {
@@ -123,18 +133,31 @@ export default function Pricing(props) {
   }, [])
 
   const loadCompanies = async () => {
+    if (!companyId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const companiesList = await find(companyId);
-      setCompaniesPlans(companiesList.planId);
-      await loadPlans(companiesList.planId);
+      if (companiesList) {
+        setCompaniesPlans(companiesList.planId);
+        if (companiesList.planId) {
+          await loadPlans(companiesList.planId);
+        } else {
+          setStoragePlans([]);
+        }
+      }
     } catch (e) {
       console.log(e);
-      // toast.error("Não foi possível carregar a lista de registros");
     }
     setLoading(false);
   };
   const loadPlans = async (companiesPlans) => {
+    if (!companiesPlans) {
+      setStoragePlans([]);
+      return;
+    }
     setLoading(true);
     try {
       const plansCompanies = await finder(companiesPlans);

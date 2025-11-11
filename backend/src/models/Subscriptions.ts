@@ -43,6 +43,10 @@ class Subscriptions extends Model<Subscriptions> {
   @Column
   providerSubscriptionId: string;
 
+  @AllowNull(true)
+  @Column
+  paymentProvider: string;
+
   @Column
   companyId: number;
 

@@ -3,6 +3,7 @@ import multer from "multer";
 import fs from "fs";
 import Whatsapp from "../models/Whatsapp";
 import { isEmpty, isNil } from "lodash";
+import AppError from "../errors/AppError";
 
 const publicFolder = path.resolve(__dirname, "..", "..", "public");
 
@@ -17,8 +18,17 @@ export default {
 
       if (companyId === undefined && isNil(companyId) && isEmpty(companyId)) {
         const authHeader = req.headers.authorization;
-        const [, token] = authHeader.split(" ");
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+          throw new AppError("Acesso não permitido", 401);
+        }
+        const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+        if (!token) {
+          throw new AppError("Acesso não permitido", 401);
+        }
         const whatsapp = await Whatsapp.findOne({ where: { token } });
+        if (!whatsapp) {
+          throw new AppError("Acesso não permitido", 401);
+        }
         companyId = whatsapp.companyId;
       }
       let folder;

@@ -16,6 +16,7 @@ import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import UndoRoundedIcon from '@material-ui/icons/UndoRounded';
 import Tooltip from '@material-ui/core/Tooltip';
 import { green } from '@material-ui/core/colors';
+import TicketAlreadyOpenModal from "../TicketAlreadyOpenModal";
 
 
 const useStyles = makeStyles(theme => ({
@@ -35,6 +36,8 @@ const TicketActionButtonsCustom = ({ ticket, onSearchToggle }) => {
 	const history = useHistory();
 	const [anchorEl, setAnchorEl] = useState(null);
 	const [loading, setLoading] = useState(false);
+	const [showAlreadyOpenModal, setShowAlreadyOpenModal] = useState(false);
+	const [attendingUserName, setAttendingUserName] = useState("");
 	const ticketOptionsMenuOpen = Boolean(anchorEl);
 	const { user } = useContext(AuthContext);
 	const { setCurrentTicket } = useContext(TicketsContext);
@@ -73,11 +76,24 @@ const TicketActionButtonsCustom = ({ ticket, onSearchToggle }) => {
 			}
 		} catch (err) {
 			setLoading(false);
-			toastError(err);
+			// Verificar se é erro de ticket já aberto
+			const errorMessage = err?.response?.data?.error || err?.message || "";
+			if (errorMessage.includes("TICKET_ALREADY_OPEN")) {
+				const parts = errorMessage.split("|");
+				if (parts.length >= 2) {
+					setAttendingUserName(parts[1] || "Atendente");
+					setShowAlreadyOpenModal(true);
+				} else {
+					toastError("Este ticket já está sendo atendido por outro atendente.");
+				}
+			} else {
+				toastError(err);
+			}
 		}
 	};
 
 	return (
+		<>
 		<div className={classes.actionButtons}>
 			{ticket.status === "closed" && (
 				<ButtonWithSpinner
@@ -148,6 +164,12 @@ const TicketActionButtonsCustom = ({ ticket, onSearchToggle }) => {
 				</ButtonWithSpinner>
 			)}
 		</div>
+		<TicketAlreadyOpenModal
+			open={showAlreadyOpenModal}
+			onClose={() => setShowAlreadyOpenModal(false)}
+			attendingUserName={attendingUserName}
+		/>
+		</>
 	);
 };
 

@@ -9,6 +9,7 @@ import Message from "../models/Message";
 import Queue from "../models/Queue";
 import User from "../models/User";
 import Whatsapp from "../models/Whatsapp";
+import * as Sentry from "@sentry/node";
 import { lookup } from 'mime-types';
 import { isNil } from "lodash";
 import QuickMessage from "../models/QuickMessage";
@@ -25,9 +26,12 @@ import ShowContactService from "../services/ContactServices/ShowContactService";
 import SendWhatsAppMedia from "../services/WbotServices/SendWhatsAppMedia";
 //import SendWhatsAppMediaInternal from "../services/WbotServices/SendWhatsAppMediaInternal";
 import path from "path";
+import fs from "fs";
 import SendWhatsAppMessage from "../services/WbotServices/SendWhatsAppMessage";
 import EditWhatsAppMessage from "../services/WbotServices/EditWhatsAppMessage";
 import ShowMessageService, { GetWhatsAppFromMessage } from "../services/MessageServices/ShowMessageService";
+import GetTicketWbot from "../helpers/GetTicketWbot";
+import { buildContactAddress } from "../utils/global";
 type IndexQuery = {
   pageNumber: string;
 };
@@ -320,33 +324,107 @@ export const forwardMessage = async (
     companyId: createTicket.companyId
   });
 
-  let body = message.body;
-  if (message.mediaType === 'conversation' || message.mediaType === 'extendedTextMessage') {
-    await SendWhatsAppMessage({ body, ticket: createTicket, quotedMsg, isForwarded: message.fromMe ? false : true });
-  } else {
+  const isForwarded = message.fromMe ? false : true;
 
-    const mediaUrl = message.mediaUrl.replace(`:${process.env.PORT}`, '');
-    const fileName = obterNomeEExtensaoDoArquivo(mediaUrl);
+  const originalBody = message.body || "";
+  let body = originalBody;
 
-    if (body === fileName) {
-      body = "";
+  const isTextMessage =
+    message.mediaType === "conversation" ||
+    message.mediaType === "extendedTextMessage" ||
+    message.mediaType === "editedMessage";
+
+  const shouldSign = Boolean(signMessage && requestUser?.name);
+
+  const isLocationMessage =
+    message.mediaType === "locationMessage" ||
+    message.mediaType === "liveLocationMessage";
+
+  if (isLocationMessage) {
+    let parsedData = null;
+    try {
+      parsedData = message.dataJson ? JSON.parse(message.dataJson) : null;
+    } catch (error) {
+      Sentry.captureException(error);
     }
 
-    const publicFolder = path.join(__dirname, '..', '..', '..', 'backend', 'public');
+    const locationMessage = parsedData?.message?.locationMessage || parsedData?.message?.liveLocationMessage;
 
-    const filePath = path.join(publicFolder, `company${createTicket.companyId}`, fileName)
+    const rawBodyCoords = originalBody?.split("|")?.[2]?.split(",") || [];
+    const latFromBody = rawBodyCoords[0] ? Number(rawBodyCoords[0].trim()) : null;
+    const lonFromBody = rawBodyCoords[1] ? Number(rawBodyCoords[1].trim()) : null;
 
-    const mediaSrc = {
-      fieldname: 'medias',
-      originalname: fileName,
-      encoding: '7bit',
-      mimetype: message.mediaType,
-      filename: fileName,
-      path: filePath
-    } as Express.Multer.File
+    const latitude = typeof locationMessage?.degreesLatitude === "number" ? locationMessage.degreesLatitude : latFromBody;
+    const longitude = typeof locationMessage?.degreesLongitude === "number" ? locationMessage.degreesLongitude : lonFromBody;
 
-    await SendWhatsAppMedia({ media: mediaSrc, ticket: createTicket, body, isForwarded: message.fromMe ? false : true });
+    if (typeof latitude === "number" && !Number.isNaN(latitude) && typeof longitude === "number" && !Number.isNaN(longitude)) {
+      const wbot = await GetTicketWbot(createTicket);
+      await wbot.sendMessage(
+        buildContactAddress(createTicket.contact, createTicket.isGroup),
+        {
+          location: {
+            degreesLatitude: latitude,
+            degreesLongitude: longitude,
+            name: locationMessage?.name || locationMessage?.comment || undefined,
+            address: locationMessage?.address || undefined
+          },
+          contextInfo: {
+            forwardingScore: isForwarded ? 2 : 0,
+            isForwarded: isForwarded ? true : false
+          }
+        }
+      );
+      return res.send();
+    }
   }
+
+  if (isTextMessage) {
+    if (shouldSign) {
+      body = `${originalBody}${originalBody ? "\n\n" : ""}${requestUser.name}`;
+    }
+    await SendWhatsAppMessage({ body, ticket: createTicket, quotedMsg, isForwarded });
+    return res.send();
+  }
+
+  const mediaUrl = message.mediaUrl?.replace(`:${process.env.PORT}`, '');
+  if (!mediaUrl) {
+    return res.status(422).send("Media URL not available for forwarding");
+  }
+
+  const fileName = obterNomeEExtensaoDoArquivo(mediaUrl);
+
+  let caption = originalBody;
+  if (caption === fileName) {
+    caption = "";
+  }
+
+  if (shouldSign) {
+    caption = `${caption}${caption ? "\n\n" : ""}${requestUser.name}`;
+  }
+
+  const publicFolder = path.join(__dirname, '..', '..', 'public');
+  const sourceCompanyId = message.companyId || createTicket.companyId;
+  const filePath = path.join(publicFolder, `company${sourceCompanyId}`, fileName);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send("Media file not found for forwarding");
+  }
+
+  const resolvedMimeRaw = lookup(fileName) || message.mediaType || 'application/octet-stream';
+  const resolvedMime = typeof resolvedMimeRaw === "string" && resolvedMimeRaw.includes("/")
+    ? resolvedMimeRaw
+    : 'application/octet-stream';
+
+  const mediaSrc = {
+    fieldname: 'medias',
+    originalname: fileName,
+    encoding: '7bit',
+    mimetype: resolvedMime,
+    filename: fileName,
+    path: filePath
+  } as Express.Multer.File;
+
+  await SendWhatsAppMedia({ media: mediaSrc, ticket: createTicket, body: caption, isForwarded });
 
   return res.send();
 }

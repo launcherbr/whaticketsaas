@@ -33,12 +33,12 @@ const useStyles = makeStyles((theme) => ({
     height: 240,
   },
   tab: {
-    backgroundColor: theme.palette.options,  
+    backgroundColor: theme.palette.options, 
     borderRadius: 4,
     width: "100%",
     "& .MuiTab-wrapper": {
       color: theme.palette.fontecor,
-    },   
+    },  
     "& .MuiTabs-flexContainer": {
       justifyContent: "center"
     }
@@ -178,12 +178,12 @@ export default function Options(props) {
         setallowregister(allowregister.value);
       }
       
-	  {/*SAUDAÇÃO*/}
+	  {/*PLW DESIGN SAUDAÇÃO*/}
       const SendGreetingAccepted = settings.find((s) => s.key === "sendGreetingAccepted");
       if (SendGreetingAccepted) {
         setSendGreetingAccepted(SendGreetingAccepted.value);
       }	 
-	  {/*SAUDAÇÃO*/}	 
+	  {/*PLW DESIGN SAUDAÇÃO*/}	 
 	  
 	  {/*TRANSFERIR TICKET*/}	
 	  const SettingsTransfTicket = settings.find((s) => s.key === "sendMsgTransfTicket");

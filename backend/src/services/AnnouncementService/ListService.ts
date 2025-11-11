@@ -5,6 +5,9 @@ import Announcement from "../../models/Announcement";
 interface Request {
   searchParam?: string;
   pageNumber?: string;
+  companyId?: number;
+  isSuperAdmin?: boolean;
+  includeHiddenForSuperAdmin?: boolean;
 }
 
 interface Response {
@@ -15,11 +18,24 @@ interface Response {
 
 const ListService = async ({
   searchParam = "",
-  pageNumber = "1"
+  pageNumber = "1",
+  companyId,
+  isSuperAdmin = false,
+  includeHiddenForSuperAdmin = false
 }: Request): Promise<Response> => {
   let whereCondition: any = {
     status: true
   };
+
+  // Filtrar por empresa
+  if (companyId) {
+    whereCondition.companyId = companyId;
+  }
+
+  // Se for superadmin, filtrar por showForSuperAdmin
+  if (isSuperAdmin && !includeHiddenForSuperAdmin) {
+    whereCondition.showForSuperAdmin = true;
+  }
 
   if (!isEmpty(searchParam)) {
     whereCondition = {

@@ -54,6 +54,7 @@ function _renderStepContent(step, setFieldValue, setActiveStep, values ) {
       setActiveStep={setActiveStep} 
       activeStep={step} 
       invoiceId={invoiceId}
+      companyId={user?.companyId}
       values={values}
       />;
     case 2:
@@ -83,7 +84,8 @@ function _renderStepContent(step, setFieldValue, setActiveStep, values ) {
         price: plan.price,
         users: plan.users,
         connections: plan.connections,
-        invoiceId: invoiceId
+        invoiceId: invoiceId,
+        email: user?.email || ""
       }
 
       const { data } = await api.post("/subscription", newValues);
@@ -124,7 +126,7 @@ function _renderStepContent(step, setFieldValue, setActiveStep, values ) {
       </Stepper>
       <React.Fragment>
         {activeStep === steps.length ? (
-          <CheckoutSuccess pix={datePayment} />
+          <CheckoutSuccess pix={datePayment} userEmail={user?.email} />
         ) : (
           <Formik
             initialValues={{

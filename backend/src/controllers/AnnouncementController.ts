@@ -13,6 +13,7 @@ import DeleteService from "../services/AnnouncementService/DeleteService";
 import FindService from "../services/AnnouncementService/FindService";
 
 import Announcement from "../models/Announcement";
+import User from "../models/User";
 
 import AppError from "../errors/AppError";
 
@@ -20,6 +21,7 @@ type IndexQuery = {
   searchParam: string;
   pageNumber: string;
   companyId: string | number;
+  includeHidden?: string;
 };
 
 type StoreData = {
@@ -30,6 +32,8 @@ type StoreData = {
   companyId: number;
   mediaPath?: string;
   mediaName?: string;
+  showForSuperAdmin?: boolean;
+  sendToAllCompanies?: boolean;
 };
 
 type FindParams = {
@@ -37,11 +41,25 @@ type FindParams = {
 };
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
-  const { searchParam, pageNumber } = req.query as IndexQuery;
+  const { searchParam, pageNumber, includeHidden } = req.query as IndexQuery;
+  const { companyId } = req.user;
+  
+  // Verificar se é superadmin buscando o usuário
+  let isSuperAdmin = false;
+  try {
+    const user = await User.findByPk(req.user.id, { attributes: ["id", "super"] });
+    isSuperAdmin = user?.super || false;
+  } catch (err) {
+    // Se não conseguir buscar, assume false
+    isSuperAdmin = false;
+  }
 
   const { records, count, hasMore } = await ListService({
     searchParam,
-    pageNumber
+    pageNumber,
+    companyId,
+    isSuperAdmin,
+    includeHiddenForSuperAdmin: includeHidden === "true"
   });
 
   return res.json({ records, count, hasMore });
@@ -61,18 +79,31 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     throw new AppError(err.message);
   }
 
-  const record = await CreateService({
+  const { announcement, companiesCount } = await CreateService({
     ...data,
     companyId
   });
 
   const io = getIO();
-  io.emit(`company-announcement`, {
-    action: "create",
-    record
-  });
+  
+  // Se foi enviado para todas empresas, emitir para todas
+  if (data.sendToAllCompanies) {
+    io.emit(`company-announcement`, {
+      action: "create",
+      record: announcement
+    });
+  } else {
+    // Caso contrário, emitir apenas para a empresa
+    io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-announcement`, {
+      action: "create",
+      record: announcement
+    });
+  }
 
-  return res.status(200).json(record);
+  return res.status(200).json({
+    announcement,
+    companiesCount
+  });
 };
 
 export const show = async (req: Request, res: Response): Promise<Response> => {

@@ -16,7 +16,7 @@ export const firstName = (contact?: Contact): string => {
   return '';
 };
 
-export default (body: string, contact: Contact): string => {
+export default (body: string, contact: Contact, additionalView: Record<string, any> = {}): string => {
   let ms = "";
 
   const Hr = new Date();
@@ -51,7 +51,8 @@ export default (body: string, contact: Contact): string => {
     gretting: greeting(),
     ms,
     protocol,
-    hora
+    hora,
+    ...additionalView
   };
   return Mustache.render(body, view);
 };

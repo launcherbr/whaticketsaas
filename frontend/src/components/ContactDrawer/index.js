@@ -43,7 +43,7 @@ const useStyles = makeStyles(theme => ({
 	header: {
 		display: "flex",
 		borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
-		backgroundColor: theme.palette.contactdrawer, 
+		backgroundColor: theme.palette.contactdrawer,
 		alignItems: "center",
 		padding: theme.spacing(0, 1),
 		minHeight: "73px",
@@ -51,7 +51,7 @@ const useStyles = makeStyles(theme => ({
 	},
 	content: {
 		display: "flex",
-		backgroundColor: theme.palette.contactdrawer, 
+		backgroundColor: theme.palette.contactdrawer,
 		flexDirection: "column",
 		padding: "8px 0px 8px 8px",
 		height: "100%",

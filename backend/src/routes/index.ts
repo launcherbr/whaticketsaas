@@ -33,6 +33,7 @@ import queueIntegrationRoutes from "./queueIntegrationRoutes";
 import forgotsRoutes from "./forgotPasswordRoutes";
 import versionRouter from "./versionRoutes";
 import reportsRoutes from './reportsRoutes';
+import geminiRoutes from "./geminiRoutes";
 
 const routes = Router();
 
@@ -70,5 +71,6 @@ routes.use(queueIntegrationRoutes);
 routes.use(forgotsRoutes);
 routes.use(reportsRoutes);
 routes.use(versionRouter);
+routes.use(geminiRoutes);
 
 export default routes;

@@ -8,6 +8,7 @@ import UpdatePromptService from "../services/PromptServices/UpdatePromptService"
 import Whatsapp from "../models/Whatsapp";
 import { verify } from "jsonwebtoken";
 import authConfig from "../config/auth";
+import AppError from "../errors/AppError";
 
 interface TokenPayload {
   id: string;
@@ -26,6 +27,9 @@ type IndexQuery = {
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { pageNumber, searchParam } = req.query as IndexQuery;
   const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new AppError("ERR_SESSION_EXPIRED", 401);
+  }
   const [, token] = authHeader.split(" ");
   const decoded = verify(token, authConfig.secret);
   const { companyId } = decoded as TokenPayload;
@@ -36,6 +40,9 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new AppError("ERR_SESSION_EXPIRED", 401);
+  }
   const [, token] = authHeader.split(" ");
   const decoded = verify(token, authConfig.secret);
   const { companyId } = decoded as TokenPayload;
@@ -54,6 +61,9 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
 export const show = async (req: Request, res: Response): Promise<Response> => {
   const { promptId } = req.params;
   const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new AppError("ERR_SESSION_EXPIRED", 401);
+  }
   const [, token] = authHeader.split(" ");
   const decoded = verify(token, authConfig.secret);
   const { companyId } = decoded as TokenPayload;
@@ -69,6 +79,9 @@ export const update = async (
   const { promptId } = req.params;
   const promptData = req.body;
   const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new AppError("ERR_SESSION_EXPIRED", 401);
+  }
   const [, token] = authHeader.split(" ");
   const decoded = verify(token, authConfig.secret);
   const { companyId } = decoded as TokenPayload;
@@ -90,6 +103,9 @@ export const remove = async (
 ): Promise<Response> => {
   const { promptId } = req.params;
   const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new AppError("ERR_SESSION_EXPIRED", 401);
+  }
   const [, token] = authHeader.split(" ");
   const decoded = verify(token, authConfig.secret);
   const { companyId } = decoded as TokenPayload;

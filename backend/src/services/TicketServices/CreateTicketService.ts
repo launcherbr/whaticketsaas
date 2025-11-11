@@ -38,7 +38,25 @@ const CreateTicketService = async ({
   if (!defaultWhatsapp)
     defaultWhatsapp = await GetDefaultWhatsApp(companyId);
 
-  await CheckContactOpenTickets(contactId, whatsappId);
+  const existingTicket = await CheckContactOpenTickets(contactId, whatsappId, companyId);
+  
+  if (existingTicket) {
+    // Obter informações do usuário que está atendendo (já incluído na busca)
+    let userName = "Nenhum atendente";
+    if (existingTicket.user && existingTicket.user.name) {
+      userName = existingTicket.user.name;
+    } else if (existingTicket.userId) {
+      // Se não veio no include, buscar separadamente
+      const User = (await import("../../models/User")).default;
+      const attendingUser = await User.findByPk(existingTicket.userId, {
+        attributes: ["id", "name", "email"]
+      });
+      if (attendingUser) {
+        userName = attendingUser.name;
+      }
+    }
+    throw new AppError(`TICKET_ALREADY_OPEN|${userName}|${existingTicket.userId || ""}`, 409);
+  }
 
   const { isGroup } = await ShowContactService(contactId, companyId);
 

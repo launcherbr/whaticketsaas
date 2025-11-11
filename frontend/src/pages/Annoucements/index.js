@@ -157,7 +157,7 @@ const Announcements = () => {
   const fetchAnnouncements = async () => {
     try {
       const { data } = await api.get("/announcements/", {
-        params: { searchParam, pageNumber },
+        params: { searchParam, pageNumber, includeHidden: user?.super ? true : undefined },
       });
       dispatch({ type: "LOAD_ANNOUNCEMENTS", payload: data.records });
       setHasMore(data.hasMore);

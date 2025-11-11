@@ -49,6 +49,12 @@ class Announcement extends Model<Announcement> {
   @Column
   status: boolean;
 
+  @Column({ defaultValue: true })
+  showForSuperAdmin: boolean;
+
+  @Column({ defaultValue: false })
+  sendToAllCompanies: boolean;
+
   @CreatedAt
   createdAt: Date;
 

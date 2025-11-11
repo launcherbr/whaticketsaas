@@ -8,7 +8,8 @@ type Params = {
 const FindService = async ({ companyId }: Params): Promise<Announcement[]> => {
   const notes: Announcement[] = await Announcement.findAll({
     where: {
-      companyId
+      companyId,
+      status: true
     },
     include: [{ model: Company, as: "company", attributes: ["id", "name"] }],
     order: [["createdAt", "DESC"]]

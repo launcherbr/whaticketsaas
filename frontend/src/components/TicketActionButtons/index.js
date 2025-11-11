@@ -11,6 +11,7 @@ import TicketOptionsMenu from "../TicketOptionsMenu";
 import ButtonWithSpinner from "../ButtonWithSpinner";
 import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
+import TicketAlreadyOpenModal from "../TicketAlreadyOpenModal";
 
 const useStyles = makeStyles(theme => ({
 	actionButtons: {
@@ -30,6 +31,8 @@ const TicketActionButtons = ({ ticket }) => {
 	const history = useHistory();
 	const [anchorEl, setAnchorEl] = useState(null);
 	const [loading, setLoading] = useState(false);
+	const [showAlreadyOpenModal, setShowAlreadyOpenModal] = useState(false);
+	const [attendingUserName, setAttendingUserName] = useState("");
 	const ticketOptionsMenuOpen = Boolean(anchorEl);
 	const { user } = useContext(AuthContext);
 
@@ -57,64 +60,83 @@ const TicketActionButtons = ({ ticket }) => {
 			}
 		} catch (err) {
 			setLoading(false);
-			toastError(err);
+			// Verificar se é erro de ticket já aberto
+			const errorMessage = err?.response?.data?.error || err?.message || "";
+			if (errorMessage.includes("TICKET_ALREADY_OPEN")) {
+				const parts = errorMessage.split("|");
+				if (parts.length >= 2) {
+					setAttendingUserName(parts[1] || "Atendente");
+					setShowAlreadyOpenModal(true);
+				} else {
+					toastError("Este ticket já está sendo atendido por outro atendente.");
+				}
+			} else {
+				toastError(err);
+			}
 		}
 	};
 
 	return (
-		<div className={classes.actionButtons}>
-			{ticket.status === "closed" && (
-				<ButtonWithSpinner
-					loading={loading}
-					startIcon={<Replay />}
-					size="small"
-					onClick={e => handleUpdateTicketStatus(e, "open", user?.id)}
-				>
-					{i18n.t("messagesList.header.buttons.reopen")}
-				</ButtonWithSpinner>
-			)}
-			{ticket.status === "open" && (
-				<>
+		<>
+			<div className={classes.actionButtons}>
+				{ticket.status === "closed" && (
 					<ButtonWithSpinner
 						loading={loading}
 						startIcon={<Replay />}
 						size="small"
-						onClick={e => handleUpdateTicketStatus(e, "pending", null)}
+						onClick={e => handleUpdateTicketStatus(e, "open", user?.id)}
 					>
-						{i18n.t("messagesList.header.buttons.return")}
+						{i18n.t("messagesList.header.buttons.reopen")}
 					</ButtonWithSpinner>
+				)}
+				{ticket.status === "open" && (
+					<>
+						<ButtonWithSpinner
+							loading={loading}
+							startIcon={<Replay />}
+							size="small"
+							onClick={e => handleUpdateTicketStatus(e, "pending", null)}
+						>
+							{i18n.t("messagesList.header.buttons.return")}
+						</ButtonWithSpinner>
+						<ButtonWithSpinner
+							loading={loading}
+							size="small"
+							variant="contained"
+							color="primary"
+							onClick={e => handleUpdateTicketStatus(e, "closed", user?.id)}
+						>
+							{i18n.t("messagesList.header.buttons.resolve")}
+						</ButtonWithSpinner>
+						<IconButton onClick={handleOpenTicketOptionsMenu}>
+							<MoreVert />
+						</IconButton>
+						<TicketOptionsMenu
+							ticket={ticket}
+							anchorEl={anchorEl}
+							menuOpen={ticketOptionsMenuOpen}
+							handleClose={handleCloseTicketOptionsMenu}
+						/>
+					</>
+				)}
+				{ticket.status === "pending" && (
 					<ButtonWithSpinner
 						loading={loading}
 						size="small"
 						variant="contained"
 						color="primary"
-						onClick={e => handleUpdateTicketStatus(e, "closed", user?.id)}
+						onClick={e => handleUpdateTicketStatus(e, "open", user?.id)}
 					>
-						{i18n.t("messagesList.header.buttons.resolve")}
+						{i18n.t("messagesList.header.buttons.accept")}
 					</ButtonWithSpinner>
-					<IconButton onClick={handleOpenTicketOptionsMenu}>
-						<MoreVert />
-					</IconButton>
-					<TicketOptionsMenu
-						ticket={ticket}
-						anchorEl={anchorEl}
-						menuOpen={ticketOptionsMenuOpen}
-						handleClose={handleCloseTicketOptionsMenu}
-					/>
-				</>
-			)}
-			{ticket.status === "pending" && (
-				<ButtonWithSpinner
-					loading={loading}
-					size="small"
-					variant="contained"
-					color="primary"
-					onClick={e => handleUpdateTicketStatus(e, "open", user?.id)}
-				>
-					{i18n.t("messagesList.header.buttons.accept")}
-				</ButtonWithSpinner>
-			)}
-		</div>
+				)}
+			</div>
+			<TicketAlreadyOpenModal
+				open={showAlreadyOpenModal}
+				onClose={() => setShowAlreadyOpenModal(false)}
+				attendingUserName={attendingUserName}
+			/>
+		</>
 	);
 };
 

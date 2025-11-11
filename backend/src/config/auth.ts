@@ -1,7 +1,17 @@
+const secret = process.env.JWT_SECRET;
+const refreshSecret = process.env.JWT_REFRESH_SECRET;
+
+if (!secret) {
+  throw new Error("JWT_SECRET environment variable must be defined");
+}
+
+if (!refreshSecret) {
+  throw new Error("JWT_REFRESH_SECRET environment variable must be defined");
+}
+
 export default {
-  secret: process.env.JWT_SECRET || "mysecret",
-  // expiresIn: "24h", 
-  expiresIn: "15m",
-  refreshSecret: process.env.JWT_REFRESH_SECRET || "myanothersecret",
-  refreshExpiresIn: "7d"
+  secret,
+  expiresIn: process.env.JWT_EXPIRES_IN || "15m",
+  refreshSecret,
+  refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d"
 };

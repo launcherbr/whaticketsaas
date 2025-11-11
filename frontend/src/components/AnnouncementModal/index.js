@@ -16,6 +16,12 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import AttachFileIcon from "@material-ui/icons/AttachFile";
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import IconButton from "@material-ui/core/IconButton";
+import Switch from "@material-ui/core/Switch";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Typography from "@material-ui/core/Typography";
+import VisibilityIcon from "@material-ui/icons/Visibility";
+import Alert from "@material-ui/lab/Alert";
+import Snackbar from "@material-ui/core/Snackbar";
 
 import { i18n } from "../../translate/i18n";
 import { head } from "lodash";
@@ -30,6 +36,7 @@ import {
   Select,
 } from "@material-ui/core";
 import ConfirmationModal from "../ConfirmationModal";
+import AnnouncementAutoPopup from "../AnnouncementAutoPopup";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -78,12 +85,17 @@ const AnnouncementModal = ({ open, onClose, announcementId, reload }) => {
     text: "",
     priority: 3,
     status: true,
+    showForSuperAdmin: true,
+    sendToAllCompanies: false,
   };
 
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [announcement, setAnnouncement] = useState(initialState);
   const [attachment, setAttachment] = useState(null);
   const attachmentFile = useRef(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewData, setPreviewData] = useState(null);
+  const [successSnackbar, setSuccessSnackbar] = useState({ open: false, companiesCount: 0 });
 
   useEffect(() => {
     try {
@@ -103,6 +115,12 @@ const AnnouncementModal = ({ open, onClose, announcementId, reload }) => {
   const handleClose = () => {
     setAnnouncement(initialState);
     setAttachment(null);
+    if (previewData?.fromObjectUrl) {
+      URL.revokeObjectURL(previewData.mediaPath);
+    }
+    setShowPreview(false);
+    setPreviewData(null);
+    setSuccessSnackbar({ open: false, companiesCount: 0 });
     onClose();
   };
 
@@ -127,23 +145,37 @@ const AnnouncementModal = ({ open, onClose, announcementId, reload }) => {
             formData
           );
         }
+        toast.success(i18n.t("announcements.toasts.success"));
       } else {
-        const { data } = await api.post("/announcements", announcementData);
-        if (attachment != null) {
+        const response = await api.post("/announcements", announcementData);
+        const announcementId = response.data.announcement?.id || response.data.id;
+        
+        if (attachment != null && announcementId) {
           const formData = new FormData();
 		  formData.append("typeArch", "announcements");
           formData.append("file", attachment);
-          await api.post(`/announcements/${data.id}/media-upload`, formData);
+          await api.post(`/announcements/${announcementId}/media-upload`, formData);
+        }
+        
+        // Mostrar barra de sucesso com quantidade de empresas
+        const companiesCount = response.data.companiesCount || response.data.announcement?.companiesCount || 1;
+        if (announcementData.sendToAllCompanies) {
+          setSuccessSnackbar({ open: true, companiesCount });
+          handleClose();
+        } else {
+          toast.success(i18n.t("announcements.toasts.success"));
         }
       }
-      toast.success(i18n.t("announcements.toasts.success"));
       if (typeof reload == "function") {
         reload();
       }
     } catch (err) {
       toastError(err);
+      handleClose();
     }
-    handleClose();
+    if (!announcementData.sendToAllCompanies) {
+      handleClose();
+    }
   };
 
   const deleteMedia = async () => {
@@ -196,7 +228,11 @@ const AnnouncementModal = ({ open, onClose, announcementId, reload }) => {
           />
         </div>
         <Formik
-          initialValues={announcement}
+          initialValues={{
+            ...announcement,
+            showForSuperAdmin: announcement.showForSuperAdmin !== undefined ? announcement.showForSuperAdmin : true,
+            sendToAllCompanies: announcement.sendToAllCompanies !== undefined ? announcement.sendToAllCompanies : false
+          }}
           enableReinitialize={true}
           validationSchema={AnnouncementSchema}
           onSubmit={(values, actions) => {
@@ -206,7 +242,28 @@ const AnnouncementModal = ({ open, onClose, announcementId, reload }) => {
             }, 400);
           }}
         >
-          {({ touched, errors, isSubmitting, values }) => (
+          {({ touched, errors, isSubmitting, values, setFieldValue }) => {
+            const handlePreview = () => {
+              if (previewData?.fromObjectUrl) {
+                URL.revokeObjectURL(previewData.mediaPath);
+              }
+
+              const objectUrl = attachment ? URL.createObjectURL(attachment) : null;
+
+              const preview = {
+                title: values.title || "",
+                text: values.text || "",
+                priority: values.priority || 3,
+                mediaPath: objectUrl || announcement.mediaPath,
+                mediaName: attachment ? attachment.name : announcement.mediaName,
+                fromObjectUrl: Boolean(objectUrl)
+              };
+
+              setPreviewData(preview);
+              setShowPreview(true);
+            };
+
+            return (
             <Form>
               <DialogContent dividers>
                 <Grid spacing={2} container>
@@ -277,6 +334,46 @@ const AnnouncementModal = ({ open, onClose, announcementId, reload }) => {
                       </Field>
                     </FormControl>
                   </Grid>
+                  <>
+                    <Grid xs={12} item>
+                      <Field name="sendToAllCompanies">
+                        {({ field }) => (
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                color="primary"
+                                checked={Boolean(field.value)}
+                                onChange={(event) => setFieldValue(field.name, event.target.checked)}
+                              />
+                            }
+                            label="Enviar para todas as empresas"
+                          />
+                        )}
+                      </Field>
+                      <Typography variant="caption" color="textSecondary" display="block">
+                        Quando ativado, o anúncio será enviado para todas as empresas cadastradas
+                      </Typography>
+                    </Grid>
+                    <Grid xs={12} item>
+                      <Field name="showForSuperAdmin">
+                        {({ field }) => (
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                color="primary"
+                                checked={Boolean(field.value)}
+                                onChange={(event) => setFieldValue(field.name, event.target.checked)}
+                              />
+                            }
+                            label="Mostrar para superadmin"
+                          />
+                        )}
+                      </Field>
+                      <Typography variant="caption" color="textSecondary" display="block">
+                        Quando desativado, o anúncio não será exibido para superadmins
+                      </Typography>
+                    </Grid>
+                  </>
                   {(announcement.mediaPath || attachment) && (
                     <Grid xs={12} item>
                       <Button startIcon={<AttachFileIcon />}>
@@ -293,6 +390,15 @@ const AnnouncementModal = ({ open, onClose, announcementId, reload }) => {
                 </Grid>
               </DialogContent>
               <DialogActions>
+                <Button
+                  color="primary"
+                  onClick={handlePreview}
+                  disabled={isSubmitting || !values.title || !values.text}
+                  variant="outlined"
+                  startIcon={<VisibilityIcon />}
+                >
+                  Visualizar
+                </Button>
                 {!attachment && !announcement.mediaPath && (
                   <Button
                     color="primary"
@@ -330,9 +436,35 @@ const AnnouncementModal = ({ open, onClose, announcementId, reload }) => {
                 </Button>
               </DialogActions>
             </Form>
-          )}
+            );
+          }}
         </Formik>
       </Dialog>
+      <AnnouncementAutoPopup
+        announcement={previewData}
+        open={showPreview}
+        onClose={() => {
+          if (previewData?.fromObjectUrl) {
+            URL.revokeObjectURL(previewData.mediaPath);
+          }
+          setShowPreview(false);
+          setPreviewData(null);
+        }}
+      />
+      <Snackbar
+        open={successSnackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSuccessSnackbar({ open: false, companiesCount: 0 })}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSuccessSnackbar({ open: false, companiesCount: 0 })}
+          severity="success"
+          variant="filled"
+        >
+          Anúncio enviado com sucesso para {successSnackbar.companiesCount} {successSnackbar.companiesCount === 1 ? "empresa" : "empresas"}!
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

@@ -59,6 +59,9 @@ class User extends Model<User> {
   @Column
   online: boolean;
 
+  @Column
+  resetPassword: string;
+
   @CreatedAt
   createdAt: Date;
 

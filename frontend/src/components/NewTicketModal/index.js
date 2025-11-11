@@ -20,6 +20,7 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import { Grid, ListItemText, MenuItem, Select } from "@material-ui/core";
 import { toast } from "react-toastify";
 import { Facebook, Instagram, WhatsApp } from "@material-ui/icons";
+import TicketAlreadyOpenModal from "../TicketAlreadyOpenModal";
 
 const useStyles = makeStyles((theme) => ({
   online: {
@@ -56,6 +57,7 @@ const NewTicketModal = ({ modalOpen, onClose, initialContact }) => {
   // Estado para controlar a exibição do modal de ticket já existente
   const [openExistingTicketModal, setOpenExistingTicketModal] = useState(false);
   const [existingTicket, setExistingTicket] = useState(null);
+  const [attendingUserName, setAttendingUserName] = useState("");
 
   useEffect(() => {
     if (initialContact?.id !== undefined) {
@@ -121,6 +123,7 @@ const NewTicketModal = ({ modalOpen, onClose, initialContact }) => {
   const handleCloseExistingTicketModal = () => {
     setOpenExistingTicketModal(false);
     setExistingTicket(null);
+    setAttendingUserName("");
     setLoading(false);
   };
 
@@ -160,6 +163,22 @@ const NewTicketModal = ({ modalOpen, onClose, initialContact }) => {
 
     } catch (err) {
       // Tratamento de erros da API
+      const errorMessage = err?.response?.data?.error || err?.message || "";
+      
+      // Verificar se é erro de ticket já aberto
+      if (errorMessage.includes("TICKET_ALREADY_OPEN")) {
+        const parts = errorMessage.split("|");
+        if (parts.length >= 2) {
+          setAttendingUserName(parts[1] || "Nenhum atendente");
+          setOpenExistingTicketModal(true);
+        } else {
+          setAttendingUserName("Nenhum atendente");
+          setOpenExistingTicketModal(true);
+        }
+        return;
+      }
+      
+      // Verificar se já existe um ticket (formato antigo)
       if (err.response?.data?.error === true && err.response?.data?.type === "TICKET_ALREADY_EXISTS") {
         setExistingTicket(err.response.data.ticket);
         setOpenExistingTicketModal(true);
@@ -407,50 +426,11 @@ const NewTicketModal = ({ modalOpen, onClose, initialContact }) => {
         )}
       </Dialog>
 
-      {/* Modal para ticket já existente */}
-      <Dialog
+      <TicketAlreadyOpenModal
         open={openExistingTicketModal}
         onClose={handleCloseExistingTicketModal}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          Ticket Já Existe
-        </DialogTitle>
-        <DialogContent style={{ padding: '16px' }}>
-          <Typography paragraph>
-            Já existe um ticket em atendimento para este contato.
-          </Typography>
-          <Typography paragraph>
-            <span style={{ fontWeight: 'bold' }}>Atendente: </span>
-            {existingTicket?.user?.name || "Não atribuído"}
-          </Typography>
-          <Typography paragraph>
-            <span style={{ fontWeight: 'bold' }}>Fila: </span>
-            {existingTicket?.queue?.name || "Não atribuído"}
-          </Typography>
-          <Typography paragraph>
-            <span style={{ fontWeight: 'bold' }}>Status: </span>
-            {existingTicket?.status || "Desconhecido"}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button 
-            onClick={handleCloseExistingTicketModal}
-            color="secondary"
-            variant="outlined"
-          >
-            Fechar
-          </Button>
-          <Button
-            onClick={navigateToExistingTicket}
-            color="primary"
-            variant="contained"
-          >
-            Ir para o Ticket
-          </Button>
-        </DialogActions>
-      </Dialog>
+        attendingUserName={attendingUserName || existingTicket?.user?.name || "Nenhum atendente"}
+      />
     </>
   );
 };

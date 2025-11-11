@@ -541,8 +541,8 @@ const getContactMessage = async (msg: proto.IWebMessageInfo, wbot: Session) => {
     const isGroup = msg.key.remoteJid.includes("g.us");
 
     // Obter JID e LID usando as funções seguras do global.ts
-    const jid = await getJidFromMessage(msg as WAMessage, wbot);
-    const lid = await getLidFromMessage(msg as WAMessage, wbot);
+    const jid = await getJidFromMessage(msg, wbot);
+    const lid = await getLidFromMessage(msg, wbot);
 
     // Validação dos dados obtidos
     if (!jid || typeof jid !== 'string') {
@@ -582,8 +582,9 @@ const downloadMedia = async (msg: proto.IWebMessageInfo) => {
 
   let buffer
   try {
+    // Type assertion para garantir compatibilidade
     buffer = await downloadMediaMessage(
-      msg as WAMessage,
+      msg as proto.IWebMessageInfo & { key: proto.IMessageKey },
       'buffer',
       {}
     )
@@ -627,6 +628,51 @@ const downloadMedia = async (msg: proto.IWebMessageInfo) => {
 }
 
 
+const resolveContactIdentifiers = async (msgContact: IMe, wbot: Session) => {
+  const rawId = msgContact?.id || "";
+  const isGroup = rawId.includes("g.us");
+  const baseNumber = rawId.split("@")[0];
+  const lidFromContact = msgContact?.lid || (rawId.includes("@lid") ? rawId : null);
+
+  if (isGroup) {
+    return {
+      number: baseNumber,
+      lid: null
+    };
+  }
+
+  const lidMappingStore = (wbot as any)?.lidMappingStore;
+  let resolvedNumber = baseNumber.replace(/[^0-9]/g, "");
+  let resolvedLid = lidFromContact;
+
+  const widUser = (msgContact as any)?.wid?.user;
+  if (widUser) {
+    resolvedNumber = widUser.replace(/[^0-9]/g, "");
+  }
+
+  if (lidFromContact) {
+    try {
+      if (lidMappingStore?.getPNForLID) {
+        const mappedJid = await lidMappingStore.getPNForLID(lidFromContact);
+        if (mappedJid && typeof mappedJid === "string" && mappedJid.includes("@")) {
+          resolvedNumber = mappedJid.split("@")[0].replace(/[^0-9]/g, "");
+        }
+      }
+    } catch (error) {
+      logger.warn(`Falha ao mapear LID para PN: ${(error as Error).message}`);
+    }
+  }
+
+  if (!resolvedNumber && baseNumber) {
+    resolvedNumber = baseNumber.replace(/[^0-9]/g, "");
+  }
+
+  return {
+    number: resolvedNumber,
+    lid: resolvedLid
+  };
+};
+
 const verifyContact = async (
   msgContact: IMe,
   wbot: Session,
@@ -640,20 +686,21 @@ const verifyContact = async (
     profilePicUrl = `${process.env.FRONTEND_URL}/nopicture.png`;
   }
 
+  const identifiers = await resolveContactIdentifiers(msgContact, wbot);
 
   const contactData = {
     name: msgContact?.name || msgContact.id.replace(/\D/g, ""),
-    number: msgContact.id.split("@")[0],
-    lid: msgContact.lid,
+    number: identifiers.number,
+    lid: identifiers.lid,
     profilePicUrl,
     isGroup: msgContact.id.includes("g.us"),
     companyId,
     whatsappId: wbot.id,
-    pushName: msgContact?.name // Passar o pushName para atualização
+    pushName: msgContact?.name
   };
   console.log('contactData:::::', contactData);
 
-  const contact = CreateOrUpdateContactService(contactData);
+  const contact = await CreateOrUpdateContactService(contactData);
 
   return contact;
 };

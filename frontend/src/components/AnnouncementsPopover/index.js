@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useState, useContext } from "react";
+import React, { useEffect, useReducer, useState, useContext, useRef } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import toastError from "../../errors/toastError";
 import Popover from "@material-ui/core/Popover";
@@ -26,6 +26,8 @@ import api from "../../services/api";
 import { isArray } from "lodash";
 import moment from "moment";
 import { SocketContext } from "../../context/Socket/SocketContext";
+import AnnouncementAutoPopup from "../AnnouncementAutoPopup";
+import { AuthContext } from "../../context/Auth/AuthContext";
 
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
@@ -39,15 +41,14 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function AnnouncementDialog({ announcement, open, handleClose }) {
-  // const getMediaPath = (filename) => {
-  //   return path.join(`${process.env.REACT_APP_BACKEND_URL}`,"public", "announcements",`${filename}`);
-  // };
   return (
     <Dialog
       open={open}
       onClose={() => handleClose()}
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
+      maxWidth="sm"
+      fullWidth
     >
       <DialogTitle id="alert-dialog-title">{announcement.title}</DialogTitle>
       <DialogContent>
@@ -57,24 +58,28 @@ function AnnouncementDialog({ announcement, open, handleClose }) {
               border: "1px solid #f1f1f1",
               margin: "0 auto 20px",
               textAlign: "center",
-              width: "400px",
-              height: 300,
-              backgroundRepeat: "no-repeat",
-              backgroundSize: "contain",
-              backgroundPosition: "center",
+              maxWidth: "100%",
+              borderRadius: 4,
+              overflow: "hidden",
             }}
           >
-		    <img
-              alt={`announcement image`}
+            <img
+              alt="Announcement"
               src={announcement.mediaPath}
               style={{
-                width: "95%",
-                height: "100%",
+                width: "100%",
+                height: "auto",
+                maxHeight: 400,
+                objectFit: "contain",
+                display: "block",
+              }}
+              onError={(e) => {
+                e.target.style.display = "none";
               }}
             />
-		  </div>
+          </div>
         )}
-        <DialogContentText id="alert-dialog-description">
+        <DialogContentText id="alert-dialog-description" style={{ whiteSpace: "pre-wrap" }}>
           {announcement.text}
         </DialogContentText>
       </DialogContent>
@@ -147,8 +152,12 @@ export default function AnnouncementsPopover() {
   const [invisible, setInvisible] = useState(false);
   const [announcement, setAnnouncement] = useState({});
   const [showAnnouncementDialog, setShowAnnouncementDialog] = useState(false);
+  const [showAutoPopup, setShowAutoPopup] = useState(false);
+  const [autoPopupAnnouncement, setAutoPopupAnnouncement] = useState(null);
+  const shownAnnouncementsRef = useRef(new Set());
 
   const socketManager = useContext(SocketContext);
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     dispatch({ type: "RESET" });
@@ -173,9 +182,23 @@ export default function AnnouncementsPopover() {
     }
 
     socket.on(`company-announcement`, (data) => {
+      if (user?.super && data.record && data.record.showForSuperAdmin === false) {
+        return;
+      }
       if (data.action === "update" || data.action === "create") {
         dispatch({ type: "UPDATE_ANNOUNCEMENTS", payload: data.record });
         setInvisible(false);
+        
+        // Mostrar popup automático para novos anúncios
+        if (data.action === "create" && data.record.status) {
+          // Verificar se já mostramos este anúncio
+          const announcementId = data.record.id;
+          if (!shownAnnouncementsRef.current.has(announcementId)) {
+            shownAnnouncementsRef.current.add(announcementId);
+            setAutoPopupAnnouncement(data.record);
+            setShowAutoPopup(true);
+          }
+        }
       }
       if (data.action === "delete") {
         dispatch({ type: "DELETE_ANNOUNCEMENT", payload: +data.id });
@@ -191,9 +214,32 @@ export default function AnnouncementsPopover() {
       const { data } = await api.get("/announcements/", {
         params: { searchParam, pageNumber },
       });
-      dispatch({ type: "LOAD_ANNOUNCEMENTS", payload: data.records });
-      setHasMore(data.hasMore);
+      const filteredRecords = (data.records || []).filter((item) => {
+        if (user?.super && item.showForSuperAdmin === false) {
+          return false;
+        }
+        return true;
+      });
+      dispatch({ type: "LOAD_ANNOUNCEMENTS", payload: filteredRecords });
+      setHasMore(Boolean(data.hasMore) || filteredRecords.length < (data.records || []).length);
       setLoading(false);
+      
+      // Mostrar popup automático para o anúncio mais recente se ainda não foi mostrado
+      if (filteredRecords && filteredRecords.length > 0 && pageNumber === 1) {
+        const latestAnnouncement = filteredRecords[0];
+        const announcementId = latestAnnouncement.id;
+        
+        if (
+          latestAnnouncement.status &&
+          !shownAnnouncementsRef.current.has(announcementId) &&
+          latestAnnouncement.createdAt &&
+          moment().diff(moment(latestAnnouncement.createdAt), "minutes") < 5 // Apenas anúncios criados nos últimos 5 minutos
+        ) {
+          shownAnnouncementsRef.current.add(announcementId);
+          setAutoPopupAnnouncement(latestAnnouncement);
+          setShowAutoPopup(true);
+        }
+      }
     } catch (err) {
       toastError(err);
     }
@@ -247,6 +293,14 @@ export default function AnnouncementsPopover() {
 
   return (
     <div>
+      <AnnouncementAutoPopup
+        announcement={autoPopupAnnouncement}
+        open={showAutoPopup}
+        onClose={() => {
+          setShowAutoPopup(false);
+          setAutoPopupAnnouncement(null);
+        }}
+      />
       <AnnouncementDialog
         announcement={announcement}
         open={showAnnouncementDialog}
@@ -306,6 +360,20 @@ export default function AnnouncementsPopover() {
                     <ListItemAvatar>
                       <Avatar
                         src={item.mediaPath}
+                        variant="rounded"
+                        style={{
+                          width: 56,
+                          height: 56,
+                          objectFit: "cover",
+                        }}
+                        imgProps={{
+                          style: {
+                            objectFit: "cover",
+                          },
+                          onError: (e) => {
+                            e.target.style.display = "none";
+                          }
+                        }}
                       />
                     </ListItemAvatar>
                   )}

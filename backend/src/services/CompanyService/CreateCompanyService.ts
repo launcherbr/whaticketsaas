@@ -218,6 +218,32 @@ const CreateCompanyService = async (
     },
  });
 
+ // Template mensagem de transferência
+    await Setting.findOrCreate({
+	where:{
+      companyId: company.id,
+      key: "sendMsgTransfTicketMessage",
+    },
+    defaults: {
+      companyId: company.id,
+      key: "sendMsgTransfTicketMessage",
+      value: "{{ms}} {{name}}, seu atendimento foi transferido. Departamento: {{queue}}. Atendente: {{agent}}."
+    },
+  });
+
+ // Template saudação ao aceitar
+    await Setting.findOrCreate({
+	where:{
+      companyId: company.id,
+      key: "sendGreetingAcceptedMessage",
+    },
+    defaults: {
+      companyId: company.id,
+      key: "sendGreetingAcceptedMessage",
+      value: "{{ms}} {{name}}, meu nome é {{agent}} e vou prosseguir com seu atendimento!"
+    },
+  });
+
   //userRating
   await Setting.findOrCreate({
     where: {
