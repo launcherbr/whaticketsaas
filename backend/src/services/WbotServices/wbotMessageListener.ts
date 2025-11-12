@@ -628,51 +628,6 @@ const downloadMedia = async (msg: proto.IWebMessageInfo) => {
 }
 
 
-const resolveContactIdentifiers = async (msgContact: IMe, wbot: Session) => {
-  const rawId = msgContact?.id || "";
-  const isGroup = rawId.includes("g.us");
-  const baseNumber = rawId.split("@")[0];
-  const lidFromContact = msgContact?.lid || (rawId.includes("@lid") ? rawId : null);
-
-  if (isGroup) {
-    return {
-      number: baseNumber,
-      lid: null
-    };
-  }
-
-  const lidMappingStore = (wbot as any)?.lidMappingStore;
-  let resolvedNumber = baseNumber.replace(/[^0-9]/g, "");
-  let resolvedLid = lidFromContact;
-
-  const widUser = (msgContact as any)?.wid?.user;
-  if (widUser) {
-    resolvedNumber = widUser.replace(/[^0-9]/g, "");
-  }
-
-  if (lidFromContact) {
-    try {
-      if (lidMappingStore?.getPNForLID) {
-        const mappedJid = await lidMappingStore.getPNForLID(lidFromContact);
-        if (mappedJid && typeof mappedJid === "string" && mappedJid.includes("@")) {
-          resolvedNumber = mappedJid.split("@")[0].replace(/[^0-9]/g, "");
-        }
-      }
-    } catch (error) {
-      logger.warn(`Falha ao mapear LID para PN: ${(error as Error).message}`);
-    }
-  }
-
-  if (!resolvedNumber && baseNumber) {
-    resolvedNumber = baseNumber.replace(/[^0-9]/g, "");
-  }
-
-  return {
-    number: resolvedNumber,
-    lid: resolvedLid
-  };
-};
-
 const verifyContact = async (
   msgContact: IMe,
   wbot: Session,
@@ -686,12 +641,10 @@ const verifyContact = async (
     profilePicUrl = `${process.env.FRONTEND_URL}/nopicture.png`;
   }
 
-  const identifiers = await resolveContactIdentifiers(msgContact, wbot);
-
   const contactData = {
     name: msgContact?.name || msgContact.id.replace(/\D/g, ""),
-    number: identifiers.number,
-    lid: identifiers.lid,
+    number: msgContact.id.split("@")[0],
+    lid: (msgContact as any)?.lid,
     profilePicUrl,
     isGroup: msgContact.id.includes("g.us"),
     companyId,
@@ -1481,7 +1434,7 @@ const verifyQueue = async (
       });
     }
 
-  {/* A DUPLICAÇÃO OCORRIA AQUI!
+  {/* A DUPLICAÇÃO OCORRIA AQUI PLW!
     
     const body = formatBody(`\u200e${choosenQueue.greetingMessage}`, ticket.contact);
     if (choosenQueue.greetingMessage) {
@@ -2245,7 +2198,8 @@ const handleMessage = async (
           !isNil(currentSchedule) &&
           (!currentSchedule || currentSchedule.inActivity === false)
         ) {
-          const body = `\u200e ${whatsapp.outOfHoursMessage}`;
+          const body = `\u200e ${whatsapp.outOfHoursMessage},
+            contact`;
 
           console.log('body9341023', body)
           const debouncedSentMessage = debounce(
