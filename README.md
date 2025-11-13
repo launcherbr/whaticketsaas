@@ -61,6 +61,11 @@ Se estiver migrando de outras versões ou precisar renovar seu acesso a nosso co
 
 **🔄 Ver Histórico de Versões (Changelog)**
 
+#### **Versão 6.3.5** (`11/11/2025`)
+
+  * Mercado Pago
+  * Gemini
+
 #### **Versão 6.3.2** (`28/09/2025`)
 
   * Correção de criptografia de grupos
