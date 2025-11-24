@@ -424,12 +424,17 @@ const getBodyButton = (msg: proto.IWebMessageInfo): string => {
 };
 
 const msgLocation = (image, latitude, longitude) => {
-  if (image) {
-    var b64 = Buffer.from(image).toString("base64");
-
-    let data = `data:image/png;base64, ${b64} | https://maps.google.com/maps?q=${latitude}%2C${longitude}&z=17&hl=pt-BR|${latitude}, ${longitude} `;
-    return data;
+  if (latitude && longitude) {
+    if (image) {
+      var b64 = Buffer.from(image).toString("base64");
+      let data = `data:image/png;base64, ${b64} | https://maps.google.com/maps?q=${latitude}%2C${longitude}&z=17&hl=pt-BR|${latitude}, ${longitude} `;
+      return data;
+    } else {
+      // Retorna dados da localização mesmo sem imagem
+      return `https://maps.google.com/maps?q=${latitude}%2C${longitude}&z=17&hl=pt-BR|${latitude}, ${longitude}`;
+    }
   }
+  return null;
 };
 
 export const getBodyMessage = (msg: proto.IWebMessageInfo): string | null => {
@@ -458,7 +463,11 @@ export const getBodyMessage = (msg: proto.IWebMessageInfo): string | null => {
         msg.message?.locationMessage?.degreesLatitude,
         msg.message?.locationMessage?.degreesLongitude
       ),
-      liveLocationMessage: `Latitude: ${msg.message?.liveLocationMessage?.degreesLatitude} - Longitude: ${msg.message?.liveLocationMessage?.degreesLongitude}`,
+      liveLocationMessage: msgLocation(
+        msg.message?.liveLocationMessage?.jpegThumbnail,
+        msg.message?.liveLocationMessage?.degreesLatitude,
+        msg.message?.liveLocationMessage?.degreesLongitude
+      ),
       documentMessage: msg.message?.documentMessage?.title,
       documentWithCaptionMessage: msg.message?.documentWithCaptionMessage?.message?.documentMessage?.caption,
       audioMessage: "Áudio",
@@ -628,6 +637,51 @@ const downloadMedia = async (msg: proto.IWebMessageInfo) => {
 }
 
 
+const resolveContactIdentifiers = async (msgContact: IMe, wbot: Session) => {
+  const rawId = msgContact?.id || "";
+  const isGroup = rawId.includes("g.us");
+  const baseNumber = rawId.split("@")[0];
+  const lidFromContact = msgContact?.lid || (rawId.includes("@lid") ? rawId : null);
+
+  if (isGroup) {
+    return {
+      number: baseNumber,
+      lid: null
+    };
+  }
+
+  const lidMappingStore = (wbot as any)?.lidMappingStore;
+  let resolvedNumber = baseNumber.replace(/[^0-9]/g, "");
+  let resolvedLid = lidFromContact;
+
+  const widUser = (msgContact as any)?.wid?.user;
+  if (widUser) {
+    resolvedNumber = widUser.replace(/[^0-9]/g, "");
+  }
+
+  if (lidFromContact) {
+    try {
+      if (lidMappingStore?.getPNForLID) {
+        const mappedJid = await lidMappingStore.getPNForLID(lidFromContact);
+        if (mappedJid && typeof mappedJid === "string" && mappedJid.includes("@")) {
+          resolvedNumber = mappedJid.split("@")[0].replace(/[^0-9]/g, "");
+        }
+      }
+    } catch (error) {
+      logger.warn(`Falha ao mapear LID para PN: ${(error as Error).message}`);
+    }
+  }
+
+  if (!resolvedNumber && baseNumber) {
+    resolvedNumber = baseNumber.replace(/[^0-9]/g, "");
+  }
+
+  return {
+    number: resolvedNumber,
+    lid: resolvedLid
+  };
+};
+
 const verifyContact = async (
   msgContact: IMe,
   wbot: Session,
@@ -641,10 +695,12 @@ const verifyContact = async (
     profilePicUrl = `${process.env.FRONTEND_URL}/nopicture.png`;
   }
 
+  const identifiers = await resolveContactIdentifiers(msgContact, wbot);
+
   const contactData = {
     name: msgContact?.name || msgContact.id.replace(/\D/g, ""),
-    number: msgContact.id.split("@")[0],
-    lid: (msgContact as any)?.lid,
+    number: identifiers.number,
+    lid: identifiers.lid,
     profilePicUrl,
     isGroup: msgContact.id.includes("g.us"),
     companyId,
@@ -968,6 +1024,68 @@ const verifyMediaMessage = async (
 ): Promise<Message> => {
   const io = getIO();
   const quotedMsg = await verifyQuotedMessage(msg);
+  
+  // Tratamento especial para localizações que podem não ter mídia para baixar
+  const msgType = getTypeMessage(msg);
+  if (msgType === "locationMessage" || msgType === "liveLocationMessage") {
+    const body = getBodyMessage(msg);
+    if (body) {
+      // Processa como mensagem de texto com os dados da localização
+      const isEdited = getTypeMessage(msg) == 'editedMessage';
+      const messageData = {
+        id: isEdited ? msg?.message?.editedMessage?.message?.protocolMessage?.key?.id : msg.key.id,
+        ticketId: ticket.id,
+        contactId: msg.key.fromMe ? undefined : contact.id,
+        body,
+        fromMe: msg.key.fromMe,
+        mediaType: getTypeMessage(msg),
+        read: msg.key.fromMe,
+        quotedMsgId: quotedMsg?.id,
+        ack: msg.status || 0,
+        remoteJid: msg.key.remoteJid,
+        participant: msg.key.participant,
+        dataJson: JSON.stringify(msg),
+        isEdited: isEdited,
+      };
+
+      await ticket.update({
+        lastMessage: body
+      });
+
+      const newMessage = await CreateMessageService({ messageData, companyId: ticket.companyId });
+
+      if (!msg.key.fromMe && ticket.status === "closed") {
+        await ticket.update({ status: "pending" });
+        await ticket.reload({
+          include: [
+            { model: Queue, as: "queue" },
+            { model: User, as: "user" },
+            { model: Contact, as: "contact" }
+          ]
+        });
+
+        io.to(`company-${ticket.companyId}-closed`)
+          .to(`queue-${ticket.queueId}-closed`)
+          .emit(`company-${ticket.companyId}-ticket`, {
+            action: "delete",
+            ticket,
+            ticketId: ticket.id
+          });
+
+        io.to(`company-${ticket.companyId}-${ticket.status}`)
+          .to(`queue-${ticket.queueId}-${ticket.status}`)
+          .to(ticket.id.toString())
+          .emit(`company-${ticket.companyId}-ticket`, {
+            action: "update",
+            ticket,
+            ticketId: ticket.id
+          });
+      }
+
+      return newMessage;
+    }
+  }
+  
   const media = await downloadMedia(msg);
 
   if (!media) {
@@ -2000,7 +2118,9 @@ const handleMessage = async (
       msg.message?.videoMessage ||
       msg.message?.documentMessage ||
       msg.message?.documentWithCaptionMessage ||
-      msg.message.stickerMessage;
+      msg.message?.stickerMessage ||
+      msg.message?.locationMessage ||
+      msg.message?.liveLocationMessage;
     if (msg.key.fromMe) {
       if (/\u200e/.test(bodyMessage)) return;
 
