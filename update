@@ -3,11 +3,27 @@ set -e
 
 echo "Iniciando atualização do Whaticket..."
 
+# --- PASSO 1: Fazer backup do arquivo server.js ---
+if [ -f "frontend/server.js" ]; then
+    echo "Salvando versão personalizada do server.js..."
+    cp frontend/server.js /tmp/server.js.backup
+fi
+# --------------------------------------------------
+
+# O comando abaixo apagaria o arquivo se não tivéssemos feito backup
 git reset --hard HEAD
 git pull
 
+# --- PASSO 2: Restaurar o arquivo server.js ---
+if [ -f "/tmp/server.js.backup" ]; then
+    echo "Restaurando server.js personalizado..."
+    cp /tmp/server.js.backup frontend/server.js
+fi
+# ----------------------------------------------
+
 echo "Atualizando o backend..."
 cd backend
+# ... o resto do script continua igual ...
 npm install
 rm -rf dist
 npm run build
