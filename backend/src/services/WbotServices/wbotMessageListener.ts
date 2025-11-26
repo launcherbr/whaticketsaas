@@ -115,17 +115,17 @@ const wbotMutex = new Mutex();
 
 const groupContactCache = new SimpleObjectCache(1000 * 30, logger);
 
-// Função para extrair número de telefone do JID limitando a 12 dígitos
-// Evita capturar o décimo terceiro dígito que pode vir incorretamente no JID
+// Função para extrair número de telefone do JID
 const extractPhoneNumber = (jid: string): string => {
   if (!jid || typeof jid !== 'string') return '';
   
   // Remove caracteres não numéricos
   const cleanNumber = jid.replace(/[^0-9]/g, "");
   
-  // Limita a 12 dígitos desde o início - números brasileiros têm no máximo 12 dígitos
-  // Isso evita capturar o décimo terceiro dígito que pode vir incorretamente no JID
-  return cleanNumber.slice(0, 12);
+  // CORREÇÃO: Não cortar mais aqui. 
+  // A lógica de validação de 12 ou 13 dígitos (9º dígito) agora é responsabilidade exclusiva
+  // do CreateOrUpdateContactService. Retornamos o número completo.
+  return cleanNumber;
 };
 
 // Função para normalizar JID removendo sufixos
