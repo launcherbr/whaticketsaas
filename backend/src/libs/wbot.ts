@@ -45,17 +45,17 @@ const KEY_MAP: { [T in keyof SignalDataTypeMap]: string } = {
   tctoken: "tctoken"
 };
 
-// Função para extrair número de telefone do JID limitando a 12 dígitos
-// Evita capturar o décimo terceiro dígito que pode vir incorretamente no JID
+// Função para extrair número de telefone do JID
 const extractPhoneNumber = (jid: string): string => {
   if (!jid || typeof jid !== 'string') return '';
   
   // Remove caracteres não numéricos
   const cleanNumber = jid.replace(/[^0-9]/g, "");
   
-  // Limita a 12 dígitos desde o início - números brasileiros têm no máximo 12 dígitos
-  // Isso evita capturar o décimo terceiro dígito que pode vir incorretamente no JID
-  return cleanNumber.slice(0, 12);
+  // CORREÇÃO: Não cortar mais aqui. 
+  // A lógica de validação de 12 ou 13 dígitos (9º dígito) agora é responsabilidade exclusiva
+  // do CreateOrUpdateContactService. Retornamos o número completo.
+  return cleanNumber;
 };
 
 const loggerBaileys = MAIN_LOGGER.child({});
@@ -599,9 +599,21 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
               if (!presences[remoteJid]?.lastKnownPresence) {
                 return;
               }
+              // Modificação para suportar números salvos com 12 ou 13 dígitos
+              const rawNumber = extractPhoneNumber(remoteJid);
+              let searchNumbers = [rawNumber];
+
+              // Se for BR e tiver 13 dígitos, adiciona a versão de 12 dígitos na busca
+              if (rawNumber.length === 13 && rawNumber.startsWith('55')) {
+                const number12Digits = rawNumber.slice(0, 4) + rawNumber.slice(5);
+                searchNumbers.push(number12Digits);
+              }
+
               const contact = await Contact.findOne({
                 where: {
-                  number: extractPhoneNumber(remoteJid),
+                  number: {
+                    [Op.or]: searchNumbers
+                  },
                   companyId: whatsapp.companyId
                 }
               });
