@@ -52,11 +52,41 @@ const wbotMonitor = async (
               "*Mensagem Automática:*\n\nAs chamadas de voz e vídeo estão desabilitas para esse WhatsApp, favor enviar uma mensagem de texto. Obrigado",
           });
 
-          const number = node.attrs.from.replace(/\D/g, "").slice(0, 12);
+          // CORREÇÃO: Substituir o slice(0, 12) pela lógica inteligente
+          let number = node.attrs.from.replace(/\D/g, "");
+
+          if (number.length === 13 && number.startsWith("55")) {
+            const ddd = parseInt(number.substring(2, 4));
+            const ninthDigit = number[4];
+            const nextDigit = parseInt(number[5]);
+
+            const dddsNonoDigitoObrigatorio = [
+              11, 12, 13, 14, 15, 16, 17, 18, 19,
+              21, 22, 24,
+              27, 28
+            ];
+
+            if (dddsNonoDigitoObrigatorio.includes(ddd)) {
+              // Mantém 13 dígitos
+            } else {
+              if (ninthDigit === "9") {
+                 if (nextDigit >= 7) {
+                   number = number.slice(0, 4) + number.slice(5);
+                 }
+              } else {
+                 number = number.slice(0, 12);
+              }
+            }
+          } else {
+            number = number.slice(0, 12);
+          }
 
           const contact = await Contact.findOne({
             where: { companyId, number },
           });
+
+          // Se não encontrar o contato, não prossegue com ticket
+          if (!contact) return;
 
           const ticket = await Ticket.findOne({
             where: {
