@@ -39,16 +39,43 @@ const CreateOrUpdateContactService = async ({
   if (isGroup) {
     number = rawNumber;
   } else {
-    // CORREÇÃO:
-    // Se for um número brasileiro (55) e tiver 13 dígitos (55 + 2 DDD + 9 + 8 número),
-    // MANTÉM O NÚMERO INTEIRO (não corta o nono dígito).
+    // LÓGICA DE NORMALIZAÇÃO DE TELEFONES BRASILEIROS
     if (number.length === 13 && number.startsWith("55")) {
-       // Mantém como está (13 dígitos) para garantir que o nono dígito seja enviado
-       number = number; 
+      const ddd = parseInt(number.substring(2, 4));
+      const ninthDigit = number[4];
+      const nextDigit = parseInt(number[5]);
+
+      // DDDs onde o nono dígito é obrigatório para TODOS os celulares
+      // (11-19, 21, 22, 24, 27, 28)
+      const dddsNonoDigitoObrigatorio = [
+        11, 12, 13, 14, 15, 16, 17, 18, 19,
+        21, 22, 24,
+        27, 28
+      ];
+
+      if (dddsNonoDigitoObrigatorio.includes(ddd)) {
+        // Se for desses DDDs, mantém os 13 dígitos (não corta nada)
+        number = number; 
+      } else {
+        // Para outros DDDs (como 34), aplicamos a lógica da faixa de numeração
+        if (ninthDigit === "9") {
+           // Se o dígito seguinte for 2, 3, 4, 5 ou 6: Mantém o 9 (colisão com fixo)
+           // Ex: 34 9 3xxx...
+           if (nextDigit < 7) {
+             number = number;
+           } else {
+             // Se o dígito seguinte for 7, 8 ou 9: Remove o 9 (faixa antiga)
+             // Ex: 34 9 9xxx... vira 34 9xxx...
+             number = number.slice(0, 4) + number.slice(5);
+           }
+        } else {
+           // Segurança: Se tem 13 dígitos mas o 5º não é 9 (formato estranho), corta pro padrão
+           number = number.slice(0, 12);
+        }
+      }
     } else {
-       // Para outros casos (números fixos, internacionais padrão ou lixo), 
-       // mantém o limite de segurança de 12 dígitos antigo
-       number = number.slice(0, 12);
+      // Padrão de segurança para números internacionais ou fixos
+      number = number.slice(0, 12);
     }
   }
   
