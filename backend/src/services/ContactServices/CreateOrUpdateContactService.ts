@@ -39,19 +39,16 @@ const CreateOrUpdateContactService = async ({
   if (isGroup) {
     number = rawNumber;
   } else {
-    // CORREÇÃO: Tratamento para números do Brasil (55) com 13 dígitos (com o 9 adicional)
-    // Ex: 55 14 9 9999 9999 (13 dig) -> vira 55 14 9999 9999 (12 dig)
+    // CORREÇÃO:
+    // Se for um número brasileiro (55) e tiver 13 dígitos (55 + 2 DDD + 9 + 8 número),
+    // MANTÉM O NÚMERO INTEIRO (não corta o nono dígito).
     if (number.length === 13 && number.startsWith("55")) {
-      // Se o dígito após o DDD (índice 4) for 9, removemos ele.
-      if (number[4] === "9") {
-        number = number.slice(0, 4) + number.slice(5);
-      } else {
-        // Caso raro de ter 13 dígitos mas não ser o formato padrão do 9º dígito, mantém o corte de segurança
-        number = number.slice(0, 12);
-      }
+       // Mantém como está (13 dígitos) para garantir que o nono dígito seja enviado
+       number = number; 
     } else {
-      // Comportamento padrão original: limita a 12 caracteres
-      number = number.slice(0, 12);
+       // Para outros casos (números fixos, internacionais padrão ou lixo), 
+       // mantém o limite de segurança de 12 dígitos antigo
+       number = number.slice(0, 12);
     }
   }
   
