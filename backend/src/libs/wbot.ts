@@ -41,7 +41,21 @@ const KEY_MAP: { [T in keyof SignalDataTypeMap]: string } = {
   "app-state-sync-version": "appStateVersions",
   "sender-key-memory": "senderKeyMemory",
   "lid-mapping": "lidMapping",
-  "device-list": "deviceList"
+  "device-list": "deviceList",
+  tctoken: "tctoken"
+};
+
+// Função para extrair número de telefone do JID limitando a 12 dígitos
+// Evita capturar o décimo terceiro dígito que pode vir incorretamente no JID
+const extractPhoneNumber = (jid: string): string => {
+  if (!jid || typeof jid !== 'string') return '';
+  
+  // Remove caracteres não numéricos
+  const cleanNumber = jid.replace(/[^0-9]/g, "");
+  
+  // Limita a 12 dígitos desde o início - números brasileiros têm no máximo 12 dígitos
+  // Isso evita capturar o décimo terceiro dígito que pode vir incorretamente no JID
+  return cleanNumber.slice(0, 12);
 };
 
 const loggerBaileys = MAIN_LOGGER.child({});
@@ -587,7 +601,7 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
               }
               const contact = await Contact.findOne({
                 where: {
-                  number: remoteJid.replace(/\D/g, ""),
+                  number: extractPhoneNumber(remoteJid),
                   companyId: whatsapp.companyId
                 }
               });

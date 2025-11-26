@@ -115,6 +115,19 @@ const wbotMutex = new Mutex();
 
 const groupContactCache = new SimpleObjectCache(1000 * 30, logger);
 
+// Função para extrair número de telefone do JID limitando a 12 dígitos
+// Evita capturar o décimo terceiro dígito que pode vir incorretamente no JID
+const extractPhoneNumber = (jid: string): string => {
+  if (!jid || typeof jid !== 'string') return '';
+  
+  // Remove caracteres não numéricos
+  const cleanNumber = jid.replace(/[^0-9]/g, "");
+  
+  // Limita a 12 dígitos desde o início - números brasileiros têm no máximo 12 dígitos
+  // Isso evita capturar o décimo terceiro dígito que pode vir incorretamente no JID
+  return cleanNumber.slice(0, 12);
+};
+
 // Função para normalizar JID removendo sufixos
 const normalizeJid = (jid: string): string => {
   if (!jid) return '';
@@ -562,6 +575,7 @@ const getContactMessage = async (msg: proto.IWebMessageInfo, wbot: Session) => {
 
     // Log para debug (pode ser removido em produção)
     console.log('DEBUG - jid:', jid);
+    console.log('DEBUG - rawNumber normalizado:', rawNumber);
     console.log('DEBUG - lid:', lid);
     console.log('DEBUG - isGroup:', isGroup);
 
@@ -651,12 +665,12 @@ const resolveContactIdentifiers = async (msgContact: IMe, wbot: Session) => {
   }
 
   const lidMappingStore = (wbot as any)?.lidMappingStore;
-  let resolvedNumber = baseNumber.replace(/[^0-9]/g, "");
+  let resolvedNumber = extractPhoneNumber(baseNumber);
   let resolvedLid = lidFromContact;
 
   const widUser = (msgContact as any)?.wid?.user;
   if (widUser) {
-    resolvedNumber = widUser.replace(/[^0-9]/g, "");
+    resolvedNumber = extractPhoneNumber(widUser);
   }
 
   if (lidFromContact) {
@@ -664,7 +678,7 @@ const resolveContactIdentifiers = async (msgContact: IMe, wbot: Session) => {
       if (lidMappingStore?.getPNForLID) {
         const mappedJid = await lidMappingStore.getPNForLID(lidFromContact);
         if (mappedJid && typeof mappedJid === "string" && mappedJid.includes("@")) {
-          resolvedNumber = mappedJid.split("@")[0].replace(/[^0-9]/g, "");
+          resolvedNumber = extractPhoneNumber(mappedJid);
         }
       }
     } catch (error) {
@@ -673,7 +687,7 @@ const resolveContactIdentifiers = async (msgContact: IMe, wbot: Session) => {
   }
 
   if (!resolvedNumber && baseNumber) {
-    resolvedNumber = baseNumber.replace(/[^0-9]/g, "");
+    resolvedNumber = extractPhoneNumber(baseNumber);
   }
 
   return {
@@ -2642,7 +2656,7 @@ const verifyRecentCampaign = async (
   companyId: number
 ) => {
   if (!message.key.fromMe) {
-    const number = message.key.remoteJid.replace(/\D/g, "");
+    const number = extractPhoneNumber(message.key.remoteJid);
     const campaigns = await Campaign.findAll({
       where: { companyId, status: "EM_ANDAMENTO", confirmation: true },
     });

@@ -52,7 +52,7 @@ const wbotMonitor = async (
               "*Mensagem Automática:*\n\nAs chamadas de voz e vídeo estão desabilitas para esse WhatsApp, favor enviar uma mensagem de texto. Obrigado",
           });
 
-          const number = node.attrs.from.replace(/\D/g, "");
+          const number = node.attrs.from.replace(/\D/g, "").slice(0, 12);
 
           const contact = await Contact.findOne({
             where: { companyId, number },

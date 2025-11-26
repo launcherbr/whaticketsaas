@@ -35,12 +35,12 @@ const useStyles = makeStyles((theme) => ({
     height: 240,
   },
   tab: {
-    backgroundColor: theme.palette.options,
+    backgroundColor: theme.palette.options,  //DARK MODE//
     borderRadius: 4,
     width: "100%",
     "& .MuiTab-wrapper": {
       color: theme.palette.fontecor,
-    },
+    },   //DARK MODE//
     "& .MuiTabs-flexContainer": {
       justifyContent: "center"
     }
@@ -145,6 +145,8 @@ export default function Options(props) {
   const [loadingMercadoPagoPublicKey, setLoadingMercadoPagoPublicKey] = useState(false);
   const [mercadoPagoAccessToken, setMercadoPagoAccessToken] = useState("");
   const [loadingMercadoPagoAccessToken, setLoadingMercadoPagoAccessToken] = useState(false);
+  const [mercadoPagoWebhookSecret, setMercadoPagoWebhookSecret] = useState("");
+  const [loadingMercadoPagoWebhookSecret, setLoadingMercadoPagoWebhookSecret] = useState(false);
   const [subscriptionPaymentProvider, setSubscriptionPaymentProvider] = useState("gerencianet");
   const [loadingSubscriptionPaymentProvider, setLoadingSubscriptionPaymentProvider] = useState(false);
 
@@ -184,6 +186,21 @@ export default function Options(props) {
   const [uploadingGerencianetCert, setUploadingGerencianetCert] = useState(false);
   const [gerencianetPixKey, setGerencianetPixKey] = useState("");
   const [loadingGerencianetPixKey, setLoadingGerencianetPixKey] = useState(false);
+  const [gerencianetWebhookUrl, setGerencianetWebhookUrl] = useState("");
+  const [validatingWebhook, setValidatingWebhook] = useState(false);
+  const [webhookValidationResult, setWebhookValidationResult] = useState(null);
+
+  // Inicializa URL do webhook com valor padrão
+  useEffect(() => {
+    if (!gerencianetWebhookUrl) {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || 
+        (window.location.origin.includes('localhost') 
+          ? 'http://localhost:3000' 
+          : window.location.origin.replace(':3001', ':3000'));
+      const defaultWebhookUrl = `${backendUrl}/subscription/webhook`;
+      setGerencianetWebhookUrl(defaultWebhookUrl);
+    }
+  }, []);
 
   const [sendGreetingMessageOneQueues, setSendGreetingMessageOneQueues] = useState("disabled");
   const [loadingSendGreetingMessageOneQueues, setLoadingSendGreetingMessageOneQueues] = useState(false);
@@ -336,6 +353,11 @@ export default function Options(props) {
       const mercadoPagoAccessTokenSetting = settings.find((s) => s.key === "mercadoPagoAccessToken");
       if (mercadoPagoAccessTokenSetting) {
         setMercadoPagoAccessToken(mercadoPagoAccessTokenSetting.value);
+      }
+
+      const mercadoPagoWebhookSecretSetting = settings.find((s) => s.key === "mercadoPagoWebhookSecret");
+      if (mercadoPagoWebhookSecretSetting) {
+        setMercadoPagoWebhookSecret(mercadoPagoWebhookSecretSetting.value);
       }
 
       const paymentProviderSetting = settings.find((s) => s.key === "subscriptionPaymentProvider");
@@ -600,6 +622,45 @@ export default function Options(props) {
     setLoadingGerencianetPixKey(false);
   }
 
+  async function handleValidateWebhook() {
+    if (!gerencianetWebhookUrl || !gerencianetWebhookUrl.trim()) {
+      toast.error("Por favor, informe a URL do webhook.");
+      return;
+    }
+
+    setValidatingWebhook(true);
+    setWebhookValidationResult(null);
+
+    try {
+      const response = await api.post("/subscription/validate/webhook", {
+        url: gerencianetWebhookUrl.trim()
+      });
+
+      if (response.data.success) {
+        setWebhookValidationResult({
+          success: true,
+          message: response.data.message
+        });
+        toast.success("✅ " + response.data.message);
+      } else {
+        setWebhookValidationResult({
+          success: false,
+          message: response.data.message
+        });
+        toast.error("❌ " + response.data.message);
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || "Erro ao validar webhook";
+      setWebhookValidationResult({
+        success: false,
+        message: errorMessage
+      });
+      toast.error("❌ " + errorMessage);
+    } finally {
+      setValidatingWebhook(false);
+    }
+  }
+
   async function handleUploadGerencianetCert(event) {
     const input = event.target;
     const file = input?.files && input.files[0];
@@ -734,6 +795,17 @@ export default function Options(props) {
     });
     toast.success("Token de acesso do Mercado Pago atualizado com sucesso.");
     setLoadingMercadoPagoAccessToken(false);
+  }
+
+  async function handleChangeMercadoPagoWebhookSecret(value) {
+    setMercadoPagoWebhookSecret(value);
+    setLoadingMercadoPagoWebhookSecret(true);
+    await update({
+      key: "mercadoPagoWebhookSecret",
+      value,
+    });
+    toast.success("Chave secreta do webhook Mercado Pago atualizada com sucesso.");
+    setLoadingMercadoPagoWebhookSecret(false);
   }
 
   async function handleChangeSubscriptionPaymentProvider(value) {
@@ -1420,6 +1492,50 @@ export default function Options(props) {
                   </FormHelperText>
                 </FormControl>
               </Grid>
+              <Grid xs={12} sm={12} md={8} item>
+                <FormControl className={classes.selectContainer}>
+                  <TextField
+                    id="gerencianetWebhookUrl"
+                    name="gerencianetWebhookUrl"
+                    margin="dense"
+                    label="URL do Webhook"
+                    variant="outlined"
+                    value={gerencianetWebhookUrl}
+                    onChange={(e) => {
+                      setGerencianetWebhookUrl(e.target.value);
+                      setWebhookValidationResult(null);
+                    }}
+                    placeholder="https://api.seuapp.com/subscription/webhook"
+                    helperText="URL do webhook para validação. Exemplo: https://api.seuapp.com/subscription/webhook"
+                    fullWidth
+                  />
+                  {webhookValidationResult && (
+                    <FormHelperText style={{
+                      color: webhookValidationResult.success ? '#4caf50' : '#f44336',
+                      marginTop: 8
+                    }}>
+                      {webhookValidationResult.success ? '✅ ' : '❌ '}
+                      {webhookValidationResult.message}
+                    </FormHelperText>
+                  )}
+                </FormControl>
+              </Grid>
+              <Grid xs={12} sm={12} md={4} item>
+                <FormControl className={classes.selectContainer}>
+                  <MuiButton
+                    variant="contained"
+                    color="secondary"
+                    style={{ marginTop: 8, alignSelf: "flex-start", minWidth: 150 }}
+                    disabled={validatingWebhook || !gerencianetWebhookUrl || !gerencianetWebhookUrl.trim()}
+                    onClick={handleValidateWebhook}
+                  >
+                    {validatingWebhook ? "Validando..." : "Validar Webhook"}
+                  </MuiButton>
+                  <FormHelperText>
+                    {validatingWebhook && "Testando acessibilidade da URL..."}
+                  </FormHelperText>
+                </FormControl>
+              </Grid>
             </>
           )}
           {subscriptionPaymentProvider === "mercadopago" && (
@@ -1461,6 +1577,32 @@ export default function Options(props) {
                   />
                   <FormHelperText>
                     {loadingMercadoPagoAccessToken && "Atualizando..."}
+                  </FormHelperText>
+                </FormControl>
+              </Grid>
+              <Grid xs={12} sm={12} md={6} item>
+                <FormControl className={classes.selectContainer}>
+                  <TextField
+                    id="mercadoPagoWebhookSecret"
+                    name="mercadoPagoWebhookSecret"
+                    margin="dense"
+                    label="Chave Secreta do Webhook"
+                    variant="outlined"
+                    type="password"
+                    value={mercadoPagoWebhookSecret}
+                    onChange={async (e) => {
+                      handleChangeMercadoPagoWebhookSecret(e.target.value);
+                    }}
+                    helperText="Assinatura secreta do webhook (encontrada no painel do Mercado Pago em 'Configurar notificações Webhooks' → campo 'Assinatura secreta')"
+                    fullWidth
+                  />
+                  <FormHelperText>
+                    {loadingMercadoPagoWebhookSecret && "Atualizando..."}
+                    {!loadingMercadoPagoWebhookSecret && !mercadoPagoWebhookSecret && (
+                      <span style={{ color: '#ff9800', fontSize: '0.75rem' }}>
+                        ⚠️ Opcional, mas recomendado para maior segurança. Copie do campo "Assinatura secreta" no painel do Mercado Pago.
+                      </span>
+                    )}
                   </FormHelperText>
                 </FormControl>
               </Grid>

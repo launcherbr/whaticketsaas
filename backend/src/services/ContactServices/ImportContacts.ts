@@ -28,7 +28,7 @@ export async function ImportContacts(
       has(row, "Número")
     ) {
       number = row["numero"] || row["número"] || row["Numero"] || row["Número"];
-      number = `${number}`.replace(/\D/g, "");
+      number = `${number}`.replace(/\D/g, "").slice(0, 12);
     }
 
     if (
@@ -62,7 +62,7 @@ export async function ImportContacts(
     for (let newContact of contactList) {
       try {
         const response = await CheckContactNumber(newContact.number, companyId);
-        const number = response.jid.replace(/\D/g, "");
+        const number = response.jid.replace(/\D/g, "").slice(0, 12);
         newContact.number = number;
         await newContact.save();
       } catch (e) {

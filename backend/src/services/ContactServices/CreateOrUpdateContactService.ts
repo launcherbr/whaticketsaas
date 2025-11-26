@@ -34,7 +34,9 @@ const CreateOrUpdateContactService = async ({
   lid
 }: Request): Promise<Contact> => {
   const normalizedNumber = rawNumber.split(":")[0];
-  const number = isGroup ? rawNumber : normalizedNumber.replace(/[^0-9]/g, "");
+  // Para grupos, mantém o rawNumber; para contatos, extrai apenas os primeiros 12 dígitos
+  const number = isGroup ? rawNumber : normalizedNumber.replace(/[^0-9]/g, "").slice(0, 12);
+  
   console.log(`Procurando ou criando contato: ${number} (LID: ${lid || "N/A"}) na empresa ${companyId}`);
 
   const io = getIO();

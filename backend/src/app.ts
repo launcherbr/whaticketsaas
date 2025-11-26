@@ -69,9 +69,27 @@ app.use('/auth', apiLimiter);
 app.use(
   cors({
     credentials: true,
-    origin: process.env.FRONTEND_URL,
+    origin: (origin, callback) => {
+      // Permite requisições sem origin (como webhooks do Gerencianet/MercadoPago)
+      if (!origin) {
+        return callback(null, true);
+      }
+      
+      const allowedOrigins = [
+        process.env.FRONTEND_URL,
+        'https://api.gerencianet.com.br',
+        'https://api.efipay.com.br',
+        'https://api.mercadopago.com'
+      ].filter(Boolean);
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Permite todas as origens para webhooks
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'x-webhook-signature', 'X-Webhook-Signature', 'x-hub-signature', 'x-hub-signature-256', 'x-sgn', 'x-signature']
   })
 );
 

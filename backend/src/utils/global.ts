@@ -51,6 +51,19 @@ export const buildContactAddress = (contact: any, isGroup: boolean): string => {
   return `${contactId}${domain}`;
 };
 
+// Função para extrair número de telefone do JID limitando a 12 dígitos
+// Evita capturar o décimo terceiro dígito que pode vir incorretamente no JID
+const extractPhoneNumber = (jid: string): string => {
+  if (!jid || typeof jid !== 'string') return '';
+  
+  // Remove caracteres não numéricos
+  const cleanNumber = jid.replace(/[^0-9]/g, "");
+  
+  // Limita a 12 dígitos desde o início - números brasileiros têm no máximo 12 dígitos
+  // Isso evita capturar o décimo terceiro dígito que pode vir incorretamente no JID
+  return cleanNumber.slice(0, 12);
+};
+
 export const getJidFromMessage = async (message: WAMessage | proto.IWebMessageInfo, wbot: Session): Promise<string> => {
   // Garantir que a mensagem tem a propriedade key
   if (!message || !message.key) {
@@ -85,8 +98,11 @@ export const getJidFromMessage = async (message: WAMessage | proto.IWebMessageIn
   if (lidMappingStore) {
     const jidForPN = await lidMappingStore.getPNForLID(remoteJid);
     if (jidForPN && jidForPN.includes('@s.whatsapp.net')) {
-      jid = jidForPN;
-      console.log('JID encontrado via LIDMappingStore:', jid);
+      // Normalizar o número extraído do JID para limitar a 12 dígitos
+      const jidNumber = extractPhoneNumber(jidForPN);
+      const jidDomain = jidForPN.split('@')[1] || 's.whatsapp.net';
+      jid = `${jidNumber}@${jidDomain}`;
+      console.log('JID encontrado via LIDMappingStore (normalizado):', jid);
     } else {
       console.log('JID não encontrado na LIDMappingStore para o PN:', remoteJid);
     }
@@ -96,6 +112,14 @@ export const getJidFromMessage = async (message: WAMessage | proto.IWebMessageIn
   const jidSplitedPontos = jid.split(':')[0];
   const jidSplitedArroba = jid.split('@')[1];
   jid = jidSplitedPontos.includes('@') ? jid : `${jidSplitedPontos}@${jidSplitedArroba}`;
+  
+  // Garantir que o número no JID final também está limitado a 12 dígitos
+  if (jid.includes('@s.whatsapp.net')) {
+    const jidParts = jid.split('@');
+    const normalizedNumber = extractPhoneNumber(jidParts[0]);
+    jid = `${normalizedNumber}@${jidParts[1]}`;
+  }
+  
   console.log('JID final para envio:', jid);
   return jid;
 };
