@@ -34,8 +34,26 @@ const CreateOrUpdateContactService = async ({
   lid
 }: Request): Promise<Contact> => {
   const normalizedNumber = rawNumber.split(":")[0];
-  // Para grupos, mantém o rawNumber; para contatos, extrai apenas os primeiros 12 dígitos
-  const number = isGroup ? rawNumber : normalizedNumber.replace(/[^0-9]/g, "").slice(0, 12);
+  let number = normalizedNumber.replace(/[^0-9]/g, "");
+
+  if (isGroup) {
+    number = rawNumber;
+  } else {
+    // CORREÇÃO: Tratamento para números do Brasil (55) com 13 dígitos (com o 9 adicional)
+    // Ex: 55 14 9 9999 9999 (13 dig) -> vira 55 14 9999 9999 (12 dig)
+    if (number.length === 13 && number.startsWith("55")) {
+      // Se o dígito após o DDD (índice 4) for 9, removemos ele.
+      if (number[4] === "9") {
+        number = number.slice(0, 4) + number.slice(5);
+      } else {
+        // Caso raro de ter 13 dígitos mas não ser o formato padrão do 9º dígito, mantém o corte de segurança
+        number = number.slice(0, 12);
+      }
+    } else {
+      // Comportamento padrão original: limita a 12 caracteres
+      number = number.slice(0, 12);
+    }
+  }
   
   console.log(`Procurando ou criando contato: ${number} (LID: ${lid || "N/A"}) na empresa ${companyId}`);
 
