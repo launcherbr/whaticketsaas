@@ -28,7 +28,8 @@ export async function ImportContacts(
       has(row, "Número")
     ) {
       number = row["numero"] || row["número"] || row["Numero"] || row["Número"];
-      number = `${number}`.replace(/\D/g, "").slice(0, 12);
+      // CORREÇÃO PARTE 1: Remover slice, apenas limpar caracteres não numéricos
+      number = `${number}`.replace(/\D/g, "");
     }
 
     if (
@@ -46,6 +47,7 @@ export async function ImportContacts(
   const contactList: Contact[] = [];
 
   for (const contact of contacts) {
+    // Criação inicial sem validação profunda para não travar importação em massa
     const [newContact, created] = await Contact.findOrCreate({
       where: {
         number: `${contact.number}`,
@@ -62,7 +64,35 @@ export async function ImportContacts(
     for (let newContact of contactList) {
       try {
         const response = await CheckContactNumber(newContact.number, companyId);
-        const number = response.jid.replace(/\D/g, "").slice(0, 12);
+        let number = response.jid.replace(/\D/g, "");
+        
+        // CORREÇÃO PARTE 2: Lógica Híbrida após verificação no WhatsApp
+        if (number.length === 13 && number.startsWith("55")) {
+          const ddd = parseInt(number.substring(2, 4));
+          const ninthDigit = number[4];
+          const nextDigit = parseInt(number[5]);
+
+          const dddsNonoDigitoObrigatorio = [
+            11, 12, 13, 14, 15, 16, 17, 18, 19,
+            21, 22, 24,
+            27, 28
+          ];
+
+          if (dddsNonoDigitoObrigatorio.includes(ddd)) {
+            // Mantém 13 dígitos
+          } else {
+            if (ninthDigit === "9") {
+               if (nextDigit >= 7) {
+                 number = number.slice(0, 4) + number.slice(5);
+               }
+            } else {
+               number = number.slice(0, 12);
+            }
+          }
+        } else {
+          number = number.slice(0, 12);
+        }
+
         newContact.number = number;
         await newContact.save();
       } catch (e) {
