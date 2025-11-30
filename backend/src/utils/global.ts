@@ -52,15 +52,17 @@ export const buildContactAddress = (contact: any, isGroup: boolean): string => {
 };
 
 // Função para extrair número de telefone do JID
+// Números brasileiros válidos têm:
+// - 12 dígitos: código país (2) + DDD (2) + número fixo (8)
+// - 13 dígitos: código país (2) + DDD (2) + número celular (9)
 const extractPhoneNumber = (jid: string): string => {
   if (!jid || typeof jid !== 'string') return '';
   
   // Remove caracteres não numéricos
   const cleanNumber = jid.replace(/[^0-9]/g, "");
   
-  // CORREÇÃO: Removido o corte (.slice) para permitir 13 dígitos (DDD 34, etc)
-  // A validação de remover ou manter o 9º dígito agora é feita no CreateOrUpdateContactService
-  return cleanNumber;
+  // Limita a 13 dígitos - números brasileiros têm no máximo 13 dígitos
+  return cleanNumber.slice(0, 13);
 };
 
 export const getJidFromMessage = async (message: WAMessage | proto.IWebMessageInfo, wbot: Session): Promise<string> => {
@@ -97,7 +99,7 @@ export const getJidFromMessage = async (message: WAMessage | proto.IWebMessageIn
   if (lidMappingStore) {
     const jidForPN = await lidMappingStore.getPNForLID(remoteJid);
     if (jidForPN && jidForPN.includes('@s.whatsapp.net')) {
-      // Normalizar o número extraído do JID (agora suportando 13 dígitos)
+      // Normalizar o número extraído do JID para limitar a 12 dígitos
       const jidNumber = extractPhoneNumber(jidForPN);
       const jidDomain = jidForPN.split('@')[1] || 's.whatsapp.net';
       jid = `${jidNumber}@${jidDomain}`;
@@ -112,7 +114,7 @@ export const getJidFromMessage = async (message: WAMessage | proto.IWebMessageIn
   const jidSplitedArroba = jid.split('@')[1];
   jid = jidSplitedPontos.includes('@') ? jid : `${jidSplitedPontos}@${jidSplitedArroba}`;
   
-  // Garantir que o número no JID final esteja limpo (sem limitar a 12 se não precisar)
+  // Garantir que o número no JID final também está limitado a 12 dígitos
   if (jid.includes('@s.whatsapp.net')) {
     const jidParts = jid.split('@');
     const normalizedNumber = extractPhoneNumber(jidParts[0]);
