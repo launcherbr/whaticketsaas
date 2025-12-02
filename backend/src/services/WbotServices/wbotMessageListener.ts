@@ -126,17 +126,17 @@ const extractPhoneNumber = (jid: string): string => {
   // Remove o sufixo @s.whatsapp.net ou similar se ainda estiver presente
   cleanNumber = cleanNumber.split("@")[0];
   
-  // Remove zeros à direita desnecessários apenas se o número tiver mais de 13 dígitos
-  // Números brasileiros válidos têm:
-  // - 12 dígitos: código país (2) + DDD (2) + número fixo (8)
-  // - 13 dígitos: código país (2) + DDD (2) + número celular (9)
-  // Isso evita duplicação de contatos com números como 5511999999990 e 55119999999900
-  while (cleanNumber.length > 13 && cleanNumber.endsWith('0')) {
-    cleanNumber = cleanNumber.slice(0, -1);
-  }
+  // Função para extrair número de telefone do JID
+const extractPhoneNumber = (jid: string): string => {
+  if (!jid || typeof jid !== 'string') return '';
   
-  // Limita a 13 dígitos - números brasileiros têm no máximo 13 dígitos
-  return cleanNumber.slice(0, 13);
+  // Remove caracteres não numéricos
+  const cleanNumber = jid.replace(/[^0-9]/g, "");
+  
+  // CORREÇÃO: Removemos cortes (.slice) e lógicas de tamanho fixo.
+  // Agora retornamos o número completo para que o CreateOrUpdateContactService
+  // aplique a regra do nono dígito (VIP vs Padrão) corretamente baseada no DDD.
+  return cleanNumber;
 };
 
 // Função para normalizar número de telefone removendo zeros à direita

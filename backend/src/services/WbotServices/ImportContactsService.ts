@@ -26,7 +26,6 @@ const ImportContactsService = async (companyId: number): Promise<void> => {
     const publicFolder = path.resolve(__dirname, "..", "..", "..", "public");
     const companyFolder = path.join(publicFolder, `company${companyId}`);
     
-    // Create company folder if it doesn't exist
     try {
       await mkdirAsync(companyFolder, { recursive: true });
     } catch (err) {
@@ -61,18 +60,48 @@ const ImportContactsService = async (companyId: number): Promise<void> => {
   if (isArray(phoneContactsList)) {
     phoneContactsList.forEach(async ({ id, name, notify }) => {
       if (id === "status@broadcast" || id.includes("g.us")) return;
-      const number = id.replace(/\D/g, "").slice(0, 13);
+      
+      // CORREÇÃO: Substituir o slice(0, 12) pela lógica inteligente
+      let number = id.replace(/\D/g, "");
+
+      if (number.length === 13 && number.startsWith("55")) {
+        const ddd = parseInt(number.substring(2, 4));
+        const ninthDigit = number[4];
+        const nextDigit = parseInt(number[5]);
+
+        const dddsNonoDigitoObrigatorio = [
+          11, 12, 13, 14, 15, 16, 17, 18, 19,
+          21, 22, 24,
+          27, 28
+        ];
+
+        if (dddsNonoDigitoObrigatorio.includes(ddd)) {
+          // Mantém 13 dígitos para DDDs VIP (SP, RJ, ES)
+        } else {
+          // Para outros DDDs
+          if (ninthDigit === "9") {
+             // Se o próximo dígito for 7, 8 ou 9, remove o 9 extra (faixa antiga)
+             if (nextDigit >= 7) {
+               number = number.slice(0, 4) + number.slice(5);
+             }
+             // Se for < 7 (ex: 34 9 3...), mantém os 13 dígitos
+          } else {
+             number = number.slice(0, 12);
+          }
+        }
+      } else {
+        // Padrão de segurança para números não-BR ou formatos estranhos
+        number = number.slice(0, 12);
+      }
 
       const existingContact = await Contact.findOne({
         where: { number, companyId }
       });
 
       if (existingContact) {
-        // Atualiza o nome do contato existente
         existingContact.name = name || notify;
         await existingContact.save();
       } else {
-        // Criar um novo contato
         try {
           await CreateContactService({
             number,

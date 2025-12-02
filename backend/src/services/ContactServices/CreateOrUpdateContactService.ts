@@ -2,6 +2,7 @@ import { getIO } from "../../libs/socket";
 import Contact from "../../models/Contact";
 import ContactCustomField from "../../models/ContactCustomField";
 import { isNil } from "lodash";
+
 interface ExtraInfo extends ContactCustomField {
   name: string;
   value: string;
@@ -21,30 +22,6 @@ interface Request {
   pushName?: string;
 }
 
-// Função para normalizar número de telefone removendo zeros à direita
-// Isso garante que números como 5511999999990 e 55119999999900 sejam tratados como iguais
-const normalizePhoneNumber = (number: string): string => {
-  if (!number) return '';
-  
-  // Remove caracteres não numéricos
-  let cleanNumber = number.replace(/[^0-9]/g, "");
-  
-  // Remove o sufixo se ainda estiver presente
-  cleanNumber = cleanNumber.split("@")[0].split(":")[0];
-  
-  // Remove zeros à direita desnecessários apenas se o número tiver mais de 13 dígitos
-  // Números brasileiros válidos têm:
-  // - 12 dígitos: código país (2) + DDD (2) + número fixo (8)
-  // - 13 dígitos: código país (2) + DDD (2) + número celular (9)
-  // Isso evita duplicação de contatos com números terminados em zero
-  while (cleanNumber.length > 13 && cleanNumber.endsWith('0')) {
-    cleanNumber = cleanNumber.slice(0, -1);
-  }
-  
-  // Limita a 13 dígitos - números brasileiros têm no máximo 13 dígitos
-  return cleanNumber.slice(0, 13);
-};
-
 const CreateOrUpdateContactService = async ({
   name,
   number: rawNumber,
@@ -57,10 +34,56 @@ const CreateOrUpdateContactService = async ({
   disableBot = false,
   lid
 }: Request): Promise<Contact> => {
-  // Para grupos, mantém o rawNumber; para contatos, normaliza removendo zeros à direita
-  const number = isGroup ? rawNumber : normalizePhoneNumber(rawNumber);
+  const normalizedNumber = rawNumber.split(":")[0];
+  let number = normalizedNumber.replace(/[^0-9]/g, "");
+
+  if (isGroup) {
+    number = rawNumber;
+  } else {
+    // =========================================================================
+    // LÓGICA HÍBRIDA DE NORMALIZAÇÃO DE TELEFONES BRASILEIROS
+    // =========================================================================
+    if (number.length === 13 && number.startsWith("55")) {
+      const ddd = parseInt(number.substring(2, 4));
+      const ninthDigit = number[4];
+      const nextDigit = parseInt(number[5]);
+
+      // 1. LISTA VIP: DDDs onde o nono dígito é OBRIGATÓRIO para TODOS os celulares
+      // (11-19: SP, 21,22,24: RJ, 27,28: ES)
+      const dddsNonoDigitoObrigatorio = [
+        11, 12, 13, 14, 15, 16, 17, 18, 19,
+        21, 22, 24,
+        27, 28
+      ];
+
+      if (dddsNonoDigitoObrigatorio.includes(ddd)) {
+        // Se for desses DDDs, mantém os 13 dígitos (não corta nada)
+        number = number; 
+      } else {
+        // 2. OUTROS DDDs (34, 31, etc): Aplicamos a lógica da faixa de numeração
+        if (ninthDigit === "9") {
+           // Se o dígito seguinte for 7, 8 ou 9: É celular antigo/padrão. 
+           // Removemos o 9 extra para ficar com 12 dígitos (padrão da API para esses casos).
+           if (nextDigit >= 7) {
+             number = number.slice(0, 4) + number.slice(5);
+           } 
+           // Se o dígito seguinte for 2, 3, 4, 5 ou 6: É celular novo ou colisão com fixo.
+           // Mantemos o 9 (fica com 13 dígitos). Ex: 55 34 9 3...
+           else {
+             number = number;
+           }
+        } else {
+           // Segurança: Se tem 13 dígitos mas o 5º não é 9 (formato estranho), corta pro padrão
+           number = number.slice(0, 12);
+        }
+      }
+    } else {
+      // Padrão de segurança para números internacionais ou fixos (corta excesso se houver)
+      number = number.slice(0, 12);
+    }
+  }
   
-  console.log(`Procurando ou criando contato: ${number} (LID: ${lid || "N/A"}) na empresa ${companyId} (número original: ${rawNumber})`);
+  console.log(`Procurando ou criando contato: ${number} (LID: ${lid || "N/A"}) na empresa ${companyId}`);
 
   const io = getIO();
   let contact: Contact | null;
@@ -69,7 +92,7 @@ const CreateOrUpdateContactService = async ({
     lid = null; // Grupos não usam LID
   }
 
-  // Se temos um LID, primeiro tentamos encontrar o contato pela coluna lid
+  // Se temos um LID e não é grupo, primeiro tentamos encontrar o contato pela coluna lid
   if (lid && !isGroup) {
     contact = await Contact.findOne({
       where: {
@@ -99,14 +122,17 @@ const CreateOrUpdateContactService = async ({
 
   if (contact) {
     contact.update({ profilePicUrl });
-    console.log(contact.whatsappId)
+    
     if (isNil(contact.whatsappId === null)) {
       contact.update({
         whatsappId
       });
     }
-    // Atualizar LID se fornecido
-    contact.update({ lid });
+    // Atualizar LID se fornecido e diferente
+    if (lid && contact.lid !== lid) {
+      contact.update({ lid });
+    }
+
     io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-contact`, {
       action: "update",
       contact
