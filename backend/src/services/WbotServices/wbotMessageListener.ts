@@ -115,56 +115,10 @@ const wbotMutex = new Mutex();
 
 const groupContactCache = new SimpleObjectCache(1000 * 30, logger);
 
-// Função para extrair número de telefone do JID
-// Normaliza o número removendo zeros à direita desnecessários para evitar duplicação
-const extractPhoneNumber = (jid: string): string => {
-  if (!jid || typeof jid !== 'string') return '';
-  
-  // Remove caracteres não numéricos
-  let cleanNumber = jid.replace(/[^0-9]/g, "");
-  
-  // Remove o sufixo @s.whatsapp.net ou similar se ainda estiver presente
-  cleanNumber = cleanNumber.split("@")[0];
-  
-  // Remove zeros à direita desnecessários apenas se o número tiver mais de 13 dígitos
-  // Números brasileiros válidos têm:
-  // - 12 dígitos: código país (2) + DDD (2) + número fixo (8)
-  // - 13 dígitos: código país (2) + DDD (2) + número celular (9)
-  // Isso evita duplicação de contatos com números como 5511999999990 e 55119999999900
-  while (cleanNumber.length > 13 && cleanNumber.endsWith('0')) {
-    cleanNumber = cleanNumber.slice(0, -1);
-  }
-  
-  // Limita a 13 dígitos - números brasileiros têm no máximo 13 dígitos
-  return cleanNumber.slice(0, 13);
-};
-
-// Função para normalizar número de telefone removendo zeros à direita
-// Isso garante que números como 5511999999990 e 55119999999900 sejam tratados como iguais
-const normalizePhoneNumber = (number: string): string => {
-  if (!number) return '';
-  
-  // Remove caracteres não numéricos
-  let cleanNumber = number.replace(/[^0-9]/g, "");
-  
-  // Remove zeros à direita desnecessários apenas se o número tiver mais de 13 dígitos
-  // Números brasileiros válidos têm:
-  // - 12 dígitos: código país (2) + DDD (2) + número fixo (8)
-  // - 13 dígitos: código país (2) + DDD (2) + número celular (9)
-  while (cleanNumber.length > 13 && cleanNumber.endsWith('0')) {
-    cleanNumber = cleanNumber.slice(0, -1);
-  }
-  
-  // Limita a 13 dígitos - números brasileiros têm no máximo 13 dígitos
-  return cleanNumber.slice(0, 13);
-};
-
 // Função para normalizar JID removendo sufixos
 const normalizeJid = (jid: string): string => {
   if (!jid) return '';
-  // Primeiro normaliza o número removendo zeros à direita
-  const normalizedNumber = normalizePhoneNumber(jid);
-  return normalizedNumber;
+  return jid.replace(/@[^.]+\.whatsapp\.net$/, '@s.whatsapp.net');
 };
 
 // Função para unificar contatos duplicados
@@ -178,12 +132,11 @@ const unifyDuplicateContacts = async (companyId: number): Promise<void> => {
     const jidMap = new Map<string, Contact>();
     
     for (const contact of contacts) {
-      // Normaliza o número removendo zeros à direita
-      const normalizedNumber = normalizePhoneNumber(contact.number);
+      const normalizedJid = normalizeJid(contact.number);
       
-      if (jidMap.has(normalizedNumber)) {
+      if (jidMap.has(normalizedJid)) {
         // Unificar com contato existente
-        const existingContact = jidMap.get(normalizedNumber)!;
+        const existingContact = jidMap.get(normalizedJid)!;
         
         // Atualizar tickets para usar o contato principal
         await Ticket.update(
@@ -197,16 +150,13 @@ const unifyDuplicateContacts = async (companyId: number): Promise<void> => {
           { where: { contactId: contact.id, companyId } }
         );
         
-        // Atualizar o número do contato duplicado para o número normalizado antes de deletar
-        // Isso garante que referências futuras usem o número correto
-        await contact.update({ number: normalizedNumber });
         
         // Deletar contato duplicado
         await contact.destroy();
         
-        logger.info(`Contato duplicado unificado: ${contact.number} -> ${existingContact.number} (normalizado: ${normalizedNumber})`);
+        logger.info(`Contato duplicado unificado: ${contact.number} -> ${existingContact.number}`);
       } else {
-        jidMap.set(normalizedNumber, contact);
+        jidMap.set(normalizedJid, contact);
       }
     }
   } catch (error) {
@@ -609,11 +559,10 @@ const getContactMessage = async (msg: proto.IWebMessageInfo, wbot: Session) => {
       throw new Error('JID inválido obtido da mensagem');
     }
 
-    const rawNumber = extractPhoneNumber(jid);
+    const rawNumber = jid.replace(/\D/g, "");
 
     // Log para debug (pode ser removido em produção)
     console.log('DEBUG - jid:', jid);
-    console.log('DEBUG - rawNumber normalizado:', rawNumber);
     console.log('DEBUG - lid:', lid);
     console.log('DEBUG - isGroup:', isGroup);
 
@@ -703,12 +652,12 @@ const resolveContactIdentifiers = async (msgContact: IMe, wbot: Session) => {
   }
 
   const lidMappingStore = (wbot as any)?.lidMappingStore;
-  let resolvedNumber = extractPhoneNumber(baseNumber);
+  let resolvedNumber = baseNumber;
   let resolvedLid = lidFromContact;
 
   const widUser = (msgContact as any)?.wid?.user;
   if (widUser) {
-    resolvedNumber = extractPhoneNumber(widUser);
+    resolvedNumber = widUser.split("@")[0];
   }
 
   if (lidFromContact) {
@@ -716,7 +665,7 @@ const resolveContactIdentifiers = async (msgContact: IMe, wbot: Session) => {
       if (lidMappingStore?.getPNForLID) {
         const mappedJid = await lidMappingStore.getPNForLID(lidFromContact);
         if (mappedJid && typeof mappedJid === "string" && mappedJid.includes("@")) {
-          resolvedNumber = extractPhoneNumber(mappedJid);
+          resolvedNumber = mappedJid.split("@")[0];
         }
       }
     } catch (error) {
@@ -725,7 +674,7 @@ const resolveContactIdentifiers = async (msgContact: IMe, wbot: Session) => {
   }
 
   if (!resolvedNumber && baseNumber) {
-    resolvedNumber = extractPhoneNumber(baseNumber);
+    resolvedNumber = baseNumber;
   }
 
   return {
@@ -747,21 +696,20 @@ const verifyContact = async (
     profilePicUrl = `${process.env.FRONTEND_URL}/nopicture.png`;
   }
 
-  const identifiers = await resolveContactIdentifiers(msgContact, wbot);
 
   const contactData = {
     name: msgContact?.name || msgContact.id.replace(/\D/g, ""),
-    number: identifiers.number,
-    lid: identifiers.lid,
+    number: msgContact.id.split("@")[0],
+    lid: msgContact.lid,
     profilePicUrl,
     isGroup: msgContact.id.includes("g.us"),
     companyId,
     whatsappId: wbot.id,
-    pushName: msgContact?.name
+    pushName: msgContact?.name // Passar o pushName para atualização
   };
   console.log('contactData:::::', contactData);
 
-  const contact = await CreateOrUpdateContactService(contactData);
+  const contact = CreateOrUpdateContactService(contactData);
 
   return contact;
 };
@@ -2694,7 +2642,7 @@ const verifyRecentCampaign = async (
   companyId: number
 ) => {
   if (!message.key.fromMe) {
-    const number = extractPhoneNumber(message.key.remoteJid);
+    const number = message.key.remoteJid.replace(/\D/g, "");
     const campaigns = await Campaign.findAll({
       where: { companyId, status: "EM_ANDAMENTO", confirmation: true },
     });
