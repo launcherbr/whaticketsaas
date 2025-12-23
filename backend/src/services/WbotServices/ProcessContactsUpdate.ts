@@ -1,4 +1,3 @@
-import { REDIS_URI_CONNECTION } from "../../config/redis";
 import Bull from 'bull';
 import { WAMessage, WAMessageUpdate,   Contact as BContact, } from 'baileys';
 import { handleMsgAck } from './wbotMessageListener';
@@ -7,7 +6,10 @@ import createOrUpdateBaileysService from '../BaileysServices/CreateOrUpdateBaile
 import { logger } from '../../utils/logger';
 
 const contactsUpdateQueue = new Bull('contactsUpdateQueue', {
-  redis: REDIS_URI_CONNECTION,
+  redis: {
+    host: 'localhost',
+    port: 6379,
+  },
   defaultJobOptions: {
     attempts: configLoader().webhook.attempts, // Número de tentativas em caso de falha
     backoff: {

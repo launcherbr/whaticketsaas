@@ -1,11 +1,14 @@
-import { REDIS_URI_CONNECTION } from "../../config/redis";
 import Bull from 'bull';
 import { WAMessage, WAMessageUpdate } from 'baileys';
 import { handleMsgAck } from './wbotMessageListener';
 import configLoader from '../ConfigLoaderService/configLoaderService';
 
 const msgAckQueue = new Bull('msgAckQueue', {
-  redis: REDIS_URI_CONNECTION,
+  redis: {
+    host: 'localhost',
+    port: 6379,
+    maxRetriesPerRequest: null
+  },
   defaultJobOptions: {
     attempts: configLoader().webhook.attempts,
     backoff: {

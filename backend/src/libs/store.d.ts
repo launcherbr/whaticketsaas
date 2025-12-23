@@ -10,7 +10,7 @@ import {
   WAMessageCursor,
   WAMessageKey,
   WALegacySocket
-} from "baileys";
+} from "@adiwajshing/baileys";
 import KeyedDB from "@adiwajshing/keyed-db";
 
 export interface Store {
