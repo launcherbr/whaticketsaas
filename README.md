@@ -61,6 +61,10 @@ Se estiver migrando de outras versões ou precisar renovar seu acesso a nosso co
 
 **🔄 Ver Histórico de Versões (Changelog)**
 
+#### **Versão 6.5.0** (`23/12/2025`)
+
+  * Backup
+
 #### **Versão 6.3.5** (`11/11/2025`)
 
   * Mercado Pago
