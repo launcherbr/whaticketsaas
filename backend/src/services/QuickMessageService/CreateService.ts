@@ -7,7 +7,8 @@ interface Data {
   message: string;
   companyId: number | string;
   userId: number | string;
-  geral: boolean;  
+  geral: boolean;
+  editBeforeSend?: boolean;
 }
 
 const CreateService = async (data: Data): Promise<QuickMessage> => {
@@ -28,7 +29,10 @@ const CreateService = async (data: Data): Promise<QuickMessage> => {
     throw new AppError(err.message);
   }
 
-  const record = await QuickMessage.create(data);
+  const record = await QuickMessage.create({
+    ...data,
+    editBeforeSend: data.editBeforeSend !== undefined ? data.editBeforeSend : false
+  });
 
   return record;
 };

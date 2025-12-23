@@ -43,6 +43,7 @@ type MessageData = {
   quotedMsg?: Message;
   number?: string;
   closeTicket?: true;
+  forceMediaType?: string;
 };
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
@@ -74,7 +75,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { ticketId } = req.params;
-  const { body, quotedMsg }: MessageData = req.body;
+  const { body, quotedMsg, forceMediaType }: MessageData = req.body;
   const medias = req.files as Express.Multer.File[];
   const { companyId } = req.user;
 
@@ -86,7 +87,12 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   if (medias) {
     await Promise.all(
       medias.map(async (media: Express.Multer.File, index) => {
-        await SendWhatsAppMedia({ media, ticket, body: Array.isArray(body) ? body[index] : body });
+        await SendWhatsAppMedia({ 
+          media, 
+          ticket, 
+          body: Array.isArray(body) ? body[index] : body,
+          forceMediaType: forceMediaType as string | undefined
+        });
       })
     );
   } else {

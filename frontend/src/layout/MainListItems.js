@@ -755,6 +755,16 @@ const MainListItems = (props) => {
             
             {user.super && (
               <ListItemLink
+                to="/backups"
+                primary={i18n.t("mainDrawer.listItems.backups")}
+                icon={<FiDatabase size={18} />}
+                isActive={isActivePath('/backups')}
+                collapsed={collapsed}
+              />
+            )}
+
+            {user.super && (
+              <ListItemLink
                 to="/loglauncher"
                 primary={i18n.t("mainDrawer.listItems.loglauncher")}
                 icon={<FiDatabase size={18} />}
@@ -821,5 +831,4 @@ const MainListItems = (props) => {
     </div>
   );
 };
-
 export default MainListItems;

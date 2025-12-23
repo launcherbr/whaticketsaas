@@ -56,6 +56,16 @@ class Whatsapp extends Model<Whatsapp> {
   @Column(DataType.TEXT)
   greetingMessage: string;
 
+  @Column(DataType.TEXT)
+  greetingMediaPath: string;
+
+  @Column(DataType.TEXT)
+  greetingMediaName: string;
+
+  @Default("caption")
+  @Column(DataType.STRING)
+  greetingMediaSendMode: string; // "caption" ou "separate"
+
   @Default("")
   @Column(DataType.TEXT)
   farewellMessage: string;

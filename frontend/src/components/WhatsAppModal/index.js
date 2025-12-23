@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import * as Yup from "yup";
 import { Formik, Form, Field } from "formik";
 import { toast } from "react-toastify";
@@ -21,12 +21,19 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  IconButton,
+  Box,
+  Typography,
 } from "@material-ui/core";
+import { AttachFile, DeleteOutline } from "@material-ui/icons";
+import { head } from "lodash";
 
 import api from "../../services/api";
 import { i18n } from "../../translate/i18n";
 import toastError from "../../errors/toastError";
 import QueueSelect from "../QueueSelect";
+import HolidayPeriodManager from "../HolidayPeriodManager";
+import { SocketContext } from "../../context/Socket/SocketContext";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -64,6 +71,7 @@ const SessionSchema = Yup.object().shape({
 
 const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
   const classes = useStyles();
+  const socketManager = useContext(SocketContext);
   const initialState = {
     name: "",
     greetingMessage: "",
@@ -86,6 +94,9 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
   const [selectedQueueId, setSelectedQueueId] = useState(null)
   const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [prompts, setPrompts] = useState([]);
+  const [greetingAttachment, setGreetingAttachment] = useState(null);
+  const attachmentFile = useRef(null);
+  const [holidayPeriodEnabled, setHolidayPeriodEnabled] = useState("disabled");
   
     useEffect(() => {
     const fetchSession = async () => {
@@ -127,10 +138,72 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
     })();
   }, []);
 
+  useEffect(() => {
+    const fetchHolidayPeriodEnabled = async () => {
+      try {
+        const { data } = await api.get("/settings");
+        const holidayPeriodEnabledSetting = data.find((s) => s.key === "holidayPeriodEnabled");
+        if (holidayPeriodEnabledSetting) {
+          setHolidayPeriodEnabled(holidayPeriodEnabledSetting.value);
+        }
+      } catch (err) {
+        toastError(err);
+      }
+    };
+    
+    fetchHolidayPeriodEnabled();
+    
+    // Listener para atualizar quando a configuração mudar via socket
+    const companyId = localStorage.getItem("companyId");
+    if (companyId && socketManager) {
+      const socket = socketManager.getSocket(companyId);
+      
+      socket.on(`company-${companyId}-settings`, (data) => {
+        if (data.action === "update" && data.setting.key === "holidayPeriodEnabled") {
+          setHolidayPeriodEnabled(data.setting.value);
+        }
+      });
+      
+      return () => {
+        socket.off(`company-${companyId}-settings`);
+      };
+    }
+  }, [socketManager, open]);
+
+  const handleAttachmentFile = (e) => {
+    const file = head(e.target.files);
+    if (file) {
+      setGreetingAttachment(file);
+    }
+  };
+
+  const deleteGreetingMedia = async () => {
+    if (greetingAttachment) {
+      setGreetingAttachment(null);
+      attachmentFile.current.value = null;
+    }
+
+    if (whatsApp.greetingMediaPath && whatsAppId) {
+      try {
+        await api.delete(`/whatsapp/${whatsAppId}/greeting-media`);
+        setWhatsApp((prev) => ({
+          ...prev,
+          greetingMediaPath: null,
+          greetingMediaName: null,
+        }));
+        toast.success("Mídia removida com sucesso");
+      } catch (err) {
+        toastError(err);
+      }
+    }
+  };
+
   const handleSaveWhatsApp = async (values) => {
-const whatsappData = {
-      ...values, queueIds: selectedQueueIds, transferQueueId: selectedQueueId,
-      promptId: selectedPrompt ? selectedPrompt : null
+    const whatsappData = {
+      ...values, 
+      queueIds: selectedQueueIds, 
+      transferQueueId: selectedQueueId,
+      promptId: selectedPrompt ? selectedPrompt : null,
     };
     delete whatsappData["queues"];
     delete whatsappData["session"];
@@ -138,8 +211,22 @@ const whatsappData = {
     try {
       if (whatsAppId) {
         await api.put(`/whatsapp/${whatsAppId}`, whatsappData);
+        
+        // Upload de mídia se houver
+        if (greetingAttachment) {
+          const formData = new FormData();
+          formData.append("file", greetingAttachment);
+          await api.post(`/whatsapp/${whatsAppId}/greeting-media`, formData);
+        }
       } else {
-        await api.post("/whatsapp", whatsappData);
+        const { data } = await api.post("/whatsapp", whatsappData);
+        
+        // Upload de mídia se houver
+        if (greetingAttachment) {
+          const formData = new FormData();
+          formData.append("file", greetingAttachment);
+          await api.post(`/whatsapp/${data.id}/greeting-media`, formData);
+        }
       }
       toast.success(i18n.t("whatsappModal.success"));
       handleClose();
@@ -163,6 +250,7 @@ const whatsappData = {
     setWhatsApp(initialState);
 	  setSelectedQueueId(null);
     setSelectedQueueIds([]);
+    setGreetingAttachment(null);
   };
 
   return (
@@ -241,6 +329,48 @@ const whatsappData = {
                     variant="outlined"
                     margin="dense"
                   />
+                </div>
+                {/* Mídia de Saudação */}
+                <div>
+                  <Typography variant="subtitle2" style={{ marginBottom: 8, marginTop: 16 }}>
+                    Mídia de Saudação (Opcional)
+                  </Typography>
+                  <div style={{ display: "none" }}>
+                    <input
+                      type="file"
+                      ref={attachmentFile}
+                      onChange={(e) => handleAttachmentFile(e)}
+                      accept="image/*"
+                    />
+                  </div>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} sm={6}>
+                      <Button
+                        variant="outlined"
+                        startIcon={<AttachFile />}
+                        onClick={() => attachmentFile.current?.click()}
+                        fullWidth
+                      >
+                        {greetingAttachment ? greetingAttachment.name : (whatsApp.greetingMediaName || "Anexar Imagem")}
+                      </Button>
+                    </Grid>
+                    {(greetingAttachment || whatsApp.greetingMediaPath) && (
+                      <Grid item xs={12}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Typography variant="body2" color="textSecondary">
+                            {greetingAttachment ? greetingAttachment.name : whatsApp.greetingMediaName}
+                          </Typography>
+                          <IconButton
+                            size="small"
+                            onClick={deleteGreetingMedia}
+                            color="secondary"
+                          >
+                            <DeleteOutline />
+                          </IconButton>
+                        </Box>
+                      </Grid>
+                    )}
+                  </Grid>
                 </div>
                 <div>
                   <Field
@@ -416,6 +546,15 @@ const whatsappData = {
                     />
                   </div>
                 </div>
+                {/* Recesso/Feriados */}
+                {whatsAppId && holidayPeriodEnabled === "enabled" && (
+                  <div style={{ marginTop: 16 }}>
+                    <HolidayPeriodManager
+                      whatsappId={whatsAppId}
+                      companyId={localStorage.getItem("companyId")}
+                    />
+                  </div>
+                )}
               </DialogContent>
               <DialogActions>
                 <Button

@@ -11,6 +11,9 @@ interface Request {
   companyId: number;
   queueIds?: number[];
   greetingMessage?: string;
+  greetingMediaPath?: string;
+  greetingMediaName?: string;
+  greetingMediaSendMode?: string;
   complationMessage?: string;
   outOfHoursMessage?: string;
   ratingMessage?: string;
@@ -39,6 +42,9 @@ const CreateWhatsAppService = async ({
   status = "OPENING",
   queueIds = [],
   greetingMessage,
+  greetingMediaPath,
+  greetingMediaName,
+    greetingMediaSendMode = "separate",
   complationMessage,
   outOfHoursMessage,
   ratingMessage,
@@ -150,6 +156,9 @@ const CreateWhatsAppService = async ({
       name,
       status,
       greetingMessage,
+      greetingMediaPath,
+      greetingMediaName,
+      greetingMediaSendMode,
       complationMessage,
       outOfHoursMessage,
       ratingMessage,

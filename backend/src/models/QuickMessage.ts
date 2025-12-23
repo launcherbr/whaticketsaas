@@ -40,6 +40,9 @@ class QuickMessage extends Model<QuickMessage> {
   @Column
   geral: boolean;
   
+  @Column
+  editBeforeSend: boolean;
+  
   @BelongsTo(() => User)
   user: User;
 

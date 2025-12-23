@@ -48,6 +48,7 @@ import Compressor from 'compressorjs';
 import LinearWithValueLabel from "./ProgressBarCustom";
 import useQuickMessages from "../../hooks/useQuickMessages";
 import MediaPreview from "../MediaPreview";
+import QuickMessageEditModal from "../QuickMessageEditModal";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
@@ -325,7 +326,7 @@ const SignSwitch = (props) => {
 };
 
 const FileInput = (props) => {
-  const { handleChangeMedias, disableOption, setMedias } = props;
+  const { handleChangeMedias, disableOption, setMedias, setSelectedMediaType } = props;
   const classes = useStyles();
   const [showOptions, setShowOptions] = useState(false);
   const fileInputRef = useRef(null);
@@ -339,6 +340,10 @@ const FileInput = (props) => {
 
   const handleOptionClick = (type) => {
     setShowOptions(false);
+    // Define o tipo de mídia escolhido
+    if (setSelectedMediaType) {
+      setSelectedMediaType(type);
+    }
     switch(type) {
       case 'image':
         fileInputRef.current.click();
@@ -868,6 +873,7 @@ const MessageInputCustom = (props) => {
   const [recording, setRecording] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [selectedMedias, setSelectedMedias] = useState([]);
+  const [selectedMediaType, setSelectedMediaType] = useState(null); // Tipo escolhido pelo usuário
   const inputRef = useRef();
   const { setReplyingMessage, replyingMessage } =
     useContext(ReplyMessageContext);
@@ -882,6 +888,8 @@ const MessageInputCustom = (props) => {
 
   const [quickMessages, setQuickMessages] = useState([]);
   const { list: listQuickMessages } = useQuickMessages();
+  const [quickMessageEditModalOpen, setQuickMessageEditModalOpen] = useState(false);
+  const [quickMessageToEdit, setQuickMessageToEdit] = useState(null);
 
   const [geminiSuggestions, setGeminiSuggestions] = useState([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
@@ -899,16 +907,17 @@ const MessageInputCustom = (props) => {
 
   useEffect(() => {
     inputRef.current.focus();
-    return () => {
-      setInputMessage("");
-      setShowEmoji(false);
-      setMedias([]);
-      setSelectedMedias([]);
-      setReplyingMessage(null);
-      setShowSuggestions(false);
-      setGeminiSuggestions([]);
-      lastPromptRef.current = "";
-    };
+      return () => {
+        setInputMessage("");
+        setShowEmoji(false);
+        setMedias([]);
+        setSelectedMedias([]);
+        setSelectedMediaType(null);
+        setReplyingMessage(null);
+        setShowSuggestions(false);
+        setGeminiSuggestions([]);
+        lastPromptRef.current = "";
+      };
   }, [ticketId, setReplyingMessage]);
 
   useEffect(() => {
@@ -1075,6 +1084,7 @@ const MessageInputCustom = (props) => {
       }
       
       setSelectedMedias(prev => [...prev, ...mediaFiles]);
+      // Manter o tipo selecionado se já foi definido
     }
     
     if (audioFiles.length > 0) {
@@ -1149,6 +1159,11 @@ const MessageInputCustom = (props) => {
         const formData = new FormData();
         formData.append("fromMe", true);
         
+        // Se o usuário escolheu "document", forçar como documento
+        if (selectedMediaType === 'document') {
+          formData.append("forceMediaType", "document");
+        }
+        
         // Aplicar assinatura se estiver ativa
         let messageBody = "";
         if (caption) {
@@ -1157,7 +1172,12 @@ const MessageInputCustom = (props) => {
         }
         // Se não há legenda, messageBody fica vazio (não envia nome do arquivo)
         
-        if (media.type.startsWith('image/')) {
+        // Se forçado como documento, não comprimir imagens
+        if (selectedMediaType === 'document') {
+          formData.append("medias", media);
+          formData.append("body", messageBody);
+          await uploadMedia(formData);
+        } else if (media.type.startsWith('image/')) {
           await new Promise((resolve, reject) => {
             new Compressor(media, {
               quality: 0.7,
@@ -1187,6 +1207,7 @@ const MessageInputCustom = (props) => {
     }
     
     setSelectedMedias([]);
+    setSelectedMediaType(null); // Limpar tipo selecionado
     setInputMessage("");
     setLoading(false);
   };
@@ -1230,6 +1251,14 @@ const MessageInputCustom = (props) => {
   };
   
   const handleQuickMessageClick = async (message) => {
+    // Se editBeforeSend estiver ativado, abre modal de edição
+    if (message.editBeforeSend) {
+      setQuickMessageToEdit(message);
+      setQuickMessageEditModalOpen(true);
+      return;
+    }
+    
+    // Comportamento original: envia diretamente
     if (message.mediaPath) {
       try {
         const { data } = await axios.get(message.mediaPath, {
@@ -1537,6 +1566,7 @@ const MessageInputCustom = (props) => {
               handleChangeMedias={handleChangeMedias}
               setMedias={setMedias}
               setInputMessage={setInputMessage}
+              setSelectedMediaType={setSelectedMediaType}
             />
 
             <SignSwitch
@@ -1576,6 +1606,22 @@ const MessageInputCustom = (props) => {
             />
           </div>
         </Paper>
+        
+        {/* Modal de edição de resposta rápida */}
+        <QuickMessageEditModal
+          open={quickMessageEditModalOpen}
+          onClose={() => {
+            setQuickMessageEditModalOpen(false);
+            setQuickMessageToEdit(null);
+          }}
+          quickMessage={quickMessageToEdit}
+          ticketId={ticketId}
+          replyingMessage={replyingMessage}
+          onSend={() => {
+            setInputMessage("");
+            setSelectedMedias([]);
+          }}
+        />
       </>
     );
   }

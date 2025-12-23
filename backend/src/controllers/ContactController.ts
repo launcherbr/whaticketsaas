@@ -40,6 +40,7 @@ interface ContactData {
   number: string;
   email?: string;
   extraInfo?: ExtraInfo[];
+  birthday?: string;
 }
 
 export const index = async (req: Request, res: Response): Promise<Response> => {

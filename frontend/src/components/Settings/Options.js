@@ -171,6 +171,18 @@ export default function Options(props) {
   const [sendGreetingAcceptedMessage, setSendGreetingAcceptedMessage] = useState("");
   const [savingGreetingMessage, setSavingGreetingMessage] = useState(false);
   
+  const [birthdayReminderEnabled, setBirthdayReminderEnabled] = useState("disabled");
+  const [loadingBirthdayReminderEnabled, setLoadingBirthdayReminderEnabled] = useState(false);
+  const [birthdayMessage, setBirthdayMessage] = useState("");
+  const [savingBirthdayMessage, setSavingBirthdayMessage] = useState(false);
+  const [birthdayReminderTime, setBirthdayReminderTime] = useState("09:00");
+  const [savingBirthdayReminderTime, setSavingBirthdayReminderTime] = useState(false);
+  
+  const [holidayPeriodEnabled, setHolidayPeriodEnabled] = useState("disabled");
+  const [loadingHolidayPeriodEnabled, setLoadingHolidayPeriodEnabled] = useState(false);
+  const [holidayPeriodAllowQueueFlow, setHolidayPeriodAllowQueueFlow] = useState("disabled");
+  const [loadingHolidayPeriodAllowQueueFlow, setLoadingHolidayPeriodAllowQueueFlow] = useState(false);
+  
   const [SettingsTransfTicket, setSettingsTransfTicket] = useState("disabled");
   const [loadingSettingsTransfTicket, setLoadingSettingsTransfTicket] = useState(false);
   const [sendMsgTransfTicketMessage, setSendMsgTransfTicketMessage] = useState("");
@@ -268,6 +280,31 @@ export default function Options(props) {
       const sendGreetingAcceptedMsg = settings.find((s) => s.key === "sendGreetingAcceptedMessage");
       if (sendGreetingAcceptedMsg) {
         setSendGreetingAcceptedMessage(sendGreetingAcceptedMsg.value);
+      }
+
+      const birthdayReminderSetting = settings.find((s) => s.key === "birthdayReminderEnabled");
+      if (birthdayReminderSetting) {
+        setBirthdayReminderEnabled(birthdayReminderSetting.value);
+      }
+
+      const birthdayMessageSetting = settings.find((s) => s.key === "birthdayMessage");
+      if (birthdayMessageSetting) {
+        setBirthdayMessage(birthdayMessageSetting.value);
+      }
+
+      const birthdayReminderTimeSetting = settings.find((s) => s.key === "birthdayReminderTime");
+      if (birthdayReminderTimeSetting) {
+        setBirthdayReminderTime(birthdayReminderTimeSetting.value || "09:00");
+      }
+
+      const holidayPeriodEnabledSetting = settings.find((s) => s.key === "holidayPeriodEnabled");
+      if (holidayPeriodEnabledSetting) {
+        setHolidayPeriodEnabled(holidayPeriodEnabledSetting.value);
+      }
+
+      const holidayPeriodAllowQueueFlowSetting = settings.find((s) => s.key === "holidayPeriodAllowQueueFlow");
+      if (holidayPeriodAllowQueueFlowSetting) {
+        setHolidayPeriodAllowQueueFlow(holidayPeriodAllowQueueFlowSetting.value);
       }
 
       const gerencianetSandboxSetting = settings.find((s) => s.key === "gerencianetSandbox");
@@ -565,6 +602,59 @@ export default function Options(props) {
     });
     toast.success("Mensagem de saudação atualizada com sucesso.");
     setSavingGreetingMessage(false);
+  }
+
+  async function handleHolidayPeriodEnabled(value) {
+    setHolidayPeriodEnabled(value);
+    setLoadingHolidayPeriodEnabled(true);
+    await update({
+      key: "holidayPeriodEnabled",
+      value,
+    });
+    toast.success("Mensagem de recesso/feriados atualizada com sucesso.");
+    setLoadingHolidayPeriodEnabled(false);
+  }
+
+  async function handleHolidayPeriodAllowQueueFlow(value) {
+    setHolidayPeriodAllowQueueFlow(value);
+    setLoadingHolidayPeriodAllowQueueFlow(true);
+    await update({
+      key: "holidayPeriodAllowQueueFlow",
+      value,
+    });
+    toast.success("Configuração de fluxo durante recesso atualizada com sucesso.");
+    setLoadingHolidayPeriodAllowQueueFlow(false);
+  }
+
+  async function handleBirthdayReminderEnabled(value) {
+    setBirthdayReminderEnabled(value);
+    setLoadingBirthdayReminderEnabled(true);
+    await update({
+      key: "birthdayReminderEnabled",
+      value,
+    });
+    toast.success("Aviso de aniversariantes atualizado com sucesso.");
+    setLoadingBirthdayReminderEnabled(false);
+  }
+
+  async function handleSaveBirthdayMessage() {
+    setSavingBirthdayMessage(true);
+    await update({
+      key: "birthdayMessage",
+      value: birthdayMessage,
+    });
+    toast.success("Mensagem de aniversário atualizada com sucesso.");
+    setSavingBirthdayMessage(false);
+  }
+
+  async function handleSaveBirthdayReminderTime() {
+    setSavingBirthdayReminderTime(true);
+    await update({
+      key: "birthdayReminderTime",
+      value: birthdayReminderTime,
+    });
+    toast.success("Horário de disparo de aniversários atualizado com sucesso. O sistema será reiniciado para aplicar as mudanças.");
+    setSavingBirthdayReminderTime(false);
   }
  
   async function handleChangeIPIxc(value) {
@@ -1022,6 +1112,134 @@ export default function Options(props) {
           </Grid>
         )}
 		
+		{/* AVISO DE ANIVERSARIANTES */}
+        <Grid xs={12} sm={12} md={12} item>
+          <FormControl className={classes.selectContainer}>
+            <InputLabel id="birthdayReminderEnabled-label">Ativar/Desativar aviso de aniversariantes</InputLabel>
+            <Select
+              labelId="birthdayReminderEnabled-label"
+              value={birthdayReminderEnabled}
+              onChange={async (e) => {
+                handleBirthdayReminderEnabled(e.target.value);
+              }}
+            >
+              <MenuItem value={"disabled"}>Desabilitado</MenuItem>
+              <MenuItem value={"enabled"}>Habilitado</MenuItem>
+            </Select>
+            <FormHelperText>
+              {loadingBirthdayReminderEnabled && "Atualizando..."}
+            </FormHelperText>
+          </FormControl>
+        </Grid>
+        {birthdayReminderEnabled === "enabled" && (
+          <>
+            <Grid xs={12} sm={12} md={6} item>
+              <FormControl className={classes.selectContainer} fullWidth>
+                <TextField
+                  id="birthdayReminderTime"
+                  name="birthdayReminderTime"
+                  margin="dense"
+                  label="Horário de disparo"
+                  type="time"
+                  variant="outlined"
+                  value={birthdayReminderTime}
+                  onChange={(e) => setBirthdayReminderTime(e.target.value)}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  helperText="Horário em que as mensagens de aniversário serão enviadas (formato: HH:MM)"
+                />
+                <MuiButton
+                  variant="contained"
+                  color="primary"
+                  style={{ marginTop: 8, alignSelf: "flex-start" }}
+                  onClick={handleSaveBirthdayReminderTime}
+                  disabled={savingBirthdayReminderTime}
+                >
+                  {savingBirthdayReminderTime ? "Salvando..." : "Salvar horário"}
+                </MuiButton>
+              </FormControl>
+            </Grid>
+            <Grid xs={12} sm={12} md={12} item>
+              <FormControl className={classes.selectContainer} fullWidth>
+                <TextField
+                  id="birthdayMessage"
+                  name="birthdayMessage"
+                  margin="dense"
+                  label="Mensagem de aniversário"
+                  variant="outlined"
+                  value={birthdayMessage}
+                  onChange={(e) => setBirthdayMessage(e.target.value)}
+                  multiline
+                  minRows={4}
+                  placeholder="Ex.: Parabéns {{name}}! 🎉🎂 Desejamos um feliz aniversário! Que você tenha {{idade}} anos de muita felicidade!"
+                />
+                <FormHelperText>
+                  {`Variáveis disponíveis: {{name}} (nome do contato), {{idade}} (idade do contato)`}
+                </FormHelperText>
+                <MuiButton
+                  variant="contained"
+                  color="primary"
+                  style={{ marginTop: 8, alignSelf: "flex-start" }}
+                  onClick={handleSaveBirthdayMessage}
+                  disabled={savingBirthdayMessage}
+                >
+                  {savingBirthdayMessage ? "Salvando..." : "Salvar mensagem"}
+                </MuiButton>
+              </FormControl>
+            </Grid>
+          </>
+        )}
+		
+		{/* RECESSO/FERIADOS */}
+        <Grid xs={12} sm={12} md={12} item>
+          <FormControl className={classes.selectContainer}>
+            <InputLabel id="holidayPeriodEnabled-label">Ativar/Desativar mensagem de recesso/feriados</InputLabel>
+            <Select
+              labelId="holidayPeriodEnabled-label"
+              value={holidayPeriodEnabled}
+              onChange={async (e) => {
+                handleHolidayPeriodEnabled(e.target.value);
+              }}
+            >
+              <MenuItem value={"disabled"}>Desabilitado</MenuItem>
+              <MenuItem value={"enabled"}>Habilitado</MenuItem>
+            </Select>
+            <FormHelperText>
+              {loadingHolidayPeriodEnabled && "Atualizando..."}
+            </FormHelperText>
+          </FormControl>
+        </Grid>
+        {holidayPeriodEnabled === "enabled" && (
+          <>
+            <Grid xs={12} sm={12} md={12} item>
+              <FormControl className={classes.selectContainer}>
+                <InputLabel id="holidayPeriodAllowQueueFlow-label">Mesmo com recesso fila funciona</InputLabel>
+                <Select
+                  labelId="holidayPeriodAllowQueueFlow-label"
+                  value={holidayPeriodAllowQueueFlow}
+                  onChange={async (e) => {
+                    handleHolidayPeriodAllowQueueFlow(e.target.value);
+                  }}
+                >
+                  <MenuItem value={"disabled"}>Desabilitado</MenuItem>
+                  <MenuItem value={"enabled"}>Habilitado</MenuItem>
+                </Select>
+                <FormHelperText>
+                  {loadingHolidayPeriodAllowQueueFlow && "Atualizando..."}
+                  {!loadingHolidayPeriodAllowQueueFlow && "Quando habilitado, o fluxo de filas continua funcionando durante o recesso, mas sem atendimento"}
+                </FormHelperText>
+              </FormControl>
+            </Grid>
+            <Grid xs={12} sm={12} md={12} item>
+              <FormControl className={classes.selectContainer} fullWidth>
+                <Typography variant="body2" color="textSecondary" style={{ marginTop: 8, marginBottom: 8 }}>
+                  Configure os períodos de recesso/feriados nas configurações da conexão WhatsApp
+                </Typography>
+              </FormControl>
+            </Grid>
+          </>
+        )}
 		{/* ENVIAR SAUDAÇÃO QUANDO HOUVER SOMENTE 1 FILA */}
         <Grid xs={12} sm={12} md={12} item>
           <FormControl className={classes.selectContainer}>
@@ -1082,9 +1300,8 @@ export default function Options(props) {
             </FormHelperText>
           </FormControl>
         </Grid>
-		
       </Grid>
-	  
+		
 		<OnlyForSuperUser
 				user={currentUser}
 				yes={() => (

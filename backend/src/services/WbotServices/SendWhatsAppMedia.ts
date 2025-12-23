@@ -12,13 +12,15 @@ import mime from "mime-types";
 import ffmpegPath from "ffmpeg-static";
 import formatBody from "../../helpers/Mustache";
 import { buildContactAddress } from "../../utils/global";
+import { verifyMessage } from "./wbotMessageListener";
 
 interface Request {
   media: Express.Multer.File;
   ticket: Ticket;
   companyId?: number;
   body?: string;
-  isForwarded?: boolean;  
+  isForwarded?: boolean;
+  forceMediaType?: string; // Força o tipo de mídia (ex: "document")
 }
 
 
@@ -124,7 +126,8 @@ const SendWhatsAppMedia = async ({
   media,
   ticket,
   body,
-  isForwarded = false
+  isForwarded = false,
+  forceMediaType
 }: Request): Promise<WAMessage> => {
   try {
     const wbot = await GetTicketWbot(ticket);
@@ -132,82 +135,108 @@ const SendWhatsAppMedia = async ({
 
     const pathMedia = media.path;
     const mimeType = media.mimetype;
-    const typeMessage = mimeType.split("/")[0];
+    let typeMessage = mimeType.split("/")[0];
     const fileName = media.originalname.replace('/', '-');
     let options: AnyMessageContent;
     const bodyMessage = formatBody(body, ticket.contact);
 
-    // Lista de tipos MIME de vídeo comuns
-    const videoMimeTypes = [
-      'video/mp4',
-      'video/3gpp',
-      'video/quicktime',
-      'video/x-msvideo',
-      'video/x-ms-wmv',
-      'video/x-matroska',
-      'video/webm',
-      'video/ogg'
-    ];
-
-    // Lista de extensões que devem ser tratadas como documento
-    const documentExtensions = ['.psd', '.ai', '.eps', '.indd', '.xd', '.sketch'];
-
-    // Verifica se é um arquivo PSD ou similar (deve ser tratado como documento)
-    const shouldBeDocument = documentExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
-
-    if (shouldBeDocument) {
-      options = {
-        document: fs.readFileSync(pathMedia),
-        caption: bodyMessage || null,
-        fileName: fileName,
-        mimetype: mimeType
-      };
+    // Copiar arquivo para a pasta pública antes de enviar
+    const folder = `${publicFolder}/company${companyId}`;
+    if (!fs.existsSync(folder)) {
+      fs.mkdirSync(folder, { recursive: true });
+      fs.chmodSync(folder, 0o777);
     }
-    // Verifica se é um vídeo (incluindo vários formatos)
-    else if (typeMessage === "video" || videoMimeTypes.includes(mimeType)) {
-      options = {
-        video: fs.readFileSync(pathMedia),
-        caption: bodyMessage || null,
-        fileName: fileName,
-        mimetype: mimeType
-      };
-    } else if (typeMessage === "audio") {
-      // Verifica se o arquivo já é OGG
-      if (mimeType === "audio/ogg") {
-        options = {
-          audio: fs.readFileSync(pathMedia),
-          mimetype: "audio/ogg; codecs=opus",
-          ptt: true
-        };
-      } else {
-        // Converte para OGG se não for
-        const convert = await processAudio(pathMedia, companyId);
-        options = {
-          audio: fs.readFileSync(convert),
-          mimetype: "audio/ogg; codecs=opus",
-          ptt: true
-        };
-      }
-    } else if (typeMessage === "document" || mimeType === "application/pdf") {
+    
+    // Gerar nome único para o arquivo
+    const timestamp = new Date().getTime();
+    const fileExtension = fileName.includes('.') ? fileName.split('.').pop() : mimeType.split('/')[1]?.split(';')[0] || 'bin';
+    const savedFileName = `${timestamp}_${fileName}`;
+    const savedFilePath = `${folder}/${savedFileName}`;
+    
+    // Copiar arquivo para a pasta pública
+    fs.copyFileSync(pathMedia, savedFilePath);
+
+    // Se forceMediaType for "document", forçar como documento independente do tipo de arquivo
+    if (forceMediaType === "document") {
       options = {
         document: fs.readFileSync(pathMedia),
         caption: bodyMessage || null,
         fileName: fileName,
         mimetype: mimeType
-      };
-    } else if (typeMessage === "image") {
-      options = {
-        image: fs.readFileSync(pathMedia),
-        caption: bodyMessage || null
       };
     } else {
-      // Caso o tipo de mídia não seja reconhecido, trata como documento
-      options = {
-        document: fs.readFileSync(pathMedia),
-        caption: bodyMessage || null,
-        fileName: fileName,
-        mimetype: mimeType
-      };
+      // Lista de tipos MIME de vídeo comuns
+      const videoMimeTypes = [
+        'video/mp4',
+        'video/3gpp',
+        'video/quicktime',
+        'video/x-msvideo',
+        'video/x-ms-wmv',
+        'video/x-matroska',
+        'video/webm',
+        'video/ogg'
+      ];
+
+      // Lista de extensões que devem ser tratadas como documento
+      const documentExtensions = ['.psd', '.ai', '.eps', '.indd', '.xd', '.sketch'];
+
+      // Verifica se é um arquivo PSD ou similar (deve ser tratado como documento)
+      const shouldBeDocument = documentExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
+
+      if (shouldBeDocument) {
+        options = {
+          document: fs.readFileSync(pathMedia),
+          caption: bodyMessage || null,
+          fileName: fileName,
+          mimetype: mimeType
+        };
+      }
+      // Verifica se é um vídeo (incluindo vários formatos)
+      else if (typeMessage === "video" || videoMimeTypes.includes(mimeType)) {
+        options = {
+          video: fs.readFileSync(pathMedia),
+          caption: bodyMessage || null,
+          fileName: fileName,
+          mimetype: mimeType
+        };
+      } else if (typeMessage === "audio") {
+        // Verifica se o arquivo já é OGG
+        if (mimeType === "audio/ogg") {
+          options = {
+            audio: fs.readFileSync(pathMedia),
+            mimetype: "audio/ogg; codecs=opus",
+            ptt: true
+          };
+        } else {
+          // Converte para OGG se não for
+          const convert = await processAudio(pathMedia, companyId);
+          options = {
+            audio: fs.readFileSync(convert),
+            mimetype: "audio/ogg; codecs=opus",
+            ptt: true
+          };
+        }
+      } else if (typeMessage === "document" || mimeType === "application/pdf") {
+        options = {
+          document: fs.readFileSync(pathMedia),
+          caption: bodyMessage || null,
+          fileName: fileName,
+          mimetype: mimeType
+        };
+      } else if (typeMessage === "image") {
+        options = {
+          image: fs.readFileSync(pathMedia),
+          caption: bodyMessage || null
+        };
+      } else {
+        // Caso o tipo de mídia não seja reconhecido, trata como documento
+        options = {
+          document: fs.readFileSync(pathMedia),
+          caption: bodyMessage || null,
+          fileName: fileName,
+          mimetype: mimeType
+        };
+      }
     }
 
     const content = {
@@ -224,6 +253,16 @@ const SendWhatsAppMedia = async ({
     );
 
     await ticket.update({ lastMessage: bodyMessage || "📎 Mídia" });
+
+    // Adicionar mediaUrl ao sentMessage antes de verificar
+    // Isso permite que o verifyMessage saiba qual arquivo foi enviado
+    if (sentMessage) {
+      (sentMessage as any).mediaUrl = savedFileName;
+      (sentMessage as any).mediaPath = savedFilePath;
+    }
+
+    // Salvar a mensagem no banco de dados
+    await verifyMessage(sentMessage, ticket, ticket.contact);
 
     return sentMessage;
   } catch (err) {

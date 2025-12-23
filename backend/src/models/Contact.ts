@@ -11,7 +11,8 @@ import {
   Default,
   HasMany,
   ForeignKey,
-  BelongsTo
+  BelongsTo,
+  DataType
 } from "sequelize-typescript";
 import ContactCustomField from "./ContactCustomField";
 import Ticket from "./Ticket";
@@ -88,6 +89,10 @@ class Contact extends Model<Contact> {
   @Default(null)
   @Column
   lid: string;
+
+  @AllowNull(true)
+  @Column(DataType.DATEONLY)
+  birthday: Date;
 
   @BelongsTo(() => Whatsapp)
   whatsapp: Whatsapp;

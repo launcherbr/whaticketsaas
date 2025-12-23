@@ -51,13 +51,21 @@ class Message extends Model<Message> {
   @Column(DataType.STRING)
   get mediaUrl(): string | null {
     if (this.getDataValue("mediaUrl")) {
-      // return `${process.env.BACKEND_URL}/public/${this.getDataValue("mediaUrl")}`;
-
-     
-      return `${process.env.BACKEND_URL}${process.env.PROXY_PORT ?`:${process.env.PROXY_PORT}`:""}/public/company${this.companyId}/${this.getDataValue("mediaUrl")}`;
-
-      // return `${process.env.BACKEND_URL}/public/company${this.companyId}/${this.getDataValue("mediaUrl")}`;
-
+      const backendUrl = process.env.BACKEND_URL || "";
+      const proxyPort = process.env.PROXY_PORT;
+      const mediaPath = this.getDataValue("mediaUrl");
+      
+      // Se BACKEND_URL já contém porta, não adicionar PROXY_PORT
+      let baseUrl = backendUrl;
+      if (proxyPort && !backendUrl.match(/:\d+$/)) {
+        baseUrl = `${backendUrl}:${proxyPort}`;
+      }
+      
+      // Garantir que não há barras duplicadas
+      const cleanBaseUrl = baseUrl.replace(/\/+$/, "");
+      const cleanPath = `/public/company${this.companyId}/${mediaPath}`.replace(/\/+/g, "/");
+      
+      return `${cleanBaseUrl}${cleanPath}`;
     }
     return null;
   }

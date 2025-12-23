@@ -6,6 +6,7 @@ import { StartAllWhatsAppsSessions } from "./services/WbotServices/StartAllWhats
 import Company from "./models/Company";
 import { startQueueProcess } from "./queues";
 import { TransferTicketQueue } from "./wbotTransferTicketQueue";
+import BirthdayReminderService from "./services/BirthdayReminderService";
 import cron from "node-cron";
 
 
@@ -53,6 +54,30 @@ cron.schedule("*/5 * * * *", async () => {  // De 1 minuto para 5 minutos
     logger.error("Error in cron job:", error);
   }
 });
+
+// Executa verificação de aniversários - horário configurável por empresa
+// O horário será verificado dentro do serviço
+const startBirthdayReminderCron = async () => {
+  // Executa a cada minuto para verificar se é o horário configurado
+  cron.schedule("* * * * *", async () => {
+    try {
+      await BirthdayReminderService();
+    } catch (error) {
+      logger.error("Error in birthday reminder cron job:", error);
+    }
+  });
+  
+  // Também executa imediatamente ao iniciar o servidor (para testes)
+  setTimeout(async () => {
+    try {
+      await BirthdayReminderService();
+    } catch (error) {
+      logger.error("Error in initial birthday reminder check:", error);
+    }
+  }, 5000); // Aguarda 5 segundos após o servidor iniciar
+};
+
+startBirthdayReminderCron();
 
 
 

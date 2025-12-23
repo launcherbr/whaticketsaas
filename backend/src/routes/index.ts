@@ -34,6 +34,7 @@ import forgotsRoutes from "./forgotPasswordRoutes";
 import versionRouter from "./versionRoutes";
 import reportsRoutes from './reportsRoutes';
 import geminiRoutes from "./geminiRoutes";
+import backupsRoutes from "./backupsRoutes";
 
 const routes = Router();
 
@@ -72,5 +73,6 @@ routes.use(forgotsRoutes);
 routes.use(reportsRoutes);
 routes.use(versionRouter);
 routes.use(geminiRoutes);
+routes.use(backupsRoutes);
 
 export default routes;

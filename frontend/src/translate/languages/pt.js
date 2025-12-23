@@ -511,6 +511,7 @@ const messages = {
           schedules: "Agendamentos",
           campaigns: "Campanhas",
           annoucements: "Informativos",
+          backups:"Backups"
           loglauncher:"Atualizações",
           chats: "Chat Interno",
           financeiro: "Financeiro",

@@ -11,8 +11,8 @@ import SendWhatsAppMessage from "../WbotServices/SendWhatsAppMessage";
 import FindOrCreateATicketTrakingService from "./FindOrCreateATicketTrakingService";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
 import { verifyMessage } from "../WbotServices/wbotMessageListener";
-import ListSettingsServiceOne from "../SettingServices/ListSettingsServiceOne"; //NOVO//
-import ShowUserService from "../UserServices/ShowUserService"; //NOVO//
+import ListSettingsServiceOne from "../SettingServices/ListSettingsServiceOne"; 
+import ShowUserService from "../UserServices/ShowUserService"; 
 import { isNil } from "lodash";
 import Whatsapp from "../../models/Whatsapp";
 import User from "../../models/User";
@@ -176,7 +176,8 @@ const UpdateTicketService = async ({
       complationMessage !== ""
     ) {
       const body = `\u200e${complationMessage}`;
-      await SendWhatsAppMessage({ body, ticket });
+      const sentMessage = await SendWhatsAppMessage({ body, ticket });
+      await verifyMessage(sentMessage, ticket, ticket.contact);
     }
   }
 

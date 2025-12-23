@@ -12,6 +12,9 @@ interface WhatsappData {
   session?: string;
   isDefault?: boolean;
   greetingMessage?: string;
+  greetingMediaPath?: string;
+  greetingMediaName?: string;
+  greetingMediaSendMode?: string;
   complationMessage?: string;
   outOfHoursMessage?: string;
   ratingMessage?: string;
@@ -57,6 +60,9 @@ const UpdateWhatsAppService = async ({
     isDefault,
     session,
     greetingMessage,
+    greetingMediaPath,
+    greetingMediaName,
+    greetingMediaSendMode,
     complationMessage,
     outOfHoursMessage,
     ratingMessage,
@@ -105,6 +111,9 @@ const UpdateWhatsAppService = async ({
     status,
     session,
     greetingMessage,
+    greetingMediaPath,
+    greetingMediaName,
+    greetingMediaSendMode: greetingMediaSendMode || "separate",
     complationMessage,
     outOfHoursMessage,
     ratingMessage,

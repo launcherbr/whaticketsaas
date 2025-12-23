@@ -77,7 +77,8 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 		name: "",
 		number: "",
 		email: "",
-		disableBot: false
+		disableBot: false,
+		birthday: ""
 	};
 
 	const [contact, setContact] = useState(initialState);
@@ -102,6 +103,22 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 				const { data } = await api.get(`/contacts/${contactId}`);
 				if (isMounted.current) {
 					console.log(data)
+					// Formata a data de aniversário para o formato YYYY-MM-DD se existir
+					if (data.birthday) {
+						// Se já está no formato YYYY-MM-DD, usa diretamente
+						if (typeof data.birthday === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data.birthday)) {
+							// Já está no formato correto
+							data.birthday = data.birthday;
+						} else {
+							// Se é uma data, extrai apenas a parte da data sem considerar timezone
+							const birthdayDate = new Date(data.birthday);
+							// Usa getUTCFullYear, getUTCMonth, getUTCDate para evitar problemas de timezone
+							const year = birthdayDate.getUTCFullYear();
+							const month = String(birthdayDate.getUTCMonth() + 1).padStart(2, '0');
+							const day = String(birthdayDate.getUTCDate()).padStart(2, '0');
+							data.birthday = `${year}-${month}-${day}`;
+						}
+					}
 					setContact(data);
 				}
 			} catch (err) {
@@ -189,6 +206,22 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 										error={touched.email && Boolean(errors.email)}
 										helperText={touched.email && errors.email}
 										placeholder="Email address"
+										fullWidth
+										margin="dense"
+										variant="outlined"
+									/>
+								</div>
+								<div>
+									<Field
+										as={TextField}
+										label="Aniversário"
+										name="birthday"
+										type="date"
+										InputLabelProps={{
+											shrink: true,
+										}}
+										error={touched.birthday && Boolean(errors.birthday)}
+										helperText={touched.birthday && errors.birthday}
 										fullWidth
 										margin="dense"
 										variant="outlined"

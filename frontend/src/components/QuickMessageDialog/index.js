@@ -30,6 +30,8 @@ import {
     InputLabel,
     MenuItem,
     Select,
+    FormControlLabel,
+    Switch,
 } from "@material-ui/core";
 import ConfirmationModal from "../ConfirmationModal";
 
@@ -85,6 +87,7 @@ const QuickMessageDialog = ({ open, onClose, quickemessageId, reload }) => {
         message: "",
         geral: false,
         status: true,
+        editBeforeSend: false,
     };
 
     const [confirmationOpen, setConfirmationOpen] = useState(false);
@@ -281,6 +284,18 @@ const QuickMessageDialog = ({ open, onClose, quickemessageId, reload }) => {
                                         <MessageVariablesPicker
                                             disabled={isSubmitting}
                                             onClick={value => handleClickMsgVar(value, setFieldValue)}
+                                        />
+                                    </Grid>
+                                    <Grid xs={12} item>
+                                        <FormControlLabel
+                                            control={
+                                                <Switch
+                                                    checked={values.editBeforeSend || false}
+                                                    onChange={(e) => setFieldValue("editBeforeSend", e.target.checked)}
+                                                    color="primary"
+                                                />
+                                            }
+                                            label="Editar antes de enviar"
                                         />
                                     </Grid>
                                     {(quickemessage.mediaPath || attachment) && (

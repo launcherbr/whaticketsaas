@@ -25,6 +25,8 @@ import { getIO } from "./socket";
 import { Store } from "./store";
 import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSession";
 import DeleteBaileysService from "../services/BaileysServices/DeleteBaileysService";
+import { wbotMessageListener } from "../services/WbotServices/wbotMessageListener";
+import wbotMonitor from "../services/WbotServices/wbotMonitor";
 import NodeCache from 'node-cache';
 import Contact from "../models/Contact";
 import Ticket from "../models/Ticket";
@@ -480,9 +482,32 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
               const sessionIndex = sessions.findIndex(
                 s => s.id === whatsapp.id
               );
+              const isReconnection = sessionIndex !== -1;
+              
               if (sessionIndex === -1) {
                 wsocket.id = whatsapp.id;
                 sessions.push(wsocket);
+              } else {
+                // Atualizar sessão existente
+                sessions[sessionIndex] = wsocket;
+              }
+
+              // Se for uma reconexão (sessão já existia), re-registrar listeners
+              if (isReconnection) {
+                logger.info(`Reconexão detectada para ${name} (ID: ${id}). Re-registrando listeners...`);
+                // Aguardar um pouco para garantir que a conexão está estável
+                setTimeout(async () => {
+                  try {
+                    await wbotMessageListener(wsocket, whatsapp.companyId);
+                    await wbotMonitor(wsocket, whatsapp, whatsapp.companyId);
+                    logger.info(`Listeners re-registrados com sucesso para ${name} (ID: ${id})`);
+                  } catch (err) {
+                    logger.error(`Erro ao re-registrar listeners para ${name}: ${err}`);
+                    Sentry.captureException(err);
+                  }
+                }, 1000);
+              } else {
+                logger.info(`Conexão inicial estabelecida para ${name} (ID: ${id}). Listeners serão registrados pelo StartWhatsAppSession.`);
               }
 
               resolve(wsocket);

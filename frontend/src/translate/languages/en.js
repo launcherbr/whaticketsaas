@@ -503,6 +503,7 @@ const messages = {
 			schedules: "Schedules",
 			campaigns: "Campaigns",
 			annoucements: "Announcements",
+			backups:"Backups",
 			loglauncher:"Updates",
 			chats: "Internal Chat",
 			financeiro: "Financial",

@@ -9,12 +9,19 @@ import ListWhatsAppsService from "../services/WhatsappService/ListWhatsAppsServi
 import ShowWhatsAppService from "../services/WhatsappService/ShowWhatsAppService";
 import UpdateWhatsAppService from "../services/WhatsappService/UpdateWhatsAppService";
 import AppError from "../errors/AppError";
+import Whatsapp from "../models/Whatsapp";
+import { head } from "lodash";
+import fs from "fs";
+import path from "path";
 
 interface WhatsappData {
   name: string;
   queueIds: number[];
   companyId: number;
   greetingMessage?: string;
+  greetingMediaPath?: string;
+  greetingMediaName?: string;
+  greetingMediaSendMode?: string;
   complationMessage?: string;
   outOfHoursMessage?: string;
   ratingMessage?: string;
@@ -50,6 +57,9 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     status,
     isDefault,
     greetingMessage,
+    greetingMediaPath,
+    greetingMediaName,
+    greetingMediaSendMode,
     complationMessage,
 	ratingMessage,
     outOfHoursMessage,
@@ -72,6 +82,9 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     status,
     isDefault,
     greetingMessage,
+    greetingMediaPath,
+    greetingMediaName,
+    greetingMediaSendMode,
     complationMessage,
 	ratingMessage,
     outOfHoursMessage,
@@ -182,4 +195,71 @@ export const restart = async (
   await restartWbot(companyId);
 
   return res.status(200).json({ message: "Whatsapp restart." });
+};
+
+export const greetingMediaUpload = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { whatsappId } = req.params;
+  const file = req.file as Express.Multer.File;
+  const { companyId } = req.user;
+
+  try {
+    if (!file) {
+      throw new AppError("Nenhum arquivo foi enviado");
+    }
+
+    const whatsapp = await ShowWhatsAppService(whatsappId, companyId);
+
+    // Criar pasta se não existir
+    const folder = path.resolve("public", `company${companyId}`, "greeting");
+    if (!fs.existsSync(folder)) {
+      fs.mkdirSync(folder, { recursive: true });
+    }
+
+    // Mover arquivo para a pasta greeting
+    const fileName = `${new Date().getTime()}_${file.originalname.replace(/ /g, "_")}`;
+    const filePath = path.resolve(folder, fileName);
+    fs.copyFileSync(file.path, filePath);
+    fs.unlinkSync(file.path); // Remove arquivo temporário
+
+    await whatsapp.update({
+      greetingMediaPath: `greeting/${fileName}`,
+      greetingMediaName: file.originalname
+    });
+
+    return res.send({ mensagem: "Arquivo Salvo" });
+  } catch (err: any) {
+    throw new AppError(err.message);
+  }
+};
+
+export const deleteGreetingMedia = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { whatsappId } = req.params;
+  const { companyId } = req.user;
+
+  try {
+    const whatsapp = await ShowWhatsAppService(whatsappId, companyId);
+    
+    if (whatsapp.greetingMediaPath) {
+      const filePath = path.resolve("public", `company${companyId}`, whatsapp.greetingMediaPath);
+      const fileExists = fs.existsSync(filePath);
+      if (fileExists) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
+    await whatsapp.update({
+      greetingMediaPath: null,
+      greetingMediaName: null
+    });
+
+    return res.send({ mensagem: "Arquivo excluído" });
+  } catch (err: any) {
+    throw new AppError(err.message);
+  }
 };

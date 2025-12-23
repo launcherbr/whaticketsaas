@@ -48,6 +48,7 @@ import QueueIntegrations from "../../models/QueueIntegrations";
 import QueueOption from "../../models/QueueOption";
 import Setting from "../../models/Setting";
 import TicketTraking from "../../models/TicketTraking";
+import HolidayPeriod from "../../models/HolidayPeriod";
 import User from "../../models/User";
 import UserRating from "../../models/UserRating";
 import { campaignQueue, parseToMilliseconds, randomValue } from "../../queues";
@@ -469,8 +470,8 @@ export const getBodyMessage = (msg: proto.IWebMessageInfo): string | null => {
         msg.message?.liveLocationMessage?.degreesLatitude,
         msg.message?.liveLocationMessage?.degreesLongitude
       ),
-      documentMessage: msg.message?.documentMessage?.title,
-      documentWithCaptionMessage: msg.message?.documentWithCaptionMessage?.message?.documentMessage?.caption,
+      documentMessage: msg.message?.documentMessage?.title || msg.message?.documentMessage?.fileName || "Documento",
+      documentWithCaptionMessage: msg.message?.documentWithCaptionMessage?.message?.documentMessage?.caption || msg.message?.documentWithCaptionMessage?.message?.documentMessage?.fileName || "Documento",
       audioMessage: "Áudio",
       listMessage: getBodyButton(msg) || msg.message?.listResponseMessage?.title,
       listResponseMessage: msg.message?.listResponseMessage?.singleSelectReply?.selectedRowId,
@@ -641,7 +642,7 @@ const downloadMedia = async (msg: proto.IWebMessageInfo) => {
 const resolveContactIdentifiers = async (msgContact: IMe, wbot: Session) => {
   const rawId = msgContact?.id || "";
   const isGroup = rawId.includes("g.us");
-  const baseNumber = rawId.split("@")[0];
+  const baseNumber = rawId.replace(/\D/g, "");
   const lidFromContact = msgContact?.lid || (rawId.includes("@lid") ? rawId : null);
 
   if (isGroup) {
@@ -657,15 +658,15 @@ const resolveContactIdentifiers = async (msgContact: IMe, wbot: Session) => {
 
   const widUser = (msgContact as any)?.wid?.user;
   if (widUser) {
-    resolvedNumber = widUser.split("@")[0];
+    resolvedNumber = widUser.replace(/\D/g, "");
   }
 
   if (lidFromContact) {
     try {
       if (lidMappingStore?.getPNForLID) {
         const mappedJid = await lidMappingStore.getPNForLID(lidFromContact);
-        if (mappedJid && typeof mappedJid === "string" && mappedJid.includes("@")) {
-          resolvedNumber = mappedJid.split("@")[0];
+        if (mappedJid && typeof mappedJid === "string") {
+          resolvedNumber = mappedJid.replace(/\D/g, "");
         }
       }
     } catch (error) {
@@ -699,7 +700,7 @@ const verifyContact = async (
 
   const contactData = {
     name: msgContact?.name || msgContact.id.replace(/\D/g, ""),
-    number: msgContact.id.split("@")[0],
+    number: msgContact.id.replace(/\D/g, ""),
     lid: msgContact.lid,
     profilePicUrl,
     isGroup: msgContact.id.includes("g.us"),
@@ -1086,68 +1087,114 @@ const verifyMediaMessage = async (
     }
   }
   
-  const media = await downloadMedia(msg);
+  // Se o msg tem mediaUrl (adicionado manualmente, como na mídia de saudação), 
+  // significa que o arquivo já está no servidor, não precisa baixar
+  const preDefinedMediaUrl = (msg as any).mediaUrl;
+  
+  let media;
+  let mediaFilename;
+  
+  if (preDefinedMediaUrl) {
+    // Arquivo já está no servidor, usa o caminho fornecido
+    mediaFilename = preDefinedMediaUrl;
+    // Para determinar o tipo de mídia, tenta extrair do dataJson ou usa o caminho
+    const msgType = getTypeMessage(msg);
+    const isImage = msgType === "imageMessage" || msgType === "imageWithCaptionMessage";
+    const isVideo = msgType === "videoMessage" || msgType === "videoWithCaptionMessage";
+    const isAudio = msgType === "audioMessage";
+    const isDocument = msgType === "documentMessage" || msgType === "documentWithCaptionMessage";
+    
+    // Cria um objeto media simulado para continuar o fluxo
+    media = {
+      filename: mediaFilename,
+      mimetype: isImage ? "image/jpeg" : isVideo ? "video/mp4" : isAudio ? "audio/ogg" : isDocument ? "application/pdf" : "image/jpeg",
+      data: null // Não precisa dos dados, arquivo já está salvo
+    };
+  } else {
+    // Precisa baixar a mídia do WhatsApp
+    media = await downloadMedia(msg);
 
-  if (!media) {
-    throw new Error("ERR_WAPP_DOWNLOAD_MEDIA");
-  }
-
-  if (!media.filename) {
-    const ext = media.mimetype.split("/")[1].split(";")[0];
-    media.filename = `${new Date().getTime()}.${ext}`;
-  }
-
-  try {
-
-    const folder = `public/company${ticket.companyId}`;
-    if (!fs.existsSync(folder)) {
-      fs.mkdirSync(folder);
-      fs.chmodSync(folder, 0o777)
+    if (!media) {
+      throw new Error("ERR_WAPP_DOWNLOAD_MEDIA");
     }
 
-    await writeFileAsync(
-      join(__dirname, "..", "..", "..", folder, media.filename),
-      media.data,
-      "base64"
-    );
+    if (!media.filename) {
+      const ext = media.mimetype.split("/")[1].split(";")[0];
+      media.filename = `${new Date().getTime()}.${ext}`;
+    }
+    mediaFilename = media.filename;
 
-    await new Promise<void>((resolve, reject) => {
-      if (media.filename.includes('.ogg')) {
-      ffmpeg(folder + '/' + media.filename)
-        .toFormat('mp3')
-        .save((folder + '/' + media.filename).replace('.ogg', '.mp3'))
-        .on('end', () => {
-          logger.info('Conversão concluída!');
-          resolve();
-        })
-        .on('error', (err) => {
-          logger.error('Erro durante a conversão:', err);
-          reject(err);
-        });
-      } else {
-          logger.info('Não é necessário converter o arquivo. Não é formato OGG.');
-          resolve(); // Resolve immediately since no conversion is needed.
+    try {
+      const folder = `public/company${ticket.companyId}`;
+      if (!fs.existsSync(folder)) {
+        fs.mkdirSync(folder);
+        fs.chmodSync(folder, 0o777)
       }
-    });
 
+      await writeFileAsync(
+        join(__dirname, "..", "..", "..", folder, media.filename),
+        media.data,
+        "base64"
+      );
 
-  } catch (err) {
-    Sentry.captureException(err);
-    logger.error(err);
+      await new Promise<void>((resolve, reject) => {
+        if (media.filename.includes('.ogg')) {
+        ffmpeg(folder + '/' + media.filename)
+          .toFormat('mp3')
+          .save((folder + '/' + media.filename).replace('.ogg', '.mp3'))
+          .on('end', () => {
+            logger.info('Conversão concluída!');
+            resolve();
+          })
+          .on('error', (err) => {
+            logger.error('Erro durante a conversão:', err);
+            reject(err);
+          });
+        } else {
+            logger.info('Não é necessário converter o arquivo. Não é formato OGG.');
+            resolve(); // Resolve immediately since no conversion is needed.
+        }
+      });
+    } catch (err) {
+      Sentry.captureException(err);
+      logger.error(err);
+    }
   }
 
-  const body = getBodyMessage(msg);
-
+  let body = getBodyMessage(msg);
+  let mediaType = media.mimetype.split("/")[0];
+  
+  // Normalizar mediaType para documentos
+  // Se o tipo do Baileys for "documentMessage" ou "documentWithCaptionMessage", garantir que seja salvo como "document" ou "application"
+  const baileysMsgType = getTypeMessage(msg);
+  if (baileysMsgType === 'documentMessage' || baileysMsgType === 'documentWithCaptionMessage') {
+    mediaType = media.mimetype.split("/")[0] === "application" ? "application" : "document";
+  }
+  
+  // Garantir que body nunca seja null ou undefined
+  if (!body || body.trim() === '') {
+    if (mediaType === 'document' || mediaType === 'application') {
+      body = media.filename || "Documento";
+    } else if (mediaType === 'image') {
+      body = "📷 Imagem";
+    } else if (mediaType === 'video') {
+      body = "🎥 Vídeo";
+    } else if (mediaType === 'audio') {
+      body = "🎵 Áudio";
+    } else {
+      body = "📎 Mídia";
+    }
+  }
 
   const messageData = {
     id: msg.key.id,
     ticketId: ticket.id,
     contactId: msg.key.fromMe ? undefined : contact.id,
-    body: body ? formatBody(body, ticket.contact) : "",
+    body: formatBody(body, ticket.contact) || body || "📎 Mídia",
     fromMe: msg.key.fromMe,
     read: msg.key.fromMe,
-    mediaUrl: media.filename,
-    mediaType: media.mimetype.split("/")[0],
+    mediaUrl: mediaFilename,
+    mediaType: mediaType,
     quotedMsgId: quotedMsg?.id,
     ack: msg.status ?? 0, 
     remoteJid: msg.key.remoteJid,
@@ -1219,8 +1266,71 @@ export const verifyMessage = async (
 ) => {
   const io = getIO();
   const quotedMsg = await verifyQuotedMessage(msg);
-  const body = getBodyMessage(msg);
+  let body = getBodyMessage(msg);
   const isEdited = getTypeMessage(msg) == 'editedMessage';
+  let mediaType = getTypeMessage(msg);
+
+  // Normalizar mediaType para o formato esperado pelo frontend
+  if (mediaType === 'documentMessage' || mediaType === 'documentWithCaptionMessage') {
+    // Verificar o mimetype do documento para determinar se é "document" ou "application"
+    const docMsg = msg.message?.documentMessage || 
+                   msg.message?.documentWithCaptionMessage?.message?.documentMessage;
+    if (docMsg?.mimetype) {
+      const mimeType = docMsg.mimetype.split("/")[0];
+      mediaType = mimeType === "application" ? "application" : "document";
+    } else {
+      mediaType = "document";
+    }
+  } else if (mediaType === 'imageMessage') {
+    mediaType = "image";
+  } else if (mediaType === 'videoMessage') {
+    mediaType = "video";
+  } else if (mediaType === 'audioMessage' || mediaType === 'pttMessage') {
+    mediaType = "audio";
+  }
+
+  // Garantir que body nunca seja null ou undefined
+  if (!body || body.trim() === '') {
+    if (mediaType === 'document' || mediaType === 'application') {
+      body = msg.message?.documentMessage?.fileName || 
+             msg.message?.documentWithCaptionMessage?.message?.documentMessage?.fileName || 
+             "Documento";
+    } else if (mediaType === 'image') {
+      body = "📷 Imagem";
+    } else if (mediaType === 'video') {
+      body = "🎥 Vídeo";
+    } else if (mediaType === 'audio') {
+      body = "🎵 Áudio";
+    } else {
+      body = "📎 Mídia";
+    }
+  }
+
+  // Extrair mediaUrl se for uma mensagem de mídia enviada
+  // Quando enviamos uma mensagem, o mediaUrl pode estar no objeto sentMessage
+  let mediaUrl: string | undefined = undefined;
+  if ((mediaType === 'document' || mediaType === 'application' || mediaType === 'image' || mediaType === 'video' || mediaType === 'audio') && msg.key.fromMe) {
+    // Tentar obter mediaUrl do objeto msg se foi adicionado pelo SendWhatsAppMedia
+    if ((msg as any).mediaUrl) {
+      mediaUrl = (msg as any).mediaUrl;
+    } else {
+      // Tentar extrair do dataJson
+      try {
+        const docMsg = msg.message?.documentMessage || 
+                       msg.message?.documentWithCaptionMessage?.message?.documentMessage;
+        if (docMsg?.fileName) {
+          // Para mensagens enviadas, o arquivo já foi salvo com timestamp
+          // Vamos procurar o arquivo mais recente que corresponde ao fileName
+          const fileName = docMsg.fileName;
+          // O arquivo foi salvo como timestamp_fileName no SendWhatsAppMedia
+          // Mas não temos o timestamp aqui, então vamos deixar o mediaUrl como undefined
+          // e o frontend vai usar o dataJson para extrair o fileName
+        }
+      } catch (e) {
+        // Ignora erro
+      }
+    }
+  }
 
   const messageData = {
     id: isEdited ? msg?.message?.editedMessage?.message?.protocolMessage?.key?.id : msg.key.id,
@@ -1228,7 +1338,7 @@ export const verifyMessage = async (
     contactId: msg.key.fromMe ? undefined : contact.id,
     body,
     fromMe: msg.key.fromMe,
-    mediaType: getTypeMessage(msg),
+    mediaType: mediaType,
     read: msg.key.fromMe,
     quotedMsgId: quotedMsg?.id,
     ack: msg.status || 0, // Garantir que sempre tenha um valor numérico
@@ -1236,10 +1346,11 @@ export const verifyMessage = async (
     participant: msg.key.participant,
     dataJson: JSON.stringify(msg),
     isEdited: isEdited,
+    ...(mediaUrl && { mediaUrl }),
   };
 
   await ticket.update({
-    lastMessage: body
+    lastMessage: body || "📎 Mídia"
   });
 
 
@@ -1334,10 +1445,76 @@ const verifyQueue = async (
 ) => {
   const companyId = ticket.companyId;
 
-  const { queues, greetingMessage, maxUseBotQueues, timeUseBotQueues } = await ShowWhatsAppService(
+  const { queues, greetingMessage, greetingMediaPath, greetingMediaName, maxUseBotQueues, timeUseBotQueues } = await ShowWhatsAppService(
     wbot.id!,
     ticket.companyId
   );
+
+  // Envia mídia de saudação da conexão se houver, antes de processar filas
+  // Esta variável será usada para evitar duplicação
+  let greetingMediaSent = false;
+  
+  if (greetingMediaPath && greetingMediaPath !== "" && !msg.key.fromMe && !ticket.isGroup) {
+    const lastMessage = await Message.findOne({
+      where: {
+        ticketId: ticket.id,
+        fromMe: true
+      },
+      order: [["createdAt", "DESC"]]
+    });
+
+    // Verifica se já foi enviada a mídia de saudação
+    const alreadySent = lastMessage && (
+      lastMessage.mediaUrl?.includes("greeting") || 
+      (greetingMessage && lastMessage.body?.includes(greetingMessage))
+    );
+
+    if (!alreadySent) {
+      greetingMediaSent = true;
+      const hasMessage = greetingMessage && greetingMessage.trim() !== "";
+      const hasQueues = queues && queues.length > 0;
+      // Sempre envia mídia primeiro (modo "separate")
+      if (greetingMediaPath && greetingMediaPath !== "") {
+        const filePath = path.resolve("public", `company${companyId}`, greetingMediaPath);
+        const optionsMsg = await getMessageOptions(greetingMediaName || "imagem", filePath, companyId.toString(), "");
+        if (optionsMsg) {
+          const sentMediaMessage = await wbot.sendMessage(
+            `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+            { ...optionsMsg }
+          );
+          // Adiciona mediaUrl ao sentMessage para identificar que é mídia de saudação
+          if (sentMediaMessage) {
+            (sentMediaMessage as any).mediaUrl = greetingMediaPath;
+          }
+          await verifyMediaMessage(sentMediaMessage, ticket, contact);
+          await delay(500);
+        }
+      }
+      
+      // Só envia a saudação como texto separado se NÃO houver filas
+      // Se houver filas, o menu será enviado depois pela função handleChartbot
+      if (hasMessage && !hasQueues) {
+        await delay(500);
+        const sentTextMessage = await wbot.sendMessage(
+          `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+          {
+            text: greetingMessage
+          }
+        );
+        await verifyMessage(sentTextMessage, ticket, contact);
+      }
+      // Se não tem mídia mas tem mensagem e não tem filas, envia apenas o texto
+      else if (hasMessage && !greetingMediaPath && !hasQueues) {
+        const sentMessage = await wbot.sendMessage(
+          `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+          {
+            text: greetingMessage
+          }
+        );
+        await verifyMessage(sentMessage, ticket, contact);
+      }
+    }
+  }
 
   if (queues.length === 1) {
     const sendGreetingMessageOneQueues = await Setting.findOne({
@@ -1347,7 +1524,7 @@ const verifyQueue = async (
       }
     });
 
-    if (greetingMessage.length > 1 && sendGreetingMessageOneQueues?.value === "enabled") {
+    if (greetingMessage && greetingMessage.length > 1 && sendGreetingMessageOneQueues?.value === "enabled" && !greetingMediaPath) {
       const body = formatBody(`${greetingMessage}`, contact);
       await wbot.sendMessage(
         `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
@@ -1552,7 +1729,7 @@ const verifyQueue = async (
       });
     }
 
-  {/* A DUPLICAÇÃO OCORRIA AQUI PLW!
+  {/* A DUPLICAÇÃO OCORRIA AQUI!
     
     const body = formatBody(`\u200e${choosenQueue.greetingMessage}`, ticket.contact);
     if (choosenQueue.greetingMessage) {
@@ -1565,14 +1742,35 @@ const verifyQueue = async (
 
     */}
 
-        if (choosenQueue.greetingMessage) {
-        const body = formatBody(`\u200e${choosenQueue.greetingMessage}`, ticket.contact);
-        const sentMessage = await wbot.sendMessage(
-          `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
-          { text: body }
-        );
-        await verifyMessage(sentMessage, ticket, contact);
-      }
+        // Só envia saudação da fila se não foi enviada mídia de saudação da conexão
+        const whatsapp = await ShowWhatsAppService(wbot.id!, ticket.companyId);
+        const lastMessage = await Message.findOne({
+          where: {
+            ticketId: ticket.id,
+            fromMe: true
+          },
+          order: [["createdAt", "DESC"]]
+        });
+
+        // Verifica se já foi enviada mídia de saudação da conexão
+        // Procura por "greeting" no mediaUrl ou verifica se o caminho contém "greeting"
+        const greetingMediaAlreadySent = whatsapp.greetingMediaPath && 
+          whatsapp.greetingMediaPath !== "" &&
+          (lastMessage?.mediaUrl?.includes("greeting") || 
+           lastMessage?.mediaUrl?.includes(whatsapp.greetingMediaPath) ||
+           (lastMessage?.mediaType && lastMessage.mediaType !== "text" && 
+            lastMessage.createdAt && 
+            new Date().getTime() - new Date(lastMessage.createdAt).getTime() < 5000)); // Mensagem de mídia enviada nos últimos 5 segundos
+
+        // Não envia saudação da fila se já foi enviada mídia de saudação da conexão
+        if (choosenQueue.greetingMessage && !greetingMediaAlreadySent) {
+          const body = formatBody(`\u200e${choosenQueue.greetingMessage}`, ticket.contact);
+          const sentMessage = await wbot.sendMessage(
+            `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+            { text: body }
+          );
+          await verifyMessage(sentMessage, ticket, contact);
+        }
 
 
     if (choosenQueue.mediaPath !== null && choosenQueue.mediaPath !== "") {
@@ -1707,15 +1905,19 @@ const handleChartbot = async (ticket: Ticket, msg: proto.IWebMessageInfo, wbot: 
   const messageBody = getBodyMessage(msg);
 
 
-  if (messageBody == "#") {
-    // voltar para o menu inicial
-    await ticket.update({ queueOptionId: null, chatbot: false, queueId: null });
-    await verifyQueue(wbot, msg, ticket, ticket.contact);
+  if (!isNil(queue) && !isNil(ticket.queueOptionId) && messageBody == "#") {
+    // falar com atendente
+    await ticket.update({ queueOptionId: null, chatbot: false });
+    const sentMessage = await wbot.sendMessage(
+      `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+      {
+        text: "\u200eAguarde, você será atendido em instantes."
+      }
+    );
+    await verifyMessage(sentMessage, ticket, ticket.contact);
     return;
-  }
-
-  // voltar para o menu anterior
-  if (!isNil(queue) && !isNil(ticket.queueOptionId) && messageBody == "0") {
+  } else if (!isNil(queue) && !isNil(ticket.queueOptionId) && messageBody == "0") {
+    // voltar para o menu anterior
     const option = await QueueOption.findByPk(ticket.queueOptionId);
     await ticket.update({ queueOptionId: option?.parentId });
 
@@ -1805,6 +2007,26 @@ const handleChartbot = async (ticket: Ticket, msg: proto.IWebMessageInfo, wbot: 
     // }
 
     const botButton = async () => {
+      // Verifica se já foi enviada mídia de saudação da conexão
+      const whatsapp = await ShowWhatsAppService(ticket.whatsappId, ticket.companyId);
+      const lastMessage = await Message.findOne({
+        where: {
+          ticketId: ticket.id,
+          fromMe: true
+        },
+        order: [["createdAt", "DESC"]]
+      });
+
+      // Verifica se já foi enviada mídia de saudação da conexão
+      // Procura por "greeting" no mediaUrl ou verifica se o caminho contém "greeting"
+      const greetingMediaAlreadySent = whatsapp.greetingMediaPath && 
+        whatsapp.greetingMediaPath !== "" &&
+        (lastMessage?.mediaUrl?.includes("greeting") || 
+         lastMessage?.mediaUrl?.includes(whatsapp.greetingMediaPath) ||
+         (lastMessage?.mediaType && lastMessage.mediaType !== "text" && 
+          lastMessage.createdAt && 
+          new Date().getTime() - new Date(lastMessage.createdAt).getTime() < 5000)); // Mensagem de mídia enviada nos últimos 5 segundos
+
       const buttons = [];
       queueOptions.forEach((option, i) => {
         buttons.push({
@@ -1819,8 +2041,11 @@ const handleChartbot = async (ticket: Ticket, msg: proto.IWebMessageInfo, wbot: 
         type: 4
       });
 
+      // Se já foi enviada mídia de saudação da conexão, não inclui saudação da fila
+      const buttonText = greetingMediaAlreadySent ? "" : formatBody(`\u200e${queue.greetingMessage}`, ticket.contact);
+
       const buttonMessage = {
-        text: formatBody(`\u200e${queue.greetingMessage}`, ticket.contact),
+        text: buttonText,
         buttons,
         headerType: 4
       };
@@ -1886,37 +2111,480 @@ const handleChartbot = async (ticket: Ticket, msg: proto.IWebMessageInfo, wbot: 
     });
 	
 	if (queueOptions.length === 0) {
-	const textMessage = {
-	  text: formatBody(`\u200e${currentOption.message}`, ticket.contact),
-	};
+		const textMessage = {
+			text: formatBody(`${currentOption.message}`, ticket.contact),
+		};
 
-	const sendMsg = await wbot.sendMessage(
-	  `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
-	  textMessage
-	);
-	
-	await verifyMessage(sendMsg, ticket, ticket.contact);
-		        if (currentOption.mediaPath !== null && currentOption.mediaPath !== "")  {
+		// Não envia mensagem se for tipo n8n
+		if (currentOption.queueType !== "n8n") {
+			const sendMsgX = await wbot.sendMessage(
+				`${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+				textMessage
+			);
+			await verifyMessage(sendMsgX, ticket, ticket.contact);
+		}
 
-              const filePath = path.resolve("public", "company" + ticket.companyId, currentOption.mediaPath);
+		// Envia mídia se houver
+		if (currentOption.mediaPath !== null && currentOption.mediaPath !== "") {
+			const filePath = path.resolve("public", "company" + ticket.companyId, currentOption.mediaPath);
+			const optionsMsg = await getMessageOptions(currentOption.mediaName, filePath, textMessage.text, ticket.companyId.toString());
+			let sentMessage = await wbot.sendMessage(
+				`${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+				{ ...optionsMsg }
+			);
+			await verifyMediaMessage(sentMessage, ticket, ticket.contact);
+		}
 
+		// Verifica posição na fila se necessário
+		const count = await Ticket.findAndCountAll({
+			where: {
+				userId: null,
+				status: "pending",
+				companyId: ticket.companyId,
+				queueId: currentOption.queueOptionsId,
+				isGroup: false
+			}
+		});
 
-              const optionsMsg = await getMessageOptions(currentOption.mediaName, filePath, textMessage.text, ticket.companyId.toString());
+		let queuePosition = await Setting.findOne({
+			where: {
+				key: "sendQueuePosition",
+				companyId: ticket.companyId
+			}
+		});
 
-          let sentMessage = await wbot.sendMessage(`${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`, { ...optionsMsg });
+		const lastMessageFromMe = await Message.findOne({
+			where: {
+				ticketId: ticket.id,
+				fromMe: true,
+				body: textMessage.text
+			},
+			order: [["createdAt", "DESC"]]
+		});
 
-          await verifyMediaMessage(sentMessage, ticket, ticket.contact);
-        }
+		const io = getIO();
 
-	await verifyMessage(sendMsg, ticket, ticket.contact);
-	
-	await ticket.update({
-	  queueOptionId: null,
-	  chatbot: false,
-	});
-	//console.log("Fim do chatbot. Última opção alcançada.");
-	return;
-  }
+		// Verifica se é tipo queue ou attendant para processar automação
+		if (currentOption.queueType === "queue" || currentOption.queueType === "attendent") {
+			// Tratamento para envio de mensagem quando a fila está fora do expediente
+			const queueC = await Queue.findByPk(currentOption.queueOptionsId);
+			if (queueC) {
+				const { schedules }: any = queueC;
+				const now = moment();
+				const weekday = now.format("dddd").toLowerCase();
+				let scheduleC;
+				if (Array.isArray(schedules) && schedules.length > 0) {
+					scheduleC = schedules.find((s) => s.weekdayEn === weekday && s.startTime !== "" && s.startTime !== null && s.endTime !== "" && s.endTime !== null);
+				}
+
+				if (queueC.outOfHoursMessage !== null && queueC.outOfHoursMessage !== "" && !isNil(scheduleC)) {
+					const startTime = moment(scheduleC.startTime, "HH:mm");
+					const endTime = moment(scheduleC.endTime, "HH:mm");
+
+					if (now.isBefore(startTime) || now.isAfter(endTime)) {
+						const body = formatBody(`${queueC.outOfHoursMessage}\n\n*SAIR* - Encerrar Atendimento`, ticket.contact);
+						const sentMessage = await wbot.sendMessage(
+							`${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+							{ text: body }
+						);
+						await verifyMessage(sentMessage, ticket, ticket.contact);
+
+						const outsidemessageActive = await Setting.findOne({
+							where: {
+								key: "outsidemessage",
+								companyId: ticket.companyId
+							}
+						});
+
+						if (outsidemessageActive?.value === "disabled") {
+							logger.info("MENSAGEM ENVIADA FORA DO HORÁRIO - SEM ABRIR TICKET");
+							await UpdateTicketService({
+								ticketData: { queueId: null, chatbot: null },
+								ticketId: ticket.id,
+								companyId: ticket.companyId,
+							});
+							return;
+						}
+					}
+				} else {
+					// Envia posição na fila se configurado
+					if (queuePosition?.value === "enabled" && !queueOptions.length) {
+						const qtd = count.count === 0 ? 1 : count.count;
+						const msgFila = `*Assistente Virtual:*\n{{ms}} *{{name}}*, sua posição na fila de atendimento é: *${qtd}*`;
+						const bodyFila = formatBody(`${msgFila}`, ticket.contact);
+						const debouncedSentMessagePosicao = debounce(
+							async () => {
+								await wbot.sendMessage(
+									`${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+									{ text: bodyFila }
+								);
+							},
+							3000,
+							ticket.id
+						);
+						debouncedSentMessagePosicao();
+					}
+				}
+			}
+		}
+
+		// Processa automação baseada no tipo
+		if (lastMessageFromMe) {
+			// Se já enviou a mensagem, apenas atualiza o ticket
+			const oldStatus = ticket.status;
+			const oldQueueId = ticket.queueId;
+			const oldUserId = ticket.userId;
+
+			if (currentOption.queueType === "queue") {
+				await ticket.update({
+					queueId: currentOption.queueOptionsId,
+					queueOptionId: currentOption.parentId,
+					chatbot: false,
+					status: "pending"
+				});
+				await ticket.reload({
+					include: [
+						{ model: Queue, as: "queue" },
+						{ model: User, as: "user" },
+						{ model: Contact, as: "contact" },
+					],
+				});
+
+				// Emite eventos do socket
+				io.to(`company-${ticket.companyId}-${oldStatus}`)
+					.to(`queue-${oldQueueId}-${oldStatus}`)
+					.emit(`company-${ticket.companyId}-ticket`, {
+						action: "delete",
+						ticketId: ticket.id
+					});
+
+				io.to(`company-${ticket.companyId}-pending`)
+					.to(`company-${ticket.companyId}-notification`)
+					.to(`queue-${ticket.queueId}-pending`)
+					.to(`queue-${ticket.queueId}-notification`)
+					.to(ticket.id.toString())
+					.emit(`company-${ticket.companyId}-ticket`, {
+						action: "update",
+						ticket
+					});
+			}
+
+		if (currentOption.queueType === "attendent") {
+			// Salva valores antigos antes de atualizar
+			const oldStatus = ticket.status;
+			const oldQueueId = ticket.queueId;
+			const oldUserId = ticket.userId;
+
+			// Verifica se está em recesso e se o fluxo de filas está habilitado
+			const holidayPeriodEnabled = await Setting.findOne({
+				where: {
+					companyId: ticket.companyId,
+					key: "holidayPeriodEnabled",
+					value: "enabled"
+				}
+			});
+
+			const holidayPeriodAllowQueueFlow = await Setting.findOne({
+				where: {
+					companyId: ticket.companyId,
+					key: "holidayPeriodAllowQueueFlow",
+					value: "enabled"
+				}
+			});
+
+			// Verifica se há um período de recesso ativo
+			const todayStr = moment().format("YYYY-MM-DD");
+			const activeHolidayPeriod = await HolidayPeriod.findOne({
+				where: {
+					whatsappId: wbot.id!,
+					companyId: ticket.companyId,
+					active: true,
+					startDate: {
+						[Op.lte]: todayStr
+					},
+					endDate: {
+						[Op.gte]: todayStr
+					}
+				}
+			});
+
+			// Se estiver em recesso e a opção "Mesmo com recesso fila funciona" estiver habilitada,
+			// atribui apenas a fila, mas não o atendente
+			const isHolidayPeriodWithQueueFlow = holidayPeriodEnabled && holidayPeriodAllowQueueFlow && activeHolidayPeriod;
+			
+			if (isHolidayPeriodWithQueueFlow) {
+				await ticket.update({
+					queueId: currentOption.queueOptionsId,
+					queueOptionId: currentOption.parentId,
+					chatbot: false,
+					status: "pending" // Mantém como pending ao invés de open
+				});
+			} else {
+				// Comportamento normal: atribui atendente e fila
+				await ticket.update({
+					userId: currentOption.queueUsersId,
+					queueId: currentOption.queueOptionsId,
+					queueOptionId: currentOption.parentId,
+					chatbot: false,
+					status: "open"
+				});
+			}
+			await ticket.reload({
+				include: [
+					{ model: Queue, as: "queue" },
+					{ model: User, as: "user" },
+					{ model: Contact, as: "contact" },
+				],
+			});
+
+			// Emite eventos do socket
+			io.to(`company-${ticket.companyId}-${oldStatus}`)
+				.to(`queue-${oldQueueId}-${oldStatus}`)
+				.emit(`company-${ticket.companyId}-ticket`, {
+					action: "delete",
+					ticketId: ticket.id
+				});
+
+			// Se não estiver em recesso, também emite para o usuário antigo
+			if (!isHolidayPeriodWithQueueFlow && oldUserId) {
+				io.to(`user-${oldUserId}`)
+					.emit(`company-${ticket.companyId}-ticket`, {
+						action: "delete",
+						ticketId: ticket.id
+					});
+			}
+
+			// Emite evento de atualização
+			const newStatus = isHolidayPeriodWithQueueFlow ? "pending" : "open";
+			io.to(`company-${ticket.companyId}-${newStatus}`)
+				.to(`company-${ticket.companyId}-notification`)
+				.to(`queue-${ticket.queueId}-${newStatus}`)
+				.to(`queue-${ticket.queueId}-notification`)
+				.to(ticket.id.toString())
+				.emit(`company-${ticket.companyId}-ticket`, {
+					action: "update",
+					ticket
+				});
+
+			// Se não estiver em recesso e tiver userId, emite para o atendente
+			if (!isHolidayPeriodWithQueueFlow && ticket.userId) {
+				io.to(`user-${ticket.userId}`)
+					.emit(`company-${ticket.companyId}-ticket`, {
+						action: "update",
+						ticket
+					});
+			}
+			}
+
+			if (currentOption.queueType === "n8n") {
+				const axios = require("axios");
+				var postwebhook = {
+					method: 'POST',
+					url: textMessage.text,
+					data: {
+						mensagem: getBodyMessage(msg),
+						sender: ticket.contact.number,
+						chamadoId: ticket.id,
+						acao: 'n8n',
+						companyId: ticket.companyId,
+						defaultWhatsapp_x: wbot.id,
+						fromMe: msg.key.fromMe,
+						queueId: ticket.queueId
+					}
+				};
+				axios.request(postwebhook);
+				logger.info("WEBHOOK POST EXEC N8N");
+				return;
+			}
+
+			// Se não for nenhum tipo de automação (text ou null), desativa o chatbot
+			if (!currentOption.queueType || currentOption.queueType === "text") {
+				await ticket.update({
+					queueOptionId: null,
+					chatbot: false
+				});
+			}
+
+			return;
+		}
+
+		// Atualiza ticket baseado no tipo de automação
+		const oldStatus = ticket.status;
+		const oldQueueId = ticket.queueId;
+		const oldUserId = ticket.userId;
+
+		if (currentOption.queueType === "queue") {
+			await ticket.update({
+				queueId: currentOption.queueOptionsId,
+				queueOptionId: currentOption.parentId,
+				chatbot: false,
+				status: "pending"
+			});
+			await ticket.reload({
+				include: [
+					{ model: Queue, as: "queue" },
+					{ model: User, as: "user" },
+					{ model: Contact, as: "contact" },
+				],
+			});
+
+			// Emite eventos do socket
+			io.to(`company-${ticket.companyId}-${oldStatus}`)
+				.to(`queue-${oldQueueId}-${oldStatus}`)
+				.emit(`company-${ticket.companyId}-ticket`, {
+					action: "delete",
+					ticketId: ticket.id
+				});
+
+			io.to(`company-${ticket.companyId}-pending`)
+				.to(`company-${ticket.companyId}-notification`)
+				.to(`queue-${ticket.queueId}-pending`)
+				.to(`queue-${ticket.queueId}-notification`)
+				.to(ticket.id.toString())
+				.emit(`company-${ticket.companyId}-ticket`, {
+					action: "update",
+					ticket
+				});
+		}
+
+		if (currentOption.queueType === "attendent") {
+			// Salva valores antigos antes de atualizar
+			const oldStatus = ticket.status;
+			const oldQueueId = ticket.queueId;
+			const oldUserId = ticket.userId;
+
+			// Verifica se está em recesso e se o fluxo de filas está habilitado
+			const holidayPeriodEnabled = await Setting.findOne({
+				where: {
+					companyId: ticket.companyId,
+					key: "holidayPeriodEnabled",
+					value: "enabled"
+				}
+			});
+
+			const holidayPeriodAllowQueueFlow = await Setting.findOne({
+				where: {
+					companyId: ticket.companyId,
+					key: "holidayPeriodAllowQueueFlow",
+					value: "enabled"
+				}
+			});
+
+			// Verifica se há um período de recesso ativo
+			const todayStr = moment().format("YYYY-MM-DD");
+			const activeHolidayPeriod = await HolidayPeriod.findOne({
+				where: {
+					whatsappId: wbot.id!,
+					companyId: ticket.companyId,
+					active: true,
+					startDate: {
+						[Op.lte]: todayStr
+					},
+					endDate: {
+						[Op.gte]: todayStr
+					}
+				}
+			});
+
+			// Se estiver em recesso e a opção "Mesmo com recesso fila funciona" estiver habilitada,
+			// atribui apenas a fila, mas não o atendente
+			const isHolidayPeriodWithQueueFlow = holidayPeriodEnabled && holidayPeriodAllowQueueFlow && activeHolidayPeriod;
+			
+			if (isHolidayPeriodWithQueueFlow) {
+				await ticket.update({
+					queueId: currentOption.queueOptionsId,
+					queueOptionId: currentOption.parentId,
+					chatbot: false,
+					status: "pending" // Mantém como pending ao invés de open
+				});
+			} else {
+				// Comportamento normal: atribui atendente e fila
+				await ticket.update({
+					userId: currentOption.queueUsersId,
+					queueId: currentOption.queueOptionsId,
+					queueOptionId: currentOption.parentId,
+					chatbot: false,
+					status: "open"
+				});
+			}
+			await ticket.reload({
+				include: [
+					{ model: Queue, as: "queue" },
+					{ model: User, as: "user" },
+					{ model: Contact, as: "contact" },
+				],
+			});
+
+			// Emite eventos do socket
+			io.to(`company-${ticket.companyId}-${oldStatus}`)
+				.to(`queue-${oldQueueId}-${oldStatus}`)
+				.emit(`company-${ticket.companyId}-ticket`, {
+					action: "delete",
+					ticketId: ticket.id
+				});
+
+			// Se não estiver em recesso, também emite para o usuário antigo
+			if (!isHolidayPeriodWithQueueFlow && oldUserId) {
+				io.to(`user-${oldUserId}`)
+					.emit(`company-${ticket.companyId}-ticket`, {
+						action: "delete",
+						ticketId: ticket.id
+					});
+			}
+
+			// Emite evento de atualização
+			const newStatus = isHolidayPeriodWithQueueFlow ? "pending" : "open";
+			io.to(`company-${ticket.companyId}-${newStatus}`)
+				.to(`company-${ticket.companyId}-notification`)
+				.to(`queue-${ticket.queueId}-${newStatus}`)
+				.to(`queue-${ticket.queueId}-notification`)
+				.to(ticket.id.toString())
+				.emit(`company-${ticket.companyId}-ticket`, {
+					action: "update",
+					ticket
+				});
+
+			// Se não estiver em recesso e tiver userId, emite para o atendente
+			if (!isHolidayPeriodWithQueueFlow && ticket.userId) {
+				io.to(`user-${ticket.userId}`)
+					.emit(`company-${ticket.companyId}-ticket`, {
+						action: "update",
+						ticket
+					});
+			}
+		}
+
+		if (currentOption.queueType === "n8n") {
+			const axios = require("axios");
+			var postwebhook = {
+				method: 'POST',
+				url: textMessage.text,
+				data: {
+					mensagem: getBodyMessage(msg),
+					sender: ticket.contact.number,
+					chamadoId: ticket.id,
+					acao: 'n8n',
+					companyId: ticket.companyId,
+					defaultWhatsapp_x: wbot.id,
+					fromMe: msg.key.fromMe,
+					queueId: ticket.queueId
+				}
+			};
+			axios.request(postwebhook);
+			logger.info("WEBHOOK POST EXEC N8N");
+			return;
+		}
+
+		// Se não for nenhum tipo de automação (text ou null), desativa o chatbot
+		if (!currentOption.queueType || currentOption.queueType === "text") {
+			await ticket.update({
+				queueOptionId: null,
+				chatbot: false
+			});
+		}
+
+		return;
+	}
 
     if (queueOptions.length > -1) {
 
@@ -2197,7 +2865,131 @@ const handleMessage = async (
 
     const ticket = await FindOrCreateTicketService(contact, wbot.id!, unreadMessages, companyId, groupContact);
 
+    // Verifica se está em período de recesso/feriado ANTES de processar qualquer coisa
+    if (!msg.key.fromMe && !ticket.isGroup) {
+      // Verifica primeiro se "Mesmo com recesso fila funciona" está ativo
+      const holidayPeriodAllowQueueFlow = await Setting.findOne({
+        where: {
+          companyId,
+          key: "holidayPeriodAllowQueueFlow",
+          value: "enabled"
+        }
+      });
 
+      // Verifica se "Ativar/Desativar mensagem de recesso/feriados" está habilitado
+      const holidayPeriodEnabled = await Setting.findOne({
+        where: {
+          companyId,
+          key: "holidayPeriodEnabled",
+          value: "enabled"
+        }
+      });
+
+      // Se "Mesmo com recesso fila funciona" está ativo MAS "Ativar/Desativar mensagem de recesso/feriados" está desativado,
+      // não processa nenhuma automação
+      if (holidayPeriodAllowQueueFlow && !holidayPeriodEnabled) {
+        return; // Não processa nada quando a função está ativa mas o recesso está desativado
+      }
+
+      // Se "Ativar/Desativar mensagem de recesso/feriados" está habilitado, verifica período ativo
+      if (holidayPeriodEnabled) {
+        // Usa string YYYY-MM-DD para comparar com DATEONLY
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        
+        const activeHolidayPeriod = await HolidayPeriod.findOne({
+          where: {
+            whatsappId: wbot.id!,
+            companyId,
+            active: true,
+            startDate: {
+              [Op.lte]: todayStr
+            },
+            endDate: {
+              [Op.gte]: todayStr
+            }
+          }
+        });
+
+        if (activeHolidayPeriod) {
+          // Verifica se já foi enviada mensagem de recesso no intervalo configurado
+          const repeatIntervalHours = activeHolidayPeriod.repeatIntervalHours || 24;
+          const now = new Date();
+          const intervalStart = new Date(now.getTime() - (repeatIntervalHours * 60 * 60 * 1000));
+
+          const lastHolidayMessage = await Message.findOne({
+            where: {
+              ticketId: ticket.id,
+              fromMe: true,
+              body: activeHolidayPeriod.message,
+              createdAt: {
+                [Op.gte]: intervalStart
+              }
+            },
+            order: [["createdAt", "DESC"]]
+          });
+
+          if (!lastHolidayMessage) {
+            // Formata as datas no formato DIA/MES/ANO
+            const formatDateBR = (dateValue: Date | string): string => {
+              if (!dateValue) return "";
+              
+              let dateStr: string;
+              if (dateValue instanceof Date) {
+                // Se é Date, extrai usando UTC e formata como YYYY-MM-DD
+                const year = dateValue.getUTCFullYear();
+                const month = String(dateValue.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(dateValue.getUTCDate()).padStart(2, '0');
+                dateStr = `${year}-${month}-${day}`;
+              } else {
+                dateStr = String(dateValue);
+              }
+              
+              // Se já está no formato YYYY-MM-DD, converte para DD/MM/YYYY
+              if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                const [year, month, day] = dateStr.split('-');
+                return `${day}/${month}/${year}`;
+              }
+              
+              // Fallback: tenta converter de Date
+              const date = new Date(dateStr);
+              const day = String(date.getUTCDate()).padStart(2, '0');
+              const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+              const year = date.getUTCFullYear();
+              return `${day}/${month}/${year}`;
+            };
+
+            const startDateValue = activeHolidayPeriod.getDataValue('startDate');
+            const endDateValue = activeHolidayPeriod.getDataValue('endDate');
+            const startDateFormatted = formatDateBR(startDateValue);
+            const endDateFormatted = formatDateBR(endDateValue);
+
+            // Adiciona as variáveis de data ao formatBody
+            const holidayMessage = formatBody(
+              activeHolidayPeriod.message, 
+              contact,
+              {
+                startDate: startDateFormatted,
+                endDate: endDateFormatted
+              }
+            );
+            const sentMessage = await wbot.sendMessage(
+              `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+              {
+                text: holidayMessage
+              }
+            );
+            await verifyMessage(sentMessage, ticket, contact);
+            
+            // Se "Mesmo com recesso fila funciona" está desabilitado, retorna sem processar nada
+            if (!holidayPeriodAllowQueueFlow) {
+              return; // Não processa nada durante recesso
+            }
+            // Se "Mesmo com recesso fila funciona" está habilitado, continua o processamento (filas funcionam, mas sem atendimento)
+          }
+        }
+      }
+    }
 
     await provider(ticket, msg, companyId, contact, wbot as WASocket);
 
@@ -2561,18 +3353,44 @@ const handleMessage = async (
         return;
       }
 
-      if (whatsapp.greetingMessage) {
-
+      if (whatsapp.greetingMessage || whatsapp.greetingMediaPath) {
         console.log('whatsapp.greetingMessage', whatsapp.greetingMessage)
         const debouncedSentMessage = debounce(
           async () => {
-            await wbot.sendMessage(
-              `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
-              }`,
-              {
-                text: whatsapp.greetingMessage
+            const hasMedia = whatsapp.greetingMediaPath && whatsapp.greetingMediaPath !== "";
+            const hasMessage = whatsapp.greetingMessage && whatsapp.greetingMessage.trim() !== "";
+
+            // Sempre envia mídia primeiro (modo "separate")
+            if (hasMedia) {
+              const filePath = path.resolve("public", `company${ticket.companyId}`, whatsapp.greetingMediaPath);
+              const optionsMsg = await getMessageOptions(whatsapp.greetingMediaName || "imagem", filePath, ticket.companyId.toString(), "");
+              if (optionsMsg) {
+                const sentMediaMessage = await wbot.sendMessage(
+                  `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+                  { ...optionsMsg }
+                );
+                // Adiciona mediaUrl ao sentMessage para identificar que é mídia de saudação
+                if (sentMediaMessage) {
+                  (sentMediaMessage as any).mediaUrl = whatsapp.greetingMediaPath;
+                }
+                await verifyMediaMessage(sentMediaMessage, ticket, ticket.contact);
+                await delay(500);
               }
-            );
+            }
+            
+            // Só envia a saudação como texto separado se NÃO houver filas
+            // Se houver filas, o menu será enviado depois pela função handleChartbot
+            const hasQueues = whatsapp.queues && whatsapp.queues.length > 0;
+            if (hasMessage && !hasQueues) {
+              await delay(500);
+              const sentTextMessage = await wbot.sendMessage(
+                `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+                {
+                  text: whatsapp.greetingMessage
+                }
+              );
+              await verifyMessage(sentTextMessage, ticket, ticket.contact);
+            }
           },
           1000,
           ticket.id
@@ -2734,6 +3552,12 @@ const filterMessages = (msg: WAMessage): boolean => {
 
 const wbotMessageListener = async (wbot: Session, companyId: number): Promise<void> => {
   try {
+    // Remover listeners antigos para evitar duplicação
+    wbot.ev.removeAllListeners("messages.upsert");
+    wbot.ev.removeAllListeners("messages.update");
+
+    logger.info(`Registrando listeners de mensagens para WhatsApp ID: ${wbot.id}, Company ID: ${companyId}`);
+
     const messageCache = new Set<string>();
     const CACHE_TIMEOUT = 1000 * 60 * 5; 
 
@@ -2802,49 +3626,58 @@ const wbotMessageListener = async (wbot: Session, companyId: number): Promise<vo
     // });
 
     wbot.ev.on("messages.upsert", async (messageUpsert: ImessageUpsert) => {
-      const messages = messageUpsert.messages
-        .filter(filterMessages)
-        .map(msg => msg);
+      try {
+        const messages = messageUpsert.messages
+          .filter(filterMessages)
+          .map(msg => msg);
         console.log('messages.upsert:::::', messages)
 
-        // const message = messages[0]
-        // console.log('key:::::', message.key)
+        if (!messages?.length) return;
 
-      if (!messages?.length) return;
-
-      messageQueue.push(...messages);
+        messageQueue.push(...messages);
+      } catch (err) {
+        logger.error(`Erro no listener messages.upsert: ${err}`);
+        Sentry.captureException(err);
+      }
     });
 
     wbot.ev.on("messages.update", async (messageUpdate: WAMessageUpdate[]) => {
-      if (!messageUpdate?.length) return;
+      try {
+        if (!messageUpdate?.length) return;
 
-      const updates = messageUpdate.map(async (message: WAMessageUpdate) => {
-        try {
-          if (message.update.status) {
-            await (wbot as WASocket)!.readMessages([message.key]);
+        const updates = messageUpdate.map(async (message: WAMessageUpdate) => {
+          try {
+            if (message.update.status) {
+              await (wbot as WASocket)!.readMessages([message.key]);
+            }
+
+            if (
+              message.update.messageStubType === 1 && 
+              message.key.remoteJid !== 'status@broadcast'
+            ) {
+              await MarkDeleteWhatsAppMessage(
+                message.key.remoteJid,
+                null,
+                message.key.id,
+                companyId
+              );
+            }
+
+            await handleMsgAck(message, message.update.status);
+          } catch (err) {
+            logger.error(`Erro ao processar update de mensagem: ${err}`);
+            Sentry.captureException(err);
           }
+        });
 
-          if (
-            message.update.messageStubType === 1 && 
-            message.key.remoteJid !== 'status@broadcast'
-          ) {
-            await MarkDeleteWhatsAppMessage(
-              message.key.remoteJid,
-              null,
-              message.key.id,
-              companyId
-            );
-          }
-
-          await handleMsgAck(message, message.update.status);
-        } catch (err) {
-          logger.error(`Error processing message update: ${err}`);
-          Sentry.captureException(err);
-        }
-      });
-
-      await Promise.all(updates);
+        await Promise.all(updates);
+      } catch (err) {
+        logger.error(`Erro no listener messages.update: ${err}`);
+        Sentry.captureException(err);
+      }
     });
+
+    logger.info(`Listeners de mensagens registrados com sucesso para WhatsApp ID: ${wbot.id}`);
 
   } catch (error) {
     Sentry.captureException(error);

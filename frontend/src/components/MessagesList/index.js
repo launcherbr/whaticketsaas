@@ -19,8 +19,11 @@ import {
   GetApp,
   Reply,
   KeyboardArrowDown,
+  InsertDriveFile,
+  ArrowDownward,
 } from "@material-ui/icons";
 import AudioModal from "../AudioModal";
+import AudioMessageWhatsApp from "../AudioMessageWhatsApp";
 import MarkdownWrapper from "../MarkdownWrapper";
 import ModalImageCors from "../ModalImageCors";
 import MessageOptionsMenu from "../MessageOptionsMenu";
@@ -263,6 +266,92 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: theme.mode === 'light' ? '#2DDD7F' : '#1c1c1c',
     color: theme.mode === 'light' ? '#2DDD7F' : '#FFF',
   },
+  documentContainer: {
+    display: "flex",
+    alignItems: "center",
+    padding: "12px 16px",
+    backgroundColor: theme.mode === 'light' ? '#dcf8c6' : '#2a2a2a',
+    borderRadius: "8px",
+    marginBottom: "8px",
+    cursor: "default",
+    "&:hover": {
+      backgroundColor: theme.mode === 'light' ? '#d4f0c0' : '#333333',
+    },
+  },
+  documentContainerReceived: {
+    backgroundColor: theme.mode === 'light' ? '#ffffff' : '#2a2a2a',
+    "&:hover": {
+      backgroundColor: theme.mode === 'light' ? '#f5f5f5' : '#333333',
+    },
+  },
+  documentIcon: {
+    fontSize: 40,
+    color: theme.mode === 'light' ? '#0084ff' : '#4fc3f7',
+    marginRight: 12,
+  },
+  documentInfo: {
+    flex: 1,
+    minWidth: 0,
+  },
+  documentName: {
+    fontSize: "14px",
+    fontWeight: 500,
+    color: theme.mode === 'light' ? '#111b21' : '#e9edef',
+    marginBottom: 4,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  documentMeta: {
+    fontSize: "12px",
+    color: theme.mode === 'light' ? '#667781' : '#8696a0',
+  },
+  documentDownload: {
+    marginLeft: 8,
+    color: theme.mode === 'light' ? '#667781' : '#8696a0',
+    cursor: "pointer",
+    transition: "all 0.3s ease",
+    position: "relative",
+    width: 24,
+    height: 24,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    "&:hover": {
+      color: theme.mode === 'light' ? '#0084ff' : '#4fc3f7',
+    },
+    "& svg": {
+      transition: "opacity 0.3s ease",
+    },
+  },
+  documentDownloadLoading: {
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      width: "20px",
+      height: "20px",
+      borderRadius: "50%",
+      border: `2px solid ${theme.mode === 'light' ? '#0084ff' : '#4fc3f7'}`,
+      borderTopColor: "transparent",
+      animation: "$spin 0.8s linear infinite",
+      zIndex: 1,
+    },
+    "& svg": {
+      opacity: 0,
+      visibility: "hidden",
+    },
+  },
+  "@keyframes spin": {
+    "0%": {
+      transform: "rotate(0deg)",
+    },
+    "100%": {
+      transform: "rotate(360deg)",
+    },
+  },
   scrollToBottomButton: {
     position: "absolute",
     bottom: 20,
@@ -363,6 +452,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, onMessagesLoad }) => {
   const scrollTimeoutRef = useRef();
   const { setReplyingMessage } = useContext(ReplyMessageContext);
   const { showSelectMessageCheckbox } = useContext(ForwardMessageContext);
+  const [downloadingFiles, setDownloadingFiles] = useState(new Set());
 
   useEffect(() => {
     dispatch({ type: "RESET" });
@@ -501,6 +591,109 @@ const MessagesList = ({ ticket, ticketId, isGroup, onMessagesLoad }) => {
     setAnchorEl(null);
   };
 
+  const formatFileSize = (bytes) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  const handleDownloadDocument = async (message, event) => {
+    event.stopPropagation();
+    if (!message.mediaUrl) return;
+
+    const messageId = message.id;
+    setDownloadingFiles(prev => new Set(prev).add(messageId));
+
+    try {
+      // Normalizar URL se necessário
+      let downloadUrl = message.mediaUrl;
+      if (downloadUrl.startsWith('/')) {
+        const baseURL = process.env.REACT_APP_BACKEND_URL || api.defaults.baseURL || 'http://localhost:3000';
+        downloadUrl = `${baseURL}${downloadUrl}`;
+      }
+
+      const response = await fetch(downloadUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': '*/*',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erro ao baixar arquivo');
+      }
+
+      const blob = await response.blob();
+      const fileName = getFileName(message);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Erro ao baixar arquivo:', error);
+      toastError(error);
+    } finally {
+      setTimeout(() => {
+        setDownloadingFiles(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(messageId);
+          return newSet;
+        });
+      }, 500);
+    }
+  };
+
+  const getFileExtension = (filename) => {
+    if (!filename) return '';
+    const parts = filename.split('.');
+    return parts.length > 1 ? parts[parts.length - 1].toUpperCase() : '';
+  };
+
+  const getFileName = (message) => {
+    // Tenta extrair do dataJson primeiro (mensagens do Baileys)
+    if (message.dataJson) {
+      try {
+        const data = JSON.parse(message.dataJson);
+        const docMsg = data?.message?.documentMessage || 
+                      data?.message?.documentWithCaptionMessage?.message?.documentMessage;
+        if (docMsg?.fileName) {
+          return docMsg.fileName;
+        }
+      } catch (e) {
+        // Ignora erro de parsing
+      }
+    }
+    
+    if (message.body) {
+      // Tenta extrair o nome do arquivo do body
+      const lines = message.body.split('\n');
+      for (let line of lines) {
+        if (line.includes('.') && !line.startsWith('http') && !line.match(/^\d+\s*(B|KB|MB|GB)/i)) {
+          return line.trim();
+        }
+      }
+    }
+    // Se não encontrar no body, tenta do mediaUrl
+    if (message.mediaUrl) {
+      const urlParts = message.mediaUrl.split('/');
+      const fileName = urlParts[urlParts.length - 1];
+      if (fileName && fileName.includes('.')) {
+        // Remove timestamp se presente (formato: timestamp_filename.ext)
+        const parts = fileName.split('_');
+        if (parts.length > 1 && /^\d+$/.test(parts[0])) {
+          return parts.slice(1).join('_');
+        }
+        return fileName;
+      }
+    }
+    return 'Documento';
+  };
+
   const checkMessageMedia = (message) => {
     if (message.mediaType === "locationMessage" && message.body.split('|').length >= 2) {
       let locationParts = message.body.split('|')
@@ -533,7 +726,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, onMessagesLoad }) => {
     } else if (message.mediaType === "image") {
       return <ModalImageCors imageUrl={message.mediaUrl} />;
     } else if (message.mediaType === "audio") {
-      return <AudioModal url={message.mediaUrl} />;
+      return <AudioMessageWhatsApp url={message.mediaUrl} contact={!message.fromMe ? message.contact : null} fromMe={message.fromMe} />;
     } else if (message.mediaType === "video") {
       return (
         <video
@@ -541,6 +734,54 @@ const MessagesList = ({ ticket, ticketId, isGroup, onMessagesLoad }) => {
           src={message.mediaUrl}
           controls
         />
+      );
+    } else if (message.mediaType === "document" || message.mediaType === "application" || message.mediaType === "documentMessage" || message.mediaType === "documentWithCaptionMessage") {
+      const fileName = getFileName(message);
+      const fileExt = getFileExtension(fileName);
+      
+      // Tenta obter tamanho do arquivo do dataJson
+      let fileSize = '';
+      if (message.dataJson) {
+        try {
+          const data = JSON.parse(message.dataJson);
+          const docMsg = data?.message?.documentMessage || 
+                        data?.message?.documentWithCaptionMessage?.message?.documentMessage;
+          if (docMsg?.fileLength) {
+            fileSize = formatFileSize(docMsg.fileLength);
+          }
+        } catch (e) {
+          // Ignora erro de parsing
+        }
+      }
+      
+      // Se não encontrou no dataJson, tenta do body
+      if (!fileSize && message.body) {
+        const fileSizeMatch = message.body?.match(/(\d+)\s*(B|KB|MB|GB)/i);
+        fileSize = fileSizeMatch ? fileSizeMatch[0] : '';
+      }
+      
+      const isDownloading = downloadingFiles.has(message.id);
+      
+      return (
+        <div 
+          className={`${classes.documentContainer} ${!message.fromMe ? classes.documentContainerReceived : ''}`}
+        >
+          <InsertDriveFile className={classes.documentIcon} />
+          <div className={classes.documentInfo}>
+            <div className={classes.documentName}>
+              {fileName.length > 50 ? fileName.substring(0, 50) + '...' : fileName}
+            </div>
+            <div className={classes.documentMeta}>
+              {fileExt ? `${fileExt} • ` : ''}{fileSize || 'Arquivo'}
+            </div>
+          </div>
+          <div 
+            className={`${classes.documentDownload} ${isDownloading ? classes.documentDownloadLoading : ''}`}
+            onClick={(e) => handleDownloadDocument(message, e)}
+          >
+            <ArrowDownward style={{ fontSize: 20 }} />
+          </div>
+        </div>
       );
     } else {
       return (
@@ -818,11 +1059,11 @@ const MessagesList = ({ ticket, ticketId, isGroup, onMessagesLoad }) => {
                   </div>
                 )}
 
-                {(message.mediaUrl || message.mediaType === "locationMessage" || message.mediaType === "vcard" || message.mediaType === "contactMessage"
+                {(message.mediaUrl || message.mediaType === "locationMessage" || message.mediaType === "vcard" || message.mediaType === "contactMessage" || message.mediaType === "document" || message.mediaType === "application" || message.mediaType === "documentMessage" || message.mediaType === "documentWithCaptionMessage"
                 ) && checkMessageMedia(message)}
                 <div className={message.isEdited ? classes.textContentItemEdited : classes.textContentItem}>
                   {message.quotedMsg && renderQuotedMessage(message)}
-                  {message.mediaType !== "reactionMessage" && (
+                  {message.mediaType !== "reactionMessage" && message.mediaType !== "audio" && message.mediaType !== "document" && message.mediaType !== "application" && message.mediaType !== "documentMessage" && message.mediaType !== "documentWithCaptionMessage" && (
                     <MarkdownWrapper>
                       {message.mediaType === "locationMessage" || message.mediaType === "contactMessage"
                         ? null
@@ -881,7 +1122,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, onMessagesLoad }) => {
                     <br />
                   </div>
                 )}
-                {(message.mediaUrl || message.mediaType === "locationMessage" || message.mediaType === "vcard" || message.mediaType === "contactMessage"
+                {(message.mediaUrl || message.mediaType === "locationMessage" || message.mediaType === "vcard" || message.mediaType === "contactMessage" || message.mediaType === "document" || message.mediaType === "application" || message.mediaType === "documentMessage" || message.mediaType === "documentWithCaptionMessage"
                 ) && checkMessageMedia(message)}
                 <div
                   className={clsx({
@@ -898,7 +1139,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, onMessagesLoad }) => {
                     />
                   )}
                   {message.quotedMsg && renderQuotedMessage(message)}
-                  {message.mediaType !== "reactionMessage" && message.mediaType !== "locationMessage" && message.mediaType !== "contactMessage" && (
+                  {message.mediaType !== "reactionMessage" && message.mediaType !== "locationMessage" && message.mediaType !== "contactMessage" && message.mediaType !== "audio" && message.mediaType !== "document" && message.mediaType !== "application" && message.mediaType !== "documentMessage" && message.mediaType !== "documentWithCaptionMessage" && (
                     <MarkdownWrapper>{message.body}</MarkdownWrapper>
                   )}
                   {message.quotedMsg && message.mediaType === "reactionMessage" && (

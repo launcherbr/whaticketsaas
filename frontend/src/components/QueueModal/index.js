@@ -469,7 +469,7 @@ const QueueModal = ({ open, onClose, queueId }) => {
                         />
                       )}
                     </div>
-                    <QueueOptions queueId={queueId} />
+                    <QueueOptions queueId={queueId} companyId={localStorage.getItem("companyId")} />
                     {(queue.mediaPath || attachment) && (
                     <Grid xs={12} item>
                       <Button startIcon={<AttachFile />}>

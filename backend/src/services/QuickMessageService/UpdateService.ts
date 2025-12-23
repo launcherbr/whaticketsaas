@@ -7,10 +7,11 @@ interface Data {
   userId: number | string;
   id?: number | string;
   geral?: boolean;
+  editBeforeSend?: boolean;
 }
 
 const UpdateService = async (data: Data): Promise<QuickMessage> => {
-  const { id, shortcode, message, userId, geral } = data;
+  const { id, shortcode, message, userId, geral, editBeforeSend } = data;
 
   const record = await QuickMessage.findByPk(id);
 
@@ -22,7 +23,8 @@ const UpdateService = async (data: Data): Promise<QuickMessage> => {
     shortcode,
     message,
     userId,
-	geral
+    geral,
+    editBeforeSend: editBeforeSend !== undefined ? editBeforeSend : false
   });
 
   return record;

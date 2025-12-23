@@ -6,6 +6,9 @@ interface QueueOptionData {
   option: string;
   message?: string;
   parentId?: string;
+  queueType?: string;
+  queueOptionsId?: number;
+  queueUsersId?: number;
 }
 
 const CreateService = async (queueOptionData: QueueOptionData): Promise<QueueOption> => {

@@ -4,7 +4,7 @@ import Stepper from "@material-ui/core/Stepper";
 import Step from "@material-ui/core/Step";
 import StepLabel from "@material-ui/core/StepLabel";
 import Typography from "@material-ui/core/Typography";
-import { Button, Grid, IconButton, StepContent, TextField } from "@material-ui/core";
+import { Button, Grid, IconButton, StepContent, TextField, MenuItem, Select, InputLabel } from "@material-ui/core";
 import AddIcon from "@material-ui/icons/Add";
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import SaveIcon from "@material-ui/icons/Save";
@@ -38,7 +38,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export function QueueOptionStepper({ queueId, options, updateOptions }) {
+export function QueueOptionStepper({ queueId, options, updateOptions, companyId }) {
   const classes = useStyles();
   const [activeOption, setActiveOption] = useState(-1);
   const [attachment, setAttachment] = useState(null);
@@ -46,6 +46,8 @@ export function QueueOptionStepper({ queueId, options, updateOptions }) {
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   
   const [queue, setQueue] = useState(false);
+  const [queues, setQueues] = useState([]);
+  const [usersList, setUsersList] = useState([]);
 
   const handleOption = (index) => async () => {
     setActiveOption(index);
@@ -148,6 +150,46 @@ export function QueueOptionStepper({ queueId, options, updateOptions }) {
     updateOptions();
   };
 
+  const handleOptionChangeType = (event, index) => {
+    options[index].queueType = event.target.value;
+    updateOptions();
+  };
+
+  const handleOptionIds = (event, index) => {
+    options[index].queueOptionsId = event.target.value;
+    updateOptions();
+  };
+
+  const handleUsersIds = (event, index) => {
+    options[index].queueUsersId = event.target.value;
+    updateOptions();
+  };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await api.get("/queue", {
+          params: { companyId }
+        });
+        setQueues(data);
+      } catch (err) {
+        toastError(err);
+      }
+    })();
+  }, [options, companyId]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await api.get(`/users/`, { params: { companyId } });
+        const userList = data.users;
+        setUsersList(userList);
+      } catch (err) {
+        toastError(err);
+      }
+    })();
+  }, [options, companyId]);
+
   const deleteMedia = async (option) => {
     if (attachment) {
       setAttachment(null);
@@ -183,7 +225,23 @@ export function QueueOptionStepper({ queueId, options, updateOptions }) {
             className={classes.input}
             placeholder="Título da opção"
           />
-                    <div style={{ display: "none" }}>
+          {option.edition && (
+            <>
+              <InputLabel style={{ marginTop: 8 }}>{"Tipo da opção"}</InputLabel>
+              <Select
+                value={option.queueType || ""}
+                size="small"
+                onChange={(event) => handleOptionChangeType(event, index)}
+                style={{ width: "40%", marginBottom: 8 }}
+              >
+                <MenuItem value={"text"}>Texto</MenuItem>
+                <MenuItem value={"attendent"}>Atendente</MenuItem>
+                <MenuItem value={"queue"}>Fila</MenuItem>
+                <MenuItem value={"n8n"}>Externo (API)</MenuItem>
+              </Select>
+            </>
+          )}
+          <div style={{ display: "none" }}>
             <input
               type="file"
               ref={attachmentFile}
@@ -221,22 +279,22 @@ export function QueueOptionStepper({ queueId, options, updateOptions }) {
                   <AttachFile/>
                 </IconButton>
               )}
-                             {(option.mediaPath || attachment) && (
-                    <Grid xs={12} item>
-                      <Button startIcon={<AttachFile />}>
-                        {attachment != null
-                          ? attachment.name
-                          : option.mediaName}
-                      </Button>
-                      
-                        <IconButton
-                          onClick={() => setConfirmationOpen(true)}
-                          color="secondary"
-                        >
-                          <DeleteOutline />
-                        </IconButton>
-                    </Grid>
-                  )}
+              {(option.mediaPath || attachment) && (
+                <Grid xs={12} item>
+                  <Button startIcon={<AttachFile />}>
+                    {attachment != null
+                      ? attachment.name
+                      : option.mediaName}
+                  </Button>
+                  
+                  <IconButton
+                    onClick={() => setConfirmationOpen(true)}
+                    color="secondary"
+                  >
+                    <DeleteOutline />
+                  </IconButton>
+                </Grid>
+              )}
             </>
           )}
         </>
@@ -261,21 +319,112 @@ export function QueueOptionStepper({ queueId, options, updateOptions }) {
 
   const renderMessage = (index) => {
     const option = options[index];
+
     if (option.edition) {
-      return (
-        <>
-          <TextField
-            style={{ width: "100%" }}
-            multiline
-            value={option.message}
-            onChange={(event) => handleOptionChangeMessage(event, index)}
-            size="small"
-            className={classes.input}
-            placeholder="Digite o texto da opção"
-          />
-        </>
-      );
+      if (option.queueType === "text" || !option.queueType) {
+        return (
+          <>
+            <TextField
+              style={{ width: "100%" }}
+              multiline
+              value={option.message}
+              onChange={(event) => handleOptionChangeMessage(event, index)}
+              size="small"
+              className={classes.input}
+              placeholder="Digite o texto da opção"
+            />
+          </>
+        );
+      }
+      
+      if (option.queueType === "n8n") {
+        return (
+          <>
+            <TextField
+              style={{ width: "100%" }}
+              multiline
+              value={option.message}
+              onChange={(event) => handleOptionChangeMessage(event, index)}
+              size="small"
+              className={classes.input}
+              placeholder="Digite a URL de integração (N8N / TypeBOT ...)"
+            />
+          </>
+        );
+      }
+      
+      if (option.queueType === "queue") {
+        return (
+          <>
+            <TextField
+              style={{ width: "100%" }}
+              multiline
+              value={option.message}
+              onChange={(event) => handleOptionChangeMessage(event, index)}
+              size="small"
+              className={classes.input}
+              placeholder="Digite o texto da opção"
+            />
+            <InputLabel style={{ marginTop: 8 }}>{"Selecione uma Fila"}</InputLabel>
+            <Select
+              value={option.queueOptionsId || ""}
+              style={{ width: "40%" }}
+              size="small"
+              onChange={(event) => handleOptionIds(event, index)}
+            >
+              {queues.map(queue => (
+                <MenuItem key={queue.id} value={queue.id}>
+                  {queue.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </>
+        );
+      }
+      
+      if (option.queueType === "attendent") {
+        return (
+          <>
+            <TextField
+              style={{ width: "100%" }}
+              multiline
+              value={option.message}
+              onChange={(event) => handleOptionChangeMessage(event, index)}
+              size="small"
+              className={classes.input}
+              placeholder="Digite o texto da opção"
+            />
+            <InputLabel style={{ marginTop: 8 }}>{"Selecione um Atendente"}</InputLabel>
+            <Select
+              value={option.queueUsersId || ""}
+              style={{ width: "40%", marginBottom: 8 }}
+              size="small"
+              onChange={(event) => handleUsersIds(event, index)}
+            >
+              {usersList.map((u) => (
+                <MenuItem key={u.id} value={u.id}>
+                  {u.name}
+                </MenuItem>
+              ))}
+            </Select>
+            <InputLabel>{"Selecione uma Fila"}</InputLabel>
+            <Select
+              value={option.queueOptionsId || ""}
+              style={{ width: "40%" }}
+              size="small"
+              onChange={(event) => handleOptionIds(event, index)}
+            >
+              {queues.map(queue => (
+                <MenuItem key={queue.id} value={queue.id}>
+                  {queue.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </>
+        );
+      }
     }
+    
     return (
       <>
         <Typography onClick={() => handleEdition(index)}>
@@ -293,6 +442,9 @@ export function QueueOptionStepper({ queueId, options, updateOptions }) {
       edition: false,
       option: optionNumber,
       queueId,
+      queueType: options[index].queueType,
+      queueOptionsId: options[index].queueOptionsId,
+      queueUsersId: options[index].queueUsersId,
       parentId: options[index].id,
       children: [],
     });
@@ -326,6 +478,7 @@ export function QueueOptionStepper({ queueId, options, updateOptions }) {
             queueId={queueId}
             options={option.children}
             updateOptions={updateOptions}
+            companyId={companyId}
           />
         </StepContent>
       </Step>
@@ -348,7 +501,7 @@ export function QueueOptionStepper({ queueId, options, updateOptions }) {
   return renderStepper();
 }
 
-export function QueueOptions({ queueId }) {
+export function QueueOptions({ queueId, companyId }) {
   const classes = useStyles();
   const [options, setOptions] = useState([]);
 
@@ -385,6 +538,7 @@ export function QueueOptions({ queueId }) {
           queueId={queueId}
           updateOptions={updateOptions}
           options={options}
+          companyId={companyId}
         />
       );
     }
@@ -401,6 +555,9 @@ export function QueueOptions({ queueId }) {
       edition: false,
       option: options.length + 1,
       queueId,
+      queueType: "",
+      queueOptionsId: null,
+      queueUsersId: null,
       parentId: null,
       children: [],
     };
