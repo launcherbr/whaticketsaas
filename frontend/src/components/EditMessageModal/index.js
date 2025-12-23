@@ -20,7 +20,7 @@ import whatsBackgroundDark from "../../assets/wa-background-dark.png"
 const useStyles = makeStyles((theme) => ({
   messagesList: {
     backgroundSize: "370px",
-    backgroundImage: theme.mode === 'light' ? `url(${whatsBackground})` : `url(${whatsBackgroundDark})`, //DARK MODE PLW DESIGN//
+    backgroundImage: theme.mode === 'light' ? `url(${whatsBackground})` : `url(${whatsBackgroundDark})`, //DARK MODE//
     display: "flex",
     display: "flex",
     justifyContent: "center",

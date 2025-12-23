@@ -46,12 +46,14 @@ import { openApi } from "../../services/api";
 import toastError from "../../errors/toastError";
 import moment from "moment";
 
+const nomeEmpresa = process.env.REACT_APP_COPYRIGHT || ''
+
 const Copyright = () => {
   return (
     <Typography variant="body2" color="textSecondary" align="center">
       {"Copyright © "}
       <Link color="inherit" href="#">
-        PLW
+        { nomeEmpresa }
       </Link>{" "}
       {new Date().getFullYear()}
     </Typography>

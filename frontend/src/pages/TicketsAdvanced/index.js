@@ -27,7 +27,7 @@ const useStyles = makeStyles(theme => ({
         alignItems: "center",
         justifyContent: "center",
         height: "100%",
-        backgroundColor: theme.palette.boxticket, //DARK MODE PLW DESIGN//
+        backgroundColor: theme.palette.boxticket, //DARK MODE//
     },
     placeholderItem: {
     }

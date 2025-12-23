@@ -762,6 +762,16 @@ const MainListItems = (props) => {
                 collapsed={collapsed}
               />
             )}
+
+            {user.super && (
+              <ListItemLink
+                to="/loglauncher"
+                primary={i18n.t("mainDrawer.listItems.loglauncher")}
+                icon={<FiDatabase size={18} />}
+                isActive={isActivePath('/loglauncher')}
+                collapsed={collapsed}
+              />
+            )}
             
             {!collapsed && (
               <React.Fragment>
