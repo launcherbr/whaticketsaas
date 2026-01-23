@@ -31,10 +31,10 @@ Para garantir a melhor performance, seu servidor deve atender às seguintes espe
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Peramix** | Basic | 4 | 6 GB | 100 GB | $4.99 USD | `WHATICKET` (25% OFF no 1º pagamento) |
 | **Peramix** | Standard | 6 | 12 GB | 200 GB | $9.99 USD | `WHATICKET` (25% OFF no 1º pagamento) |
-| **Netcup** | VPS 1000 G11 | 4 | 8 GB | 256 GB | €5.75 | `36nc17542354680` (voucher de 5 euros) |
-| **Netcup** | VPS 2000 G11 | 8 | 16 GB | 512 GB | €12.60 USD | `36nc17542354680` (voucher de 5 euros) |
+| **Netcup** | VPS 1000 G11 | 4 | 8 GB | 256 GB | €5.75 | `36nc17691773970` (voucher de 5 euros) |
+| **Netcup** | VPS 2000 G11 | 8 | 16 GB | 512 GB | €12.60 USD | `36nc17691773970` (voucher de 5 euros) |
 
-  * Adquira aqui: [Peramix](https://control.peramix.com/?affid=14) | [Netcup](https://www.netcup.com/en/?ref=283810)
+  * Adquira aqui: [Peramix](https://control.peramix.com/?affid=14) | [Netcup](https://www.netcup.com/en/?ref=341805)
 
 -----
 
