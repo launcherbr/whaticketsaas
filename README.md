@@ -61,7 +61,7 @@ Se estiver migrando de outras versões ou precisar renovar seu acesso a nosso co
 
 **🔄 Ver Histórico de Versões (Changelog)**
 
-#### **Versão 6.6.1** (`23/12/2025`)
+#### **Versão 6.6.1** (`04/02/2026`)
 
   * Envio de Chave PIX com um click
   * Suporte Envio de GIFs e Stickers
@@ -70,7 +70,6 @@ Se estiver migrando de outras versões ou precisar renovar seu acesso a nosso co
   * Correções no Menu
   * Correção no Audio
   * Removido Página Updates
-
 
 #### **Versão 6.3.5** (`23/12/2025`)
 
