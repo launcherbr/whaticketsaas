@@ -41,6 +41,7 @@ import TableAttendantsStatus from "../../components/Dashboard/TableAttendantsSta
 import { isArray } from "lodash";
 
 import { AuthContext } from "../../context/Auth/AuthContext";
+import { i18n } from "../../translate/i18n";
 
 import useDashboard from "../../hooks/useDashboard";
 import useTickets from "../../hooks/useTickets";
@@ -171,7 +172,7 @@ const Dashboard = () => {
     }
 
     if (Object.keys(params).length === 0) {
-      toast.error("Parametrize o filtro");
+      toast.error(i18n.t("dashboard.messages.parameterizeFilter"));
       setLoading(false);
       return;
     }
@@ -206,7 +207,7 @@ const Dashboard = () => {
           <Grid item xs={12} sm={6} md={4}>
             <TextField
               fullWidth
-              label="Data Inicial"
+              label={i18n.t("dashboard.filters.dateFrom")}
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
@@ -217,7 +218,7 @@ const Dashboard = () => {
           <Grid item xs={12} sm={6} md={4}>
             <TextField
               fullWidth
-              label="Data Final"
+              label={i18n.t("dashboard.filters.dateTo")}
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
@@ -231,20 +232,20 @@ const Dashboard = () => {
       return (
         <Grid item xs={12} sm={6} md={4}>
           <FormControl fullWidth variant="outlined">
-            <InputLabel id="period-selector-label">Período</InputLabel>
+            <InputLabel id="period-selector-label">{i18n.t("dashboard.filters.period")}</InputLabel>
             <Select
               labelId="period-selector-label"
               value={period}
               onChange={(e) => handleChangePeriod(e.target.value)}
-              label="Período"
+              label={i18n.t("dashboard.filters.period")}
             >
-              <MenuItem value={0}>Nenhum selecionado</MenuItem>
-              <MenuItem value={3}>Últimos 3 dias</MenuItem>
-              <MenuItem value={7}>Últimos 7 dias</MenuItem>
-              <MenuItem value={15}>Últimos 15 dias</MenuItem>
-              <MenuItem value={30}>Últimos 30 dias</MenuItem>
-              <MenuItem value={60}>Últimos 60 dias</MenuItem>
-              <MenuItem value={90}>Últimos 90 dias</MenuItem>
+              <MenuItem value={0}>{i18n.t("dashboard.filters.noneSelected")}</MenuItem>
+              <MenuItem value={3}>{i18n.t("dashboard.filters.last3Days")}</MenuItem>
+              <MenuItem value={7}>{i18n.t("dashboard.filters.last7Days")}</MenuItem>
+              <MenuItem value={15}>{i18n.t("dashboard.filters.last15Days")}</MenuItem>
+              <MenuItem value={30}>{i18n.t("dashboard.filters.last30Days")}</MenuItem>
+              <MenuItem value={60}>{i18n.t("dashboard.filters.last60Days")}</MenuItem>
+              <MenuItem value={90}>{i18n.t("dashboard.filters.last90Days")}</MenuItem>
             </Select>
           </FormControl>
         </Grid>
@@ -264,7 +265,7 @@ const Dashboard = () => {
                 <div className={classes.cardContent}>
                   <div className={classes.cardText}>
                     <Typography variant="subtitle2" className={classes.cardTitle}>
-                      Conexões Ativas
+                      {i18n.t("dashboard.cards.activeConnections")}
                     </Typography>
                     <Typography variant="h4" className={classes.cardValue}>
                       {counters.totalWhatsappSessions || 0}
@@ -283,7 +284,7 @@ const Dashboard = () => {
                 <div className={classes.cardContent}>
                   <div className={classes.cardText}>
                     <Typography variant="subtitle2" className={classes.cardTitle}>
-                      Empresas
+                      {i18n.t("dashboard.cards.companies")}
                     </Typography>
                     <Typography variant="h4" className={classes.cardValue}>
                       {counters.totalCompanies || 0}
@@ -301,7 +302,7 @@ const Dashboard = () => {
               <div className={classes.cardContent}>
                 <div className={classes.cardText}>
                   <Typography variant="subtitle2" className={classes.cardTitle}>
-                    Em Conversa
+                    {i18n.t("dashboard.cards.inConversation")}
                   </Typography>
                   <Typography variant="h4" className={classes.cardValue}>
                     {counters.supportHappening || 0}
@@ -318,7 +319,7 @@ const Dashboard = () => {
               <div className={classes.cardContent}>
                 <div className={classes.cardText}>
                   <Typography variant="subtitle2" className={classes.cardTitle}>
-                    Aguardando
+                    {i18n.t("dashboard.cards.waiting")}
                   </Typography>
                   <Typography variant="h4" className={classes.cardValue}>
                     {counters.supportPending || 0}
@@ -335,7 +336,7 @@ const Dashboard = () => {
               <div className={classes.cardContent}>
                 <div className={classes.cardText}>
                   <Typography variant="subtitle2" className={classes.cardTitle}>
-                    Novos Contatos
+                    {i18n.t("dashboard.cards.newContacts")}
                   </Typography>
                   <Typography variant="h4" className={classes.cardValue}>
                     {GetContacts(true) || 0}
@@ -352,7 +353,7 @@ const Dashboard = () => {
               <div className={classes.cardContent}>
                 <div className={classes.cardText}>
                   <Typography variant="subtitle2" className={classes.cardTitle}>
-                    T.M. de Conversa
+                    {i18n.t("dashboard.cards.avgConversationTime")}
                   </Typography>
                   <Typography variant="h4" className={classes.cardValue}>
                     {formatTime(counters.avgSupportTime || 0)}
@@ -369,7 +370,7 @@ const Dashboard = () => {
               <div className={classes.cardContent}>
                 <div className={classes.cardText}>
                   <Typography variant="subtitle2" className={classes.cardTitle}>
-                    Finalizados
+                    {i18n.t("dashboard.cards.finished")}
                   </Typography>
                   <Typography variant="h4" className={classes.cardValue}>
                     {counters.supportFinished || 0}
@@ -386,7 +387,7 @@ const Dashboard = () => {
               <div className={classes.cardContent}>
                 <div className={classes.cardText}>
                   <Typography variant="subtitle2" className={classes.cardTitle}>
-                    T.M. de Espera
+                    {i18n.t("dashboard.cards.avgWaitTime")}
                   </Typography>
                   <Typography variant="h4" className={classes.cardValue}>
                     {formatTime(counters.avgWaitTime || 0)}
@@ -404,15 +405,15 @@ const Dashboard = () => {
             <Grid container spacing={2} alignItems="center">
               <Grid item xs={12} sm={6} md={4}>
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel id="filter-type-label">Tipo de Filtro</InputLabel>
+                  <InputLabel id="filter-type-label">{i18n.t("dashboard.filters.filterType")}</InputLabel>
                   <Select
                     labelId="filter-type-label"
                     value={filterType}
                     onChange={(e) => handleChangeFilterType(e.target.value)}
-                    label="Tipo de Filtro"
+                    label={i18n.t("dashboard.filters.filterType")}
                   >
-                    <MenuItem value={1}>Filtro por Data</MenuItem>
-                    <MenuItem value={2}>Filtro por Período</MenuItem>
+                    <MenuItem value={1}>{i18n.t("dashboard.filters.dateFilter")}</MenuItem>
+                    <MenuItem value={2}>{i18n.t("dashboard.filters.periodFilter")}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -428,7 +429,7 @@ const Dashboard = () => {
                   disabled={loading}
                   size="large"
                 >
-                  Filtrar
+                  {i18n.t("dashboard.filters.filter")}
                 </Button>
               </Grid>
             </Grid>

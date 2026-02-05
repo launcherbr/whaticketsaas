@@ -12,6 +12,7 @@ import {
 	Legend,
 } from "recharts";
 import { startOfHour, parseISO, format } from "date-fns";
+import { i18n } from "../../translate/i18n";
 
 import Title from "./Title";
 import useTickets from "../../hooks/useTickets";
@@ -67,7 +68,7 @@ const Chart = ({ queueTicket }) => {
 
 	return (
 		<React.Fragment>
-			<Title>{`${"Atendimentos Criados: "}${count}`}</Title>
+			<Title>{`${i18n.t("dashboard.charts.ticketsCreated")}${count}`}</Title>
 			<ResponsiveContainer>
 				<LineChart
 					data={chartData}
@@ -100,7 +101,7 @@ const Chart = ({ queueTicket }) => {
 								fill: theme.palette.text.primary,
 							}}
 						>
-							Tickets
+							{i18n.t("dashboard.charts.tickets")}
 						</Label>
 					</YAxis>
 					<Line

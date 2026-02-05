@@ -29,6 +29,7 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 import { ForwardMessageContext } from "../../context/ForwarMessage/ForwardMessageContext";
 import toastError from "../../errors/toastError";
+import EmojiGifStickerPicker from "../EmojiGifStickerPicker";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
@@ -208,6 +209,91 @@ const MessageInput = ({ ticketStatus }) => {
 	const handleAddEmoji = e => {
 		let emoji = e.native;
 		setInputMessage(prevState => prevState + emoji);
+	};
+
+	const handleStickerSelect = async (sticker) => {
+		if (!sticker || !sticker.path) return;
+		
+		setLoading(true);
+		try {
+			const baseURL = process.env.REACT_APP_BACKEND_URL || api.defaults.baseURL || '';
+			let stickerPath = sticker.path;
+			
+			if (!stickerPath.startsWith('stickers/salvos/')) {
+				if (stickerPath.startsWith('stickers/')) {
+					if (!stickerPath.includes('/salvos/')) {
+						stickerPath = `stickers/salvos/${stickerPath.replace('stickers/', '')}`;
+					}
+				} else if (stickerPath.startsWith('salvos/')) {
+					stickerPath = `stickers/${stickerPath}`;
+				} else {
+					stickerPath = `stickers/salvos/${stickerPath}`;
+				}
+			}
+			
+			const stickerUrl = `${baseURL}/public/company${user.companyId}/${stickerPath}`.replace(/([^:]\/)\/+/g, '$1');
+			
+			const response = await fetch(stickerUrl);
+			if (!response.ok) {
+				throw new Error(`Erro ao carregar sticker: ${response.statusText}`);
+			}
+			
+			const blob = await response.blob();
+			const fileName = stickerPath.split('/').pop() || sticker.name || 'sticker.webp';
+			const file = new File([blob], fileName, { type: sticker.mimetype || "image/webp" });
+
+			const formData = new FormData();
+			formData.append("medias", file);
+			formData.append("body", "");
+			formData.append("fromMe", "true");
+			formData.append("forceMediaType", "sticker");
+			formData.append("stickerPath", stickerPath);
+
+			await api.post(`/messages/${ticketId}`, formData);
+
+			setShowEmoji(false);
+			setReplyingMessage(null);
+		} catch (err) {
+			toastError(err);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleGifSelect = async (gifData) => {
+		setLoading(true);
+		try {
+			let file;
+			
+			if (gifData.isUrl && gifData.url) {
+				// Se é apenas uma URL, fazer download
+				const response = await fetch(gifData.url);
+				const blob = await response.blob();
+				const fileName = `gif_${Date.now()}.gif`;
+				file = new File([blob], fileName, { type: "image/gif" });
+			} else if (gifData.file) {
+				// Se já é um File
+				file = gifData.file;
+			} else {
+				throw new Error("Dados de GIF inválidos");
+			}
+
+			// Criar FormData para envio como GIF
+			const formData = new FormData();
+			formData.append("medias", file);
+			formData.append("body", "");
+			formData.append("fromMe", "true");
+			formData.append("forceMediaType", "gif");
+
+			await api.post(`/messages/${ticketId}`, formData);
+
+			setShowEmoji(false);
+			setReplyingMessage(null);
+		} catch (err) {
+			toastError(err);
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	const handleChangeMedias = e => {
@@ -395,24 +481,12 @@ const MessageInput = ({ ticketStatus }) => {
 			<Paper square elevation={0} className={classes.mainWrapper}>
 				{replyingMessage && renderReplyingMessage(replyingMessage)}
 				<div className={classes.newMessageBox}>
-					<IconButton
-						aria-label="emojiPicker"
-						component="span"
+					<EmojiGifStickerPicker
 						disabled={loading || recording || ticketStatus !== "open"}
-						onClick={e => setShowEmoji(prevState => !prevState)}
-					>
-						<MoodIcon className={classes.sendMessageIcons} />
-					</IconButton>
-					{showEmoji ? (
-						<div className={classes.emojiBox}>
-							<Picker
-								perLine={16}
-								showPreview={false}
-								showSkinTones={false}
-								onSelect={handleAddEmoji}
-							/>
-						</div>
-					) : null}
+						onSelectEmoji={handleAddEmoji}
+						onSelectGif={handleGifSelect}
+						onSelectSticker={handleStickerSelect}
+					/>
 
 					<input
 						multiple

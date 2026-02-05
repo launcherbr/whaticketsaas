@@ -14,7 +14,8 @@ import { i18n } from "../../translate/i18n";
 
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
-import { Grid } from "@material-ui/core";
+import { Grid, Typography } from "@material-ui/core";
+import CountryCodeSelector from "../CountryCodeSelector";
 
 const useStyles = makeStyles(theme => ({
 	root: {
@@ -55,7 +56,7 @@ const ContactSchema = Yup.object().shape({
 		.min(2, "Too Short!")
 		.max(50, "Too Long!")
 		.required("Required"),
-	number: Yup.string().min(8, "Too Short!").max(50, "Too Long!"),
+	number: Yup.string().min(10, "Número inválido").max(20, "Número muito longo"),
 	email: Yup.string().email("Invalid email"),
 });
 
@@ -119,17 +120,31 @@ export function ContactForm ({ initialContact, onSave, onCancel }) {
                             />
                         </Grid>
                         <Grid item xs={12}>
-                            <Field
-                                as={TextField}
-                                label={i18n.t("contactModal.form.number")}
-                                name="number"
-                                error={touched.number && Boolean(errors.number)}
-                                helperText={touched.number && errors.number}
-                                placeholder="5513912344321"
-                                variant="outlined"
-                                margin="dense"
-                                fullWidth
-                            />
+                            <div style={{ marginBottom: 8 }}>
+                                <Typography 
+                                    variant="caption" 
+                                    style={{ 
+                                        marginBottom: 4, 
+                                        display: "block",
+                                        color: errors.number && touched.number ? "#f44336" : "rgba(0, 0, 0, 0.54)"
+                                    }}
+                                >
+                                    {i18n.t("contactModal.form.number")}
+                                </Typography>
+                                <Field name="number">
+                                    {({ field, form }) => (
+                                        <CountryCodeSelector
+                                            value={field.value || ""}
+                                            onChange={(e) => {
+                                                form.setFieldValue("number", e.target.value);
+                                                form.setFieldTouched("number", true);
+                                            }}
+                                            error={touched.number && Boolean(errors.number)}
+                                            helperText={touched.number && errors.number}
+                                        />
+                                    )}
+                                </Field>
+                            </div>
                         </Grid>
                         <Grid item xs={12}>
                             <Field

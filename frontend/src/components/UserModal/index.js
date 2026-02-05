@@ -88,6 +88,7 @@ const UserModal = ({ open, onClose, userId }) => {
 		password: "",
 		profile: "user",
 		super:"",
+		SuperIs: "0",
 		allTicket: "desabled"
 	};
 
@@ -102,11 +103,19 @@ const UserModal = ({ open, onClose, userId }) => {
 
 	useEffect(() => {
 		const fetchUser = async () => {
-			if (!userId) return;
+			if (!userId) {
+				setUser(initialState);
+				return;
+			}
 			try {
 				const { data } = await api.get(`/users/${userId}`);
+				const superValue = data.super !== undefined && data.super !== null ? String(data.super) : "0";
 				setUser(prevState => {
-					return { ...prevState, ...data };
+					return { 
+						...prevState, 
+						...data,
+						SuperIs: superValue
+					};
 				});
 				const userQueueIds = data.queues?.map(queue => queue.id);
 				setSelectedQueueIds(userQueueIds);
@@ -130,7 +139,13 @@ const UserModal = ({ open, onClose, userId }) => {
 	};
 
 	const handleSaveUser = async values => {
-		const userData = { ...values, whatsappId, queueIds: selectedQueueIds, allTicket: values.allTicket };
+		const userData = { 
+			...values, 
+			whatsappId, 
+			queueIds: selectedQueueIds, 
+			allTicket: values.allTicket,
+			super: values.SuperIs ? parseInt(values.SuperIs) : 0
+		};
 		try {
 			if (userId) {
 				await api.put(`/users/${userId}`, userData);
@@ -268,12 +283,8 @@ const UserModal = ({ open, onClose, userId }) => {
 														label={i18n.t("userModal.form.SuperIs")}
 														name="SuperIs"
 														labelId="SuperIs-selection-label"
-														id="SuperIs"                                                        
-														required
+														id="SuperIs"
 													>
-                                                    	<MenuItem value="disabled" disabled>
-                                        				<em>Permissão SUPER ADMIN?</em>
-														</MenuItem>
 														<MenuItem value="0">NÃO</MenuItem>
 														<MenuItem value="1">SIM</MenuItem>
 													</Field>

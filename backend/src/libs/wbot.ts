@@ -48,17 +48,15 @@ const KEY_MAP: { [T in keyof SignalDataTypeMap]: string } = {
 };
 
 // Função para extrair número de telefone do JID
-// Números brasileiros válidos têm:
-// - 12 dígitos: código país (2) + DDD (2) + número fixo (8)
-// - 13 dígitos: código país (2) + DDD (2) + número celular (9)
+// Suporta números de qualquer país (até 15 dígitos conforme padrão internacional)
 const extractPhoneNumber = (jid: string): string => {
   if (!jid || typeof jid !== 'string') return '';
   
   // Remove caracteres não numéricos
   const cleanNumber = jid.replace(/[^0-9]/g, "");
   
-  // Limita a 13 dígitos - números brasileiros têm no máximo 13 dígitos
-  return cleanNumber.slice(0, 13);
+  // Limita a 15 dígitos - padrão internacional máximo para números de telefone
+  return cleanNumber.slice(0, 15);
 };
 
 const loggerBaileys = MAIN_LOGGER.child({});
@@ -210,6 +208,30 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
 
         if (!whatsappUpdate) return;
 
+        // Verificar se já existe uma sessão ativa e se está conectado
+        if (whatsappUpdate.status === "CONNECTED") {
+          const existingSessionIndex = sessions.findIndex(s => s.id === whatsapp.id);
+          if (existingSessionIndex !== -1) {
+            const existingSession = sessions[existingSessionIndex];
+            logger.info(`WhatsApp ${whatsappUpdate.name} (ID: ${whatsapp.id}) já está CONNECTED e tem sessão ativa. Reutilizando sessão existente.`);
+            resolve(existingSession);
+            return;
+          } else {
+            // Status é CONNECTED mas não há sessão na memória - pode ser um restart do servidor
+            // Atualizar status para DISCONNECTED e continuar para criar nova sessão
+            logger.warn(`WhatsApp ${whatsappUpdate.name} (ID: ${whatsapp.id}) está marcado como CONNECTED mas não tem sessão na memória. Atualizando status e criando nova sessão.`);
+            await whatsappUpdate.update({ status: "DISCONNECTED" });
+            // Continuar para criar nova sessão
+          }
+        } else {
+          // Se não está CONNECTED, remover sessão antiga se existir
+          const existingSessionIndex = sessions.findIndex(s => s.id === whatsapp.id);
+          if (existingSessionIndex !== -1) {
+            logger.info(`Removendo sessão antiga para ${whatsappUpdate.name} (ID: ${whatsapp.id}) antes de criar nova.`);
+            await removeWbot(whatsapp.id, false);
+          }
+        }
+
         const { id, name, provider } = whatsappUpdate;
 
         // const { version, isLatest } = await fetchLatestWaWebVersion({});
@@ -338,24 +360,17 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                   }
                   
                   const buffer = Buffer.from(array);
-                  console.log(`✅ Convertido objeto Object() para Buffer (${buffer.length} bytes)`);
                   return buffer;
                 } else {
-                  console.log(`⚠️ Objeto Object() não tem chaves numéricas válidas, usando Buffer original`);
-                  // Em vez de retornar Buffer vazio, tentar usar o valor original
                   return originalBufferFrom.call(this, value, ...args);
                 }
               } catch (conversionError) {
-                console.error(`❌ Erro ao converter objeto Object() para Buffer:`, conversionError);
-                // Em vez de retornar Buffer vazio, tentar usar o valor original
                 return originalBufferFrom.call(this, value, ...args);
               }
             }
             
             return originalBufferFrom.call(this, value, ...args);
           } catch (error) {
-            console.error(`❌ Erro no Buffer.from interceptado:`, error);
-            // Em vez de retornar Buffer vazio, tentar usar o valor original
             return originalBufferFrom.call(this, value, ...args);
           }
         };

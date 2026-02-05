@@ -335,7 +335,7 @@ const MainListItems = (props) => {
   const [chats, dispatch] = useReducer(reducer, []);
   const { getPlanCompany } = usePlans();
   
-  const [version, setVersion] = useState(false);
+  const [version, setVersion] = useState(null);
   const { getVersion } = useVersion();
 
   const socketManager = useContext(SocketContext);
@@ -347,8 +347,15 @@ const MainListItems = (props) => {
 
   useEffect(() => {
     async function fetchVersion() {
-      const _version = await getVersion();
-      setVersion(_version.version);
+      try {
+        const _version = await getVersion();
+        if (_version && _version.version) {
+          setVersion(_version.version);
+        }
+      } catch (err) {
+        // Ignorar erro ao buscar versão
+        console.error("Erro ao buscar versão:", err);
+      }
     }
     fetchVersion();
   }, [getVersion]);
@@ -481,7 +488,7 @@ const MainListItems = (props) => {
               inset
               color="inherit"
             >
-              {i18n.t("Atendimento")}
+              {i18n.t("mainDrawer.sections.atendimento")}
             </ListSubheader>
             <>
               <ListItemLink
@@ -501,7 +508,7 @@ const MainListItems = (props) => {
               {showKanban && (
                 <ListItemLink
                   to="/kanban"
-                  primary="Kanban"
+                  primary={i18n.t("mainDrawer.listItems.kanban")}
                   icon={<FiCheckSquare size={18} />}
                   isActive={isActivePath('/kanban')}
                   collapsed={collapsed}
@@ -509,7 +516,7 @@ const MainListItems = (props) => {
               )}
               <ListItemLink
                 to="/todolist"
-                primary={i18n.t("Tarefas")}
+                primary={i18n.t("mainDrawer.listItems.tasks")}
                 icon={<FiList size={18} />}
                 isActive={isActivePath('/todolist')}
                 collapsed={collapsed}
@@ -573,12 +580,12 @@ const MainListItems = (props) => {
               inset
               color="inherit"
             >
-              {i18n.t("Gerência")}
+              {i18n.t("mainDrawer.sections.gerencia")}
             </ListSubheader>
 
             <ListItemLink
               to="/"
-              primary="Dashboard"
+              primary={i18n.t("mainDrawer.listItems.dashboard")}
               icon={<FiHome size={18} />}
               isActive={isActivePath('/')}
               collapsed={collapsed}
@@ -586,7 +593,7 @@ const MainListItems = (props) => {
             
             <ListItemLink
               to="/relatorios"
-              primary={i18n.t("Relátorios")}
+              primary={i18n.t("mainDrawer.listItems.reports")}
               icon={<FiBarChart2 size={18} />}
               isActive={isActivePath('/relatorios')}
               collapsed={collapsed}
@@ -602,18 +609,18 @@ const MainListItems = (props) => {
           <>
             {showCampaigns && (
               <>
-                <ListSubheader
-                  hidden={collapsed}
-                  className={classes.subheader}
-                  inset
-                  color="inherit"
-                >
-                  {i18n.t("Campanhas")}
-                </ListSubheader>
+              <ListSubheader
+                hidden={collapsed}
+                className={classes.subheader}
+                inset
+                color="inherit"
+              >
+                {i18n.t("mainDrawer.sections.campanhas")}
+              </ListSubheader>
 
                 <ListItemLink
                   to="/campaigns"
-                  primary={i18n.t("Listagem")}
+                  primary={i18n.t("mainDrawer.listItems.listagem")}
                   icon={<FiMail size={18} />}
                   isActive={isActivePath('/campaigns')}
                   collapsed={collapsed}
@@ -621,7 +628,7 @@ const MainListItems = (props) => {
 
                 <ListItemLink
                   to="/contact-lists"
-                  primary={i18n.t("Listas de Contatos")}
+                  primary={i18n.t("mainDrawer.listItems.contactLists")}
                   icon={<FiUsers size={18} />}
                   isActive={isActivePath('/contact-lists')}
                   collapsed={collapsed}
@@ -629,7 +636,7 @@ const MainListItems = (props) => {
 
                 <ListItemLink
                   to="/campaigns-config"
-                  primary={i18n.t("Configurações")}
+                  primary={i18n.t("mainDrawer.listItems.campaignsConfig")}
                   icon={<FiSettings size={18} />}
                   isActive={isActivePath('/campaigns-config')}
                   collapsed={collapsed}
@@ -643,7 +650,7 @@ const MainListItems = (props) => {
               inset
               color="inherit"
             >
-              {i18n.t("Administração")}
+              {i18n.t("mainDrawer.sections.administracao")}
             </ListSubheader>
 
             {user.super && (
@@ -749,7 +756,7 @@ const MainListItems = (props) => {
                 inset
                 color="inherit"
               >
-                {i18n.t("Sistema")}
+                {i18n.t("mainDrawer.sections.sistema")}
               </ListSubheader>
             )}
             
@@ -762,18 +769,8 @@ const MainListItems = (props) => {
                 collapsed={collapsed}
               />
             )}
-
-            {user.super && (
-              <ListItemLink
-                to="/loglauncher"
-                primary={i18n.t("mainDrawer.listItems.loglauncher")}
-                icon={<FiDatabase size={18} />}
-                isActive={isActivePath('/loglauncher')}
-                collapsed={collapsed}
-              />
-            )}
             
-            {!collapsed && (
+            {!collapsed && version && version !== "false" && version !== false && (
               <React.Fragment>
                 <Divider />
                 <div className={classes.versionContainer}>
@@ -791,7 +788,7 @@ const MainListItems = (props) => {
       <Divider />
       <li>
         {collapsed ? (
-          <CustomTooltip title={i18n.t("Sair")} placement="right" TransitionComponent={Zoom} arrow>
+          <CustomTooltip title={i18n.t("mainDrawer.appBar.user.logout")} placement="right" TransitionComponent={Zoom} arrow>
             <ListItem
               button
               dense
@@ -804,7 +801,7 @@ const MainListItems = (props) => {
                 </div>
               </ListItemIcon>
               <ListItemText 
-                primary={i18n.t("Sair")} 
+                primary={i18n.t("mainDrawer.appBar.user.logout")} 
                 className={classes.listItemText}
               />
             </ListItem>
@@ -822,7 +819,7 @@ const MainListItems = (props) => {
               </div>
             </ListItemIcon>
             <ListItemText 
-              primary={i18n.t("Sair")} 
+              primary={i18n.t("mainDrawer.appBar.user.logout")} 
               className={classes.listItemText}
             />
           </ListItem>

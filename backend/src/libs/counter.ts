@@ -1,5 +1,3 @@
-// I ❤️ Chat GPT
-
 export type Counter = {
     name: string;
     value: number;

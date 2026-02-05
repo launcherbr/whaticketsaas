@@ -1,25 +1,62 @@
 import React from "react";
 import { makeStyles } from "@material-ui/core";
-import { green, red } from '@material-ui/core/colors';
-import CheckCircleIcon from '@material-ui/icons/CheckCircle';
-import ErrorIcon from '@material-ui/icons/Error';
 
 const useStyles = makeStyles(theme => ({
-    on: {
-        color: green[600],
-        fontSize: '20px'
+    statusDot: {
+        width: '14px',
+        height: '14px',
+        borderRadius: '50%',
+        display: 'inline-block',
+        position: 'relative',
     },
-    off: {
-        color: red[600],
-        fontSize: '20px'
-    }
+    online: {
+        backgroundColor: '#00ff00',
+        boxShadow: '0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00',
+        animation: '$pulseGreen 1.5s ease-in-out infinite',
+    },
+    offline: {
+        backgroundColor: '#ff0000',
+        boxShadow: '0 0 10px #ff0000, 0 0 20px #ff0000, 0 0 30px #ff0000',
+        animation: '$pulseRed 1.5s ease-in-out infinite',
+    },
+    '@keyframes pulseGreen': {
+        '0%': {
+            boxShadow: '0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00',
+            opacity: 1,
+        },
+        '50%': {
+            boxShadow: '0 0 20px #00ff00, 0 0 30px #00ff00, 0 0 40px #00ff00, 0 0 50px #00ff00',
+            opacity: 0.8,
+        },
+        '100%': {
+            boxShadow: '0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00',
+            opacity: 1,
+        },
+    },
+    '@keyframes pulseRed': {
+        '0%': {
+            boxShadow: '0 0 10px #ff0000, 0 0 20px #ff0000, 0 0 30px #ff0000',
+            opacity: 1,
+        },
+        '50%': {
+            boxShadow: '0 0 20px #ff0000, 0 0 30px #ff0000, 0 0 40px #ff0000, 0 0 50px #ff0000',
+            opacity: 0.8,
+        },
+        '100%': {
+            boxShadow: '0 0 10px #ff0000, 0 0 20px #ff0000, 0 0 30px #ff0000',
+            opacity: 1,
+        },
+    },
 }));
 
 const UserStatusIcon = ({ user }) => {
     const classes = useStyles();
-    return user.online ?
-        <CheckCircleIcon className={classes.on} />
-        : <ErrorIcon className={classes.off} />
+    return (
+        <span 
+            className={`${classes.statusDot} ${user.online ? classes.online : classes.offline}`}
+            title={user.online ? "Online" : "Offline"}
+        />
+    );
 }
 
 export default UserStatusIcon;

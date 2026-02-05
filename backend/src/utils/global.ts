@@ -52,17 +52,15 @@ export const buildContactAddress = (contact: any, isGroup: boolean): string => {
 };
 
 // Função para extrair número de telefone do JID
-// Números brasileiros válidos têm:
-// - 12 dígitos: código país (2) + DDD (2) + número fixo (8)
-// - 13 dígitos: código país (2) + DDD (2) + número celular (9)
+// Suporta números de qualquer país (até 15 dígitos conforme padrão internacional)
 const extractPhoneNumber = (jid: string): string => {
   if (!jid || typeof jid !== 'string') return '';
   
   // Remove caracteres não numéricos
   const cleanNumber = jid.replace(/[^0-9]/g, "");
   
-  // Limita a 13 dígitos - números brasileiros têm no máximo 13 dígitos
-  return cleanNumber.slice(0, 13);
+  // Limita a 15 dígitos - padrão internacional máximo para números de telefone
+  return cleanNumber.slice(0, 15);
 };
 
 export const getJidFromMessage = async (message: WAMessage | proto.IWebMessageInfo, wbot: Session): Promise<string> => {

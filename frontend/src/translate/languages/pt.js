@@ -11,21 +11,94 @@ const messages = {
           name: "Nome",
           email: "Email",
           password: "Senha",
+          companyName: "Nome da Empresa",
+          companyNamePlaceholder: "Digite o nome da sua empresa",
+          phone: "Telefone",
+          phonePlaceholder: "(00) 00000-0000",
+          passwordPlaceholder: "Mínimo 5 caracteres",
+          emailPlaceholder: "seu@email.com",
         },
         buttons: {
           submit: "Cadastrar",
           login: "Já tem uma conta? Entre!",
+          creating: "Criando conta...",
+          startTrial: "Iniciar teste de {{days}} dias",
+          selected: "Selecionado",
+          select: "Selecionar",
+          backToPlans: "Voltar para planos",
+          loginHere: "Faça login aqui",
         },
+        validation: {
+          passwordTooShort: "Senha muito curta! Mínimo 5 caracteres",
+          nameTooShort: "Nome muito curto!",
+          nameTooLong: "Nome muito longo!",
+          passwordTooLong: "Senha muito longa!",
+          invalidEmail: "Email inválido",
+          phoneIncomplete: "Telefone incompleto",
+          required: "Obrigatório",
+        },
+        steps: {
+          selectPlan: "Selecione seu plano",
+          createAccount: "Crie sua conta",
+        },
+        hero: {
+          title: "Transforme sua comunicação com nosso sistema",
+          subtitle: "Experimente gratuitamente por {days} dias todas as funcionalidades da nossa plataforma. Sem necessidade de cartão de crédito.",
+        },
+        planCard: {
+          popular: "POPULAR",
+          perMonth: "/mês",
+          whatsappConnections: "Conexões WhatsApp",
+          users: "Usuários",
+          prioritySupport: "Suporte prioritário",
+          freeDays: "{days} dias grátis",
+          selectedPlan: "Plano selecionado:",
+        },
+        formTitle: "Cadastre sua empresa",
+        alreadyHaveAccount: "Já tem uma conta?",
       },
       login: {
         title: "Login",
+        formTitle: "Acesse sua conta",
         form: {
           email: "Email",
           password: "Senha",
         },
+        placeholders: {
+          email: "seu@email.com",
+          password: "••••••••",
+        },
         buttons: {
           submit: "Entrar",
           register: "Registre-se, agora mesmo!",
+          createAccount: "Criar conta",
+        },
+        links: {
+          forgotPassword: "Esqueceu a senha?",
+        },
+      },
+      forgetPassword: {
+        title: "Redefinir senha",
+        form: {
+          email: "Email",
+          verificationCode: "Código de Verificação",
+          newPassword: "Nova senha",
+          confirmPassword: "Confirme a senha",
+        },
+        buttons: {
+          resetPassword: "Redefinir Senha",
+          sendEmail: "Enviar Email",
+        },
+        links: {
+          noAccount: "Não tem uma conta? Cadastre-se!",
+        },
+        messages: {
+          emailNotFound: "Email não encontrado",
+          emailSentSuccess: "Email enviado com sucesso!",
+          passwordResetSuccess: "Senha redefinida com sucesso.",
+          requiredField: "Campo obrigatório",
+          passwordsDontMatch: "As senhas não correspondem",
+          passwordRequirements: "Sua senha precisa ter no mínimo 8 caracteres, sendo uma letra maiúscula, uma minúscula e um número.",
         },
       },
       plans: {
@@ -61,18 +134,27 @@ const messages = {
         },
         token: "Token",
       },
-      dashboard: {
-        charts: {
-          perDay: {
-            title: "Atendimentos hoje: ",
-          },
-        },
-      },
       connections: {
         title: "Conexões",
         subtitle:"Todos os WhatsApp's",
+        status: {
+          connected: "Conectado",
+          disconnected: "Desconectado",
+          qrcode: "QR Code",
+          timeout: "Timeout",
+          connecting: "Conectando",
+        },
+        labels: {
+          default: "Padrão",
+          numberNotDefined: "Número não definido",
+          connections: "conexões",
+        },
         toasts: {
           deleted: "Conexão com o WhatsApp excluída com sucesso!",
+          disconnected: "Conexão desconectada com sucesso!",
+          connecting: "Conectando...",
+          requestingQr: "Solicitando novo QR Code...",
+          restarting: "Aguarde... reiniciando...",
         },
         confirmationModal: {
           deleteTitle: "Deletar",
@@ -89,6 +171,12 @@ const messages = {
           newQr: "Novo QR CODE",
           connecting: "Conectando",
           restart:"Restart",
+          edit: "Editar",
+          delete: "Excluir",
+        },
+        emptyState: {
+          title: "Nenhuma conexão encontrada",
+          message: 'Clique no botão "Adicionar Conexão" para começar',
         },
         toolTips: {
           disconnected: {
@@ -141,6 +229,12 @@ const messages = {
 		  outOfHoursMessage: "Mensagem de fora de expediente",
           queueRedirectionDesc: "Selecione uma fila para os contatos que não possuem fila serem redirecionados",
           prompt: "Prompt",
+          greetingMedia: "Mídia de Saudação (Opcional)",
+          attachImage: "Anexar Imagem",
+          transferAfterMinutes: "Transferir após x (minutos)",
+          transferQueue: "Fila de Transferência",
+          expiresTicket: "Encerrar chats abertos após X horas",
+          expiresInactiveMessage: "Mensagem por Inatividade",
           //maxUseBotQueues: "Enviar bot x vezes",
           //timeUseBotQueues: "Intervalo em minutos entre envio de bot",
           expiresTicket: "Encerrar chats abertos após x minutos",
@@ -185,13 +279,22 @@ const messages = {
 		  importSheet: "Import. Excel",
           add: "Adicionar Contato",
           export: "Exportar Contatos",
-          delete: "Excluir Todos Contatos"
+          delete: "Excluir Todos Contatos",
+          selectAll: "Marcar Todos",
+          deselectAll: "Desmarcar Todos",
+          deleteSelected: "Excluir",
+          deleteAllSelected: "Excluir Todos",
+          importExport: "Importar / Exportar",
+          exportExcel: "Exportar Excel"
         },
         table: {
           name: "Nome",
           whatsapp: "WhatsApp",
           email: "Email",
           actions: "Ações",
+          profilePicture: "Foto de Perfil",
+          lastInteraction: "Última Interação",
+          status: "Status",
         },
       },
       queueIntegrationModal: {
@@ -247,6 +350,37 @@ const messages = {
           voiceKey: "Chave da API de Voz",
           voiceRegion: "Região de Voz",
         },
+        validation: {
+          nameTooShort: "Muito curto!",
+          nameTooLong: "Muito longo!",
+          nameRequired: "Obrigatório",
+          promptTooShort: "Muito curto!",
+          promptRequired: "Descreva o treinamento para Inteligência Artificial",
+          voiceRequired: "Informe o modo para Voz",
+          maxTokensRequired: "Informe o número máximo de tokens",
+          temperatureRequired: "Informe a temperatura",
+          apikeyRequired: "Informe a API Key",
+          queueIdRequired: "Informe a fila",
+          maxMessagesRequired: "Informe o número máximo de mensagens",
+        },
+        voices: {
+          text: "Texto",
+          francisca: "Francisa",
+          antonio: "Antônio",
+          brenda: "Brenda",
+          donato: "Donato",
+          elza: "Elza",
+          fabio: "Fábio",
+          giovanna: "Giovanna",
+          humberto: "Humberto",
+          julio: "Julio",
+          leila: "Leila",
+          leticia: "Letícia",
+          manuela: "Manuela",
+          nicolau: "Nicolau",
+          valerio: "Valério",
+          yara: "Yara",
+        },
         success: "Prompt salvo com sucesso!",
         title: {
           add: "Adicionar Prompt",
@@ -285,9 +419,11 @@ const messages = {
           name: "Nome",
           number: "Número do Whatsapp",
           email: "Email",
+          emailPlaceholder: "seu@email.com",
+          birthday: "Aniversário",
           extraName: "Nome do campo",
           extraValue: "Valor",
-		  disableBot: "Desabilitar chatbot",
+          disableBot: "Desabilitar chatbot",
           whatsapp: "Conexão Origem: "
         },
         buttons: {
@@ -296,12 +432,24 @@ const messages = {
           okEdit: "Salvar",
           cancel: "Cancelar",
         },
+        validation: {
+          nameRequired: "Obrigatório",
+          nameTooShort: "Muito curto! Mínimo 2 caracteres",
+          nameTooLong: "Muito longo! Máximo 50 caracteres",
+          numberRequired: "Informe o número",
+          numberInvalid: "Número inválido",
+          emailInvalid: "Email inválido",
+        },
         success: "Contato salvo com sucesso.",
       },
       queueModal: {
         title: {
           add: "Adicionar fila",
           edit: "Editar fila",
+        },
+        tabs: {
+          queueData: "Dados da Fila",
+          serviceHours: "Horários de Atendimento",
         },
 	toasts: {
           deleted: "Registro excluído",
@@ -320,6 +468,7 @@ const messages = {
           token: "Token",
           orderQueue: "Ordem da fila (Bot)",
           integrationId: "Integração",
+          linkToGroups: "Vincular a Grupos",
         },
         buttons: {
           okAdd: "Adicionar",
@@ -344,6 +493,27 @@ const messages = {
       },
       qrCodeModal:{
         title:"QrCode",
+        waiting: "Aguardando geração do QR Code...",
+        instructions: {
+          title: "Como conectar seu WhatsApp:",
+          step1: {
+            number: "1.",
+            text: "Abra o WhatsApp no seu celular",
+          },
+          step2: {
+            number: "2.",
+            text: "Toque em Mais opções no Android ou em Configurações no iPhone",
+          },
+          step3: {
+            number: "3.",
+            text: "Toque em Dispositivos conectados e depois em Conectar dispositivos",
+          },
+          step4: {
+            number: "4.",
+            text: "Aponte a câmera do celular para esta tela para escanear o QR Code",
+          },
+          note: "O QR Code atualiza automaticamente a cada 60 segundos",
+        },
       },
       userModal: {
         title: {
@@ -379,11 +549,27 @@ const messages = {
           sendAt: 'Data de Agendamento',
           sentAt: 'Data de Envio',
           geral: 'Abrir Ticket?',
+          sendBy: "Enviar por...",
+        },
+        recurrence: {
+          day: "dia",
+          days: "dias",
+          everyDay: "Todo dia",
+          daysOfWeek: {
+            sunday: "Domingo",
+            monday: "Segunda",
+            tuesday: "Terça",
+            wednesday: "Quarta",
+            thursday: "Quinta",
+            friday: "Sexta",
+            saturday: "Sábado",
+          },
         },
         buttons: {
           okAdd: "Adicionar",
           okEdit: "Salvar",
           cancel: "Cancelar",
+          attachMedia: "Anexar Mídia",
         },
         success: "Agendamento salvo com sucesso.",
       },
@@ -402,9 +588,6 @@ const messages = {
           cancel: "Cancelar",
         },
         success: "Tag salvo com sucesso.",
-      },
-      chat: {
-        noTicketMessage: "Selecione um ticket para começar a conversar.",
       },
       uploads: {
         titles: {
@@ -452,12 +635,27 @@ const messages = {
             closed: "Fechado",
             pending: "Pendente",
           },
-          filterUsers: "Filtro por Usuarios",
-          ticketsPerPage: "Tickets por página"
+          filterUsers: "Filtro por Usuários",
+          filterTags: "Filtro por Tags",
+          filterStatus: "Filtro por Status",
+          ticketsPerPage: "Tickets por página",
+          groups: "Grupos"
         },
         buttons: {
           showAll: "Todos",
         },
+      },
+      addUsersToTicketModal: {
+        title: "Adicionar Usuários ao Grupo",
+        assignedUsers: "Usuários Atribuídos:",
+        fieldLabel: "Selecione usuários",
+        typeToSearch: "Digite pelo menos 3 caracteres",
+        noOptions: "Nenhum usuário encontrado",
+        addUsers: "Adicionar usuários",
+        buttons: {
+          cancel: "Cancelar",
+          add: "Adicionar"
+        }
       },
       transferTicketModal: {
         title: "Transferir Ticket",
@@ -489,18 +687,28 @@ const messages = {
         title: "Criar Ticket",
         fieldLabel: "Digite para pesquisar o contato",
         add: "Adicionar",
+        selectQueue: "Selecione uma fila",
+        selectConnection: "Selecione uma Conexão",
         buttons: {
           ok: "Salvar",
           cancel: "Cancelar",
         },
       },
       mainDrawer: {
+        sections: {
+          atendimento: "Atendimento",
+          gerencia: "Gerência",
+          campanhas: "Campanhas",
+          administracao: "Administração",
+          sistema: "Sistema",
+        },
         listItems: {
           dashboard: "Dashboard",
           connections: "Conexões",
           tickets: "Atendimentos",
           quickMessages: "Respostas Rápidas",
           contacts: "Contatos",
+          kanban: "Kanban",
           queues: "Filas & Chatbot",
           tags: "Tags",
           administration: "Administração",
@@ -510,15 +718,19 @@ const messages = {
           messagesAPI: "API",
           schedules: "Agendamentos",
           campaigns: "Campanhas",
+          listagem: "Listagem",
+          contactLists: "Listas de Contatos",
+          campaignsConfig: "Configurações",
           annoucements: "Informativos",
           backups:"Backups",
-          loglauncher:"Atualizações",
+          tasks: "Tarefas",
           chats: "Chat Interno",
           financeiro: "Financeiro",
           files: "Lista de arquivos",
           prompts: "Open.Ai",
 		  reports: "Relatórios",
           queueIntegration: "Integrações",
+          languageSettings: "Configuração de Idioma",
         },
         appBar: {
           notRegister:"Sem notificações",
@@ -551,6 +763,28 @@ const messages = {
       },
 	reports: {
         title: "Relatórios de Atendimentos",
+        labels: {
+          contact: "Contato",
+          dateFrom: "Data Inicial",
+          dateTo: "Data Final",
+        },
+        tooltips: {
+          exportExcel: "Exportar para Excel",
+          accessTicket: "Acessar Ticket",
+        },
+        status: {
+          open: "ABERTO",
+          closed: "FECHADO",
+          pending: "PENDENTE",
+          noQueue: "SEM FILA",
+        },
+        messages: {
+          noPermissionFilterUsers: "Você não tem permissão para filtrar tickets de outros usuários",
+        },
+        excel: {
+          sheetName: "RelatorioDeAtendimentos",
+          fileName: "relatorio-de-atendimentos.xlsx",
+        },
         table: {
           id: "Ticket",
           user: "Usuário",
@@ -597,20 +831,56 @@ const messages = {
         "pt-BR": "Português",
         es: "Español",
         en: "English",
-        tr: "Türkçe",
       },
       messagesAPI: {
-        title: "API",
+        title: "Documentação para envio de mensagens",
+        sections: {
+          sendMethods: "Métodos de Envio",
+          textMessages: "Mensagens de Texto",
+          mediaMessages: "Mensagens de Media",
+          instructions: "Instruções",
+          textMessagesTitle: "1. Mensagens de Texto",
+          mediaMessagesTitle: "2. Mensagens de Media",
+          testSend: "Teste de Envio",
+        },
         textMessage: {
           number: "Número",
           body: "Mensagem",
           token: "Token cadastrado",
+          description: "Seguem abaixo a lista de informações necessárias para envio das mensagens de texto:",
+          endpoint: "Endpoint",
+          method: "Método",
+          headers: "Headers",
+          headersValue: "Authorization (Bearer token) e Content-Type (application/json)",
+          bodyExample: "Sua mensagem",
         },
         mediaMessage: {
           number: "Número",
           body: "Nome do arquivo",
           media: "Arquivo",
           token: "Token cadastrado",
+          description: "Seguem abaixo a lista de informações necessárias para envio das mensagens de media:",
+          endpoint: "Endpoint",
+          method: "Método",
+          headers: "Headers",
+          headersValue: "Authorization (Bearer token) e Content-Type (multipart/form-data)",
+          formData: "FormData",
+          file: "arquivo",
+          selectFile: "Nenhum arquivo escolhido",
+        },
+        buttons: {
+          send: "Enviar",
+        },
+        toasts: {
+          messageSent: "Mensagem enviada com sucesso",
+        },
+        notes: {
+          title: "Observações importantes",
+          tokenNote: "Antes de enviar mensagens, é necessário o cadastro do token vinculado à conexão que enviará as mensagens. Para realizar o cadastro acesse o menu \"Conexões\", clique no botão editar da conexão e insira o token no devido campo.",
+          numberFormat: "O número para envio não deve ter mascara ou caracteres especiais e deve ser composto por:",
+          countryCode: "Código do país",
+          areaCode: "DDD",
+          number: "Número",
         },
       },
       notifications: {
@@ -640,11 +910,16 @@ const messages = {
           message: "Resposta",
           save: "Salvar",
           cancel: "Cancelar",
-          geral: "Permitir editar",
+          geral: "Global",
           add: "Adicionar",
           edit: "Editar",
           visao: "Permitir visão",
-		  geral: 'Global',
+          active: "Ativo",
+          inactive: "Inativo",
+          editBeforeSend: "Editar antes de enviar",
+        },
+        validation: {
+          required: "Obrigatório",
         },
         table: {
           shortcode: "Atalho",
@@ -663,6 +938,45 @@ const messages = {
           protocolNumber: "Protocolo",
           date: "Data",
           hour: "Hora",
+        },
+      },
+      dashboard: {
+        cards: {
+          activeConnections: "Conexões Ativas",
+          companies: "Empresas",
+          inConversation: "Em Conversa",
+          waiting: "Aguardando",
+          newContacts: "Novos Contatos",
+          avgConversationTime: "T.M. de Conversa",
+          finished: "Finalizados",
+          avgWaitTime: "T.M. de Espera",
+        },
+        filters: {
+          filterType: "Tipo de Filtro",
+          dateFilter: "Filtro por Data",
+          periodFilter: "Filtro por Período",
+          dateFrom: "Data Inicial",
+          dateTo: "Data Final",
+          period: "Período",
+          noneSelected: "Nenhum selecionado",
+          last3Days: "Últimos 3 dias",
+          last7Days: "Últimos 7 dias",
+          last15Days: "Últimos 15 dias",
+          last30Days: "Últimos 30 dias",
+          last60Days: "Últimos 60 dias",
+          last90Days: "Últimos 90 dias",
+          filter: "Filtrar",
+        },
+        messages: {
+          parameterizeFilter: "Parametrize o filtro",
+        },
+        charts: {
+          ticketsCreated: "Atendimentos Criados: ",
+          tickets: "Tickets",
+          conversationsChart: "Gráfico de Conversas",
+          quantity: "Quantidade",
+          hourOfDay: "Hora do Dia",
+          errorLoadingData: "Erro ao obter informações dos atendimentos",
         },
       },
       contactLists: {
@@ -734,6 +1048,7 @@ const messages = {
         buttons: {
           add: "Nova Campanha",
           contactLists: "Listas de Contatos",
+          stopCampaign: "Parar Campanha",
         },
         table: {
           name: "Nome",
@@ -744,6 +1059,15 @@ const messages = {
           completedAt: "Concluída",
           confirmation: "Confirmação",
           actions: "Ações",
+          notDefinedQueue: "Não definida",
+          notDefinedWhatsapp: "Não definido",
+          noSchedule: "Sem agendamento",
+          notCompleted: "Não concluída",
+          statusInactive: "Inativa",
+          statusScheduled: "Programada",
+          statusInProgress: "Em Andamento",
+          statusCancelled: "Cancelada",
+          statusFinished: "Finalizada",
         },
         dialog: {
           new: "Nova Campanha",
@@ -796,6 +1120,11 @@ const messages = {
         inactive: 'Inativo',
         title: "Informativos",
         searchPlaceholder: "Pesquisa",
+        priority: {
+          high: "Alta",
+          average: "Média",
+          low: "Baixa",
+        },
         buttons: {
           add: "Novo Informativo",
           contactLists: "Listas de Informativos",
@@ -837,9 +1166,6 @@ const messages = {
           success: "Operação realizada com sucesso",
           deleted: "Registro excluído",
         },
-      },
-      campaignsConfig: {
-        title: "Configurações de Campanhas",
       },
       queues: {
         title: "Filas & Chatbot",
@@ -894,6 +1220,7 @@ const messages = {
       },
       schedules: {
         title: "Agendamentos",
+        searchPlaceholder: "Buscar...",
         confirmationModal: {
           deleteTitle: "Você tem certeza que quer excluir este Agendamento?",
           deleteMessage: "Esta ação não pode ser revertida.",
@@ -909,8 +1236,35 @@ const messages = {
         buttons: {
           add: "Novo Agendamento",
         },
+        tooltips: {
+          edit: "Editar",
+          delete: "Excluir",
+        },
         toasts: {
           deleted: "Agendamento excluído com sucesso.",
+        },
+        messages: {
+          noEventsInRange: "Não há agendamentos no período.",
+        },
+        calendar: {
+          month: "Mês",
+          next: "Próximo",
+          tomorrow: "Amanhã",
+          previous: "Anterior",
+          today: "Hoje",
+          yesterday: "Ontem",
+          week: "Semana",
+          day: "Dia",
+          agenda: "Agenda",
+          allDay: "Dia Todo",
+          date: "Data",
+          time: "Hora",
+          event: "Evento",
+          showMore: "mais",
+        },
+        tooltips: {
+          edit: "Editar",
+          delete: "Excluir",
         },
       },
       tags: {
@@ -949,6 +1303,159 @@ const messages = {
           },
         },
       },
+      settingsCustom: {
+        tabs: {
+          options: "Opções",
+          schedules: "Horários",
+          logo: "Logo",
+          companies: "Empresas",
+          newCompany: "Cadastrar Empresa",
+          plans: "Planos",
+          helps: "Ajuda",
+        },
+        toasts: {
+          schedulesUpdated: "Horários atualizados com sucesso.",
+        },
+        uploader: {
+          tab: {
+            logosIcons: "Logotipos / Ícones",
+          },
+          labels: {
+            chooseOption: "Escolha uma opção:",
+            chooseImage: "Escolher imagem em PNG",
+          },
+          options: {
+            signup: "Tela de Registro",
+            login: "Tela de Login",
+            interno: "Logotipo Interno",
+            logoDark: "Logotipo Dark",
+            favicon: "Favicon.Ico",
+          },
+          buttons: {
+            sendFile: "ENVIAR ARQUIVO",
+          },
+          messages: {
+            noPermission: "Sem permissão para acessar!",
+            chooseFile: "Escolha um arquivo!",
+            chooseDestination: "Escolha um destino!",
+            fileSentSuccess: "Arquivo enviado com sucesso!",
+            invalidFileFormat: "Use somente arquivos em formato PNG, ICO ou SVG!",
+          },
+        },
+      },
+      settingsOptions: {
+        labels: {
+          ratings: "Avaliações",
+          scheduleManagement: "Gerenciamento de Expediente",
+          ignoreGroupMessages: "Ignorar Mensagens de Grupos",
+          acceptCall: "Aceitar Chamada",
+          chatbotType: "Tipo Chatbot",
+          sendGreetingAccepted: "Enviar saudação ao aceitar o ticket",
+          sendTransferMessage: "Enviar mensagem de transferencia de Fila/agente",
+          birthdayReminder: "Ativar/Desativar aviso de aniversariantes",
+          holidayPeriod: "Ativar/Desativar mensagem de recesso/feriados",
+          holidayPeriodAllowQueueFlow: "Mesmo com recesso fila funciona",
+          sendGreetingOneQueue: "Enviar saudação quando houver somente 1 fila",
+          viewClosedTickets: "Operador Visualiza Tickets Fechados?",
+          viewGroups: "Operador Visualiza Grupos?",
+          allowRegister: "Registro (Inscrição) Permitida?",
+          viewRegister: "Registro (Inscrição) Visível?",
+          trialTime: "Tempo de Trial?",
+          globalSettings: "Configurações Globais",
+          integrations: "INTEGRAÇÕES",
+          asaas: "ASAAS",
+          mercadoPago: "MERCADO PAGO",
+          geminiAI: "GEMINI AI",
+          paymentProvider: "Provedor de cobrança",
+          environment: "Ambiente",
+          webhookUrl: "URL do Webhook",
+          selectGeminiModel: "Selecionar Modelo do Gemini",
+          geminiApiToken: "Token da API do Gemini",
+        },
+        options: {
+          disabled: "Desabilitado",
+          enabled: "Habilitado",
+          no: "Não",
+          yes: "Sim",
+          scheduleDisabled: "Desabilitado",
+          scheduleQueue: "Fila",
+          scheduleCompany: "Empresa",
+          callDisabled: "Não Aceitar",
+          callEnabled: "Aceitar",
+          chatbotText: "Texto",
+          environmentProduction: "Produção",
+          environmentSandbox: "Sandbox",
+          paymentProviderGerencianet: "Gerencianet (Atual)",
+          paymentProviderMercadoPago: "Mercado Pago",
+        },
+        placeholders: {
+          greetingMessage: "Ex.: {{ms}} {{name}}, meu nome é {{agent}} e vou prosseguir com seu atendimento!",
+          transferMessage: "Ex.: {{ms}} {{name}}, seu atendimento foi transferido. Departamento: {{queue}}. Atendente: {{agent}}.",
+          birthdayMessage: "Ex.: Parabéns {{name}}! 🎉🎂 Desejamos um feliz aniversário! Que você tenha {{idade}} anos de muita felicidade!",
+          webhookUrl: "https://api.seuapp.com/subscription/webhook",
+        },
+        helperTexts: {
+          updating: "Atualizando...",
+          saving: "Salvando...",
+          saveMessage: "Salvar mensagem",
+          saveTime: "Salvar horário",
+          greetingVariables: "Variáveis disponíveis: {{ms}} (saudação), {{name}} (nome do contato), {{agent}} (atendente)",
+          transferVariables: "Variáveis disponíveis: {{ms}} (saudação), {{name}} (nome do contato), {{agent}} (novo atendente), {{queue}} (fila atual), {{previousAgent}} (atendente anterior), {{previousQueue}} (fila anterior)",
+          birthdayVariables: "Variáveis disponíveis: {{name}} (nome do contato), {{idade}} (idade do contato)",
+          holidayPeriodFlow: "Quando habilitado, o fluxo de filas continua funcionando durante o recesso, mas sem atendimento",
+          configureHolidayPeriod: "Configure os períodos de recesso/feriados nas configurações da conexão WhatsApp",
+          triggerTime: "Horário em que as mensagens de aniversário serão enviadas (formato: HH:MM)",
+          webhookUrlExample: "URL do webhook para validação. Exemplo: https://api.seuapp.com/subscription/webhook",
+          validatingWebhook: "Testando acessibilidade da URL...",
+          validateWebhook: "Validar Webhook",
+          gerencianetClientId: "Client ID da aplicação Gerencianet",
+          gerencianetClientSecret: "Client Secret da aplicação Gerencianet",
+          gerencianetPixKey: "Chave PIX utilizada nas cobranças Gerencianet",
+          uploadingCert: "Enviando certificado...",
+          loadCert: "Carregar certificado (.p12)",
+          certCurrent: "Certificado atual:",
+          noCert: "Nenhum certificado enviado",
+          mercadoPagoPublicKey: "Informe a chave pública do Mercado Pago",
+          mercadoPagoAccessToken: "Informe o access token do Mercado Pago",
+          mercadoPagoWebhookSecret: "Assinatura secreta do webhook (encontrada no painel do Mercado Pago em 'Configurar notificações Webhooks' → campo 'Assinatura secreta')",
+          mercadoPagoWebhookSecretOptional: "⚠️ Opcional, mas recomendado para maior segurança. Copie do campo \"Assinatura secreta\" no painel do Mercado Pago.",
+          geminiApiToken: "Configure o token da API do Google Gemini para habilitar sugestões automáticas de mensagens",
+          geminiCurrentModel: "Modelo atual:",
+          asaasToken: "Token Asaas",
+        },
+        messages: {
+          greetingMessage: "Mensagem de saudação",
+          transferMessage: "Mensagem de transferência",
+          birthdayMessage: "Mensagem de aniversário",
+          triggerTime: "Horário de disparo",
+        },
+        toasts: {
+          operationUpdated: "Operação atualizada com sucesso.",
+          greetingMessageUpdated: "Mensagem de saudação atualizada com sucesso.",
+          transferMessageUpdated: "Mensagem de transferência atualizada com sucesso.",
+          birthdayReminderUpdated: "Aviso de aniversariantes atualizado com sucesso.",
+          birthdayMessageUpdated: "Mensagem de aniversário atualizada com sucesso.",
+          birthdayTimeUpdated: "Horário de disparo de aniversários atualizado com sucesso. O sistema será reiniciado para aplicar as mudanças.",
+          holidayPeriodUpdated: "Mensagem de recesso/feriados atualizada com sucesso.",
+          holidayPeriodFlowUpdated: "Configuração de fluxo durante recesso atualizada com sucesso.",
+          gerencianetEnvironmentUpdated: "Ambiente Gerencianet atualizado com sucesso.",
+          gerencianetClientIdUpdated: "Client ID do Gerencianet atualizado com sucesso.",
+          gerencianetClientSecretUpdated: "Client Secret do Gerencianet atualizado com sucesso.",
+          gerencianetPixKeyUpdated: "Chave PIX do Gerencianet atualizada com sucesso.",
+          gerencianetCertUploaded: "Certificado do Gerencianet enviado com sucesso.",
+          gerencianetCertWarning: "Certificado enviado, mas não foi possível atualizar a configuração automaticamente.",
+          gerencianetCertError: "Não foi possível enviar o certificado do Gerencianet.",
+          webhookUrlRequired: "Por favor, informe a URL do webhook.",
+          webhookValidated: "✅",
+          webhookError: "❌",
+          mercadoPagoPublicKeyUpdated: "Chave pública do Mercado Pago atualizada com sucesso.",
+          mercadoPagoAccessTokenUpdated: "Token de acesso do Mercado Pago atualizado com sucesso.",
+          mercadoPagoWebhookSecretUpdated: "Chave secreta do webhook Mercado Pago atualizada com sucesso.",
+          paymentProviderUpdated: "Provedor de cobrança atualizado com sucesso.",
+          geminiTokenUpdated: "Token do Gemini atualizado com sucesso.",
+          certFormatError: "Envie um certificado no formato .p12.",
+        },
+      },
       messagesList: {
         header: {
           assignedTo: "Atribuído à:",
@@ -957,6 +1464,9 @@ const messages = {
             resolve: "Resolver",
             reopen: "Reabrir",
             accept: "Aceitar",
+            reject: "Recusar",
+            transfer: "Transferir",
+            close: "Fechar",
           },
         },
       },
@@ -965,6 +1475,13 @@ const messages = {
         placeholderClosed:
           "Reabra ou aceite esse ticket para enviar uma mensagem.",
         signMessage: "Assinar",
+        attachments: {
+          image: "Imagem",
+          document: "Documento",
+          video: "Vídeo",
+          location: "Localização",
+          audio: "Áudio",
+        },
       },
       mediaModal: {
         title: "Enviar Mídia",
@@ -987,8 +1504,16 @@ const messages = {
         header: "Dados do contato",
         buttons: {
           edit: "Editar contato",
+          cancel: "Cancelar",
+          save: "Salvar",
         },
         extraInfo: "Outras informações",
+        contactNotes: "Observações do Contato",
+        note: "Observação",
+        notePlaceholder: "Insira aqui a informação que deseja registrar",
+        errors: {
+          invalidUrl: "URL inválida:",
+        },
       },
       fileModal: {
         title: {
@@ -1086,6 +1611,583 @@ const messages = {
         ERR_WAPP_GREETING_REQUIRED:
           "A mensagem de saudação é obrigatório quando há mais de uma fila.",
         ERR_CHECK_NUMBER: "Número inválido. Verifique o número e tente novamente.",
+      },
+      prompts: {
+        warning: {
+          title: "Aviso Importante:",
+          message: "Para todos os usuários do Whaticket que notaram uma interrupção no funcionamento do OpenAI, gostaríamos de esclarecer que isso não se trata de um erro do sistema. O OpenAI oferece um crédito gratuito de $5 USD para novos cadastros, porém, este benefício também está sujeito a um limite de tempo, geralmente em torno de três meses. Quando o crédito disponibilizado se esgota, é necessário recarregar a conta para continuar utilizando o serviço. É importante estar ciente dessa política para garantir uma experiência contínua e sem interrupções no uso do OpenAI com o Whaticket. Se você notou que o serviço parou de funcionar, verifique se seu crédito gratuito expirou e considere a recarga da conta, se necessário. Estamos à disposição para ajudar e esclarecer quaisquer dúvidas adicionais que possam surgir. Obrigado pela compreensão e continuaremos trabalhando para oferecer o melhor serviço possível aos nossos usuários.",
+          usefulLinks: "Links Úteis:",
+          usage: "Uso:",
+          billing: "Fatura:",
+          api: "API:",
+        },
+        toasts: {
+          noPermission: "Esta empresa não possui permissão para acessar essa página! Estamos lhe redirecionando.",
+        },
+      },
+      queueOptions: {
+        title: "Título não definido",
+        placeholder: {
+          optionText: "Digite o texto da opção",
+          integrationUrl: "Digite a URL de integração (N8N / TypeBOT ...)",
+        },
+        labels: {
+          optionType: "Tipo da opção",
+          selectQueue: "Selecione uma Fila",
+          selectAttendant: "Selecione um Atendente",
+        },
+        types: {
+          text: "Texto",
+          attendant: "Atendente",
+          queue: "Fila",
+          n8n: "Externo (API)",
+        },
+        buttons: {
+          add: "Adicionar",
+          options: "Opções",
+        },
+      },
+      holidayPeriodManager: {
+        title: "Recesso/Feriados",
+        buttons: {
+          addPeriod: "Adicionar Período",
+          cancel: "Cancelar",
+          save: "Salvar",
+        },
+        labels: {
+          startDate: "Data de Início",
+          endDate: "Data de Término",
+          message: "Mensagem",
+          repeatInterval: "Repetir mensagem a cada (horas)",
+          active: "Ativo",
+        },
+        placeholders: {
+          message: "Ex.: Estamos em recesso de {{startDate}} a {{endDate}}. Retornaremos em breve!",
+        },
+        helperText: {
+          variables: "Variáveis disponíveis: {{startDate}} (data de início), {{endDate}} (data de término), {{name}} (nome do contato), {{ms}} (saudação)",
+        },
+        intervals: {
+          hour1: "1 hora",
+          hour2: "2 horas",
+          hour3: "3 horas",
+          hour6: "6 horas",
+          hour12: "12 horas",
+          hour24: "24 horas (1 dia)",
+          hour48: "48 horas (2 dias)",
+          hour72: "72 horas (3 dias)",
+        },
+        dialog: {
+          editTitle: "Editar Período",
+          newTitle: "Novo Período de Recesso/Feriado",
+        },
+        status: {
+          active: "Ativo",
+          inactive: "Inativo",
+          activeNow: "⚠️ Período ativo agora",
+        },
+        dates: {
+          from: "De:",
+          to: "Até:",
+        },
+        messages: {
+          noPeriods: "Nenhum período de recesso/feriado configurado",
+          fillRequired: "Preencha todos os campos obrigatórios",
+          dateError: "A data de início deve ser anterior à data de término",
+          updated: "Período atualizado com sucesso!",
+          created: "Período criado com sucesso!",
+          deleted: "Período excluído com sucesso!",
+          confirmDelete: "Tem certeza que deseja excluir este período?",
+        },
+      },
+      campaignModal: {
+        helperText: {
+          variables: "Utilize variáveis como {nome}, {numero}, {email} ou defina variáveis personalizadas.",
+        },
+        tabs: {
+          message1: "Msg. 1",
+          message2: "Msg. 2",
+          message3: "Msg. 3",
+          message4: "Msg. 4",
+          message5: "Msg. 5",
+        },
+        errors: {
+          generic: "Erro ao processar solicitação",
+        },
+      },
+      toastError: {
+        generic: "Ocorreu um erro!",
+      },
+      backups: {
+        title: "Backups do Sistema",
+        buttons: {
+          create: "Fazer Backup",
+          download: "Download",
+          delete: "Excluir",
+          cancel: "Cancelar",
+          previous: "Anterior",
+          next: "Próxima",
+        },
+        table: {
+          name: "Nome",
+          size: "Tamanho",
+          createdAt: "Data de Criação",
+          actions: "Ações",
+        },
+        placeholders: {
+          search: "Buscar backups...",
+        },
+        status: {
+          started: "Iniciado",
+          preparing: "Preparando...",
+          database: "Fazendo backup do banco de dados...",
+          backend: "Fazendo backup do backend...",
+          frontend: "Fazendo backup do frontend...",
+          compressing: "Comprimindo...",
+          completed: "Concluído",
+          error: "Erro",
+        },
+        messages: {
+          noBackups: "Nenhum backup encontrado",
+          errorCreating: "Erro ao criar backup:",
+          unknownError: "Erro desconhecido",
+          creating: "Criando Backup...",
+          error: "Erro:",
+          important: "Importante:",
+          importantNote: "É sempre recomendado fazer backup da VPS através de snapshot e também realizar backups regularmente durante a noite devido à duração do processo. Os backups incluem o banco de dados completo e todos os arquivos do sistema (backend e frontend).",
+          confirmDelete: "Confirmar Exclusão",
+          confirmDeleteMessage: "Tem certeza que deseja excluir o backup \"{{name}}\"? Esta ação não afetará o sistema, apenas removerá o arquivo de backup.",
+          page: "Página",
+          of: "de",
+          databaseBackupError: "Não foi possível fazer backup do banco de dados. Certifique-se de que mysqldump/pg_dump está instalado.",
+          tempDirNotFound: "Diretório temporário não encontrado para compressão",
+          noFilesToCompress: "Nenhum arquivo encontrado para comprimir",
+          zipCreationFailed: "Falha ao criar arquivo ZIP",
+          unsupportedDatabaseDialect: "Dialeto de banco de dados não suportado",
+        },
+        toasts: {
+          accessDenied: "Acesso negado. Apenas superadmin pode acessar esta página.",
+          completed: "Backup concluído com sucesso!",
+          started: "Backup iniciado. Aguarde a conclusão...",
+          deleted: "Backup excluído com sucesso",
+          downloadStarted: "Download iniciado",
+          error: "Erro ao criar backup",
+        },
+        formatBytes: {
+          zero: "0 Bytes",
+          bytes: "Bytes",
+          kb: "KB",
+          mb: "MB",
+          gb: "GB",
+        },
+      },
+      chat: {
+        noTicketMessage: "Selecione um ticket para começar a conversar.",
+        tabs: {
+          chats: "Chats",
+          messages: "Mensagens",
+        },
+        dialog: {
+          title: "Conversa",
+          labels: {
+            title: "Título",
+          },
+          placeholders: {
+            title: "Título",
+          },
+          alerts: {
+            fillTitle: "Por favor, preencha o título da conversa.",
+            selectUser: "Por favor, selecione pelo menos um usuário.",
+          },
+          buttons: {
+            close: "Fechar",
+            save: "Salvar",
+          },
+        },
+        buttons: {
+          new: "Nova",
+          newChat: "Novo",
+        },
+        confirmationModal: {
+          deleteTitle: "Excluir Conversa",
+          deleteMessage: "Esta ação não pode ser revertida, confirmar?",
+        },
+      },
+      campaignsConfig: {
+        title: "Configurações de Campanhas",
+        sections: {
+          intervals: "Intervalos",
+        },
+        toasts: {
+          saved: "Configurações salvas",
+        },
+        labels: {
+          randomInterval: "Intervalo Randômico de Disparo",
+          greaterInterval: "Intervalo de Disparo Maior",
+          greaterIntervalAfter: "Intervalo Maior Após",
+          shortcut: "Atalho",
+          content: "Conteúdo",
+        },
+        intervals: {
+          noInterval: "Sem Intervalo",
+          notDefined: "Não definido",
+          seconds: "segundos",
+          second: "segundo",
+        },
+        buttons: {
+          addVariable: "Adicionar Variável",
+          saveSettings: "Salvar Configurações",
+          close: "Fechar",
+          add: "Adicionar",
+        },
+        table: {
+          shortcut: "Atalho",
+          content: "Conteúdo",
+        },
+      },
+      campaignReport: {
+        titles: {
+          validContacts: "Contatos Válidos",
+          requestedConfirmations: "Confirmações Solicitadas",
+          confirmations: "Confirmações",
+          connection: "Conexão",
+          completion: "Conclusão",
+        },
+      },
+      contactListItems: {
+        tooltips: {
+          validWhatsapp: "Whatsapp Válido",
+          invalidWhatsapp: "Whatsapp Inválido",
+        },
+      },
+      announcementModal: {
+        validation: {
+          titleRequired: "Obrigatório",
+          textRequired: "Obrigatório",
+        },
+      },
+      financeiro: {
+        title: "Faturas",
+        table: {
+          id: "Id",
+          details: "Detalhes",
+          value: "Valor",
+          dueDate: "Data Venc.",
+          status: {
+            label: "Status",
+            paid: "Pago",
+            overdue: "Vencido",
+            open: "Em Aberto",
+          },
+          action: "Ação",
+        },
+        buttons: {
+          pay: "PAGAR",
+          paid: "PAGO",
+        },
+      },
+      checkoutPage: {
+        title: "Falta pouco!",
+        steps: {
+          data: "Dados",
+          customize: "Personalizar",
+          review: "Revisar",
+        },
+        buttons: {
+          back: "VOLTAR",
+          next: "PRÓXIMO",
+          pay: "PAGAR",
+        },
+        addressForm: {
+          title: "Vamos precisar de algumas informações",
+        },
+        paymentForm: {
+          month: "/mês",
+          users: "Usuários",
+          connections: "Conexão",
+          queues: "Filas",
+          select: "SELECIONAR",
+        },
+        reviewOrder: {
+          title: "Resumo da assinatura",
+          planDetails: {
+            title: "Detalhes do plano",
+            users: "Usuários:",
+            whatsapps: "Whatsapps:",
+            billing: "Cobrança: Mensal",
+            total: "Total:",
+          },
+          paymentInfo: {
+            title: "Informação de pagamento",
+            email: "Email:",
+            name: "Nome:",
+            address: "Endereço:",
+            total: "Total:",
+          },
+        },
+        checkoutSuccess: {
+          total: "TOTAL",
+          emailForBilling: "E-mail para cobrança:",
+          copyPix: "Copiar PIX",
+          copied: "Copiado",
+          instructions: "Para finalizar, basta realizar o pagamento escaneando ou colando o código Pix acima :)",
+          licenseRenewed: "Sua licença foi renovada até {{date}}!",
+        },
+        toasts: {
+          subscriptionSuccess: "Assinatura realizada com sucesso!, aguardando a realização do pagamento",
+        },
+        formModel: {
+          firstName: {
+            label: "Nome completo*",
+            requiredErrorMsg: "O nome completo é obrigatório",
+          },
+          lastName: {
+            label: "Sobrenome*",
+            requiredErrorMsg: "O sobrenome é obrigatório",
+          },
+          address1: {
+            label: "Endereço*",
+            requiredErrorMsg: "O Endereço é obrigatório",
+          },
+          city: {
+            label: "Cidade*",
+            requiredErrorMsg: "Cidade é obrigatória",
+          },
+          state: {
+            label: "Estado*",
+            requiredErrorMsg: "Estado é obrigatório",
+          },
+          zipcode: {
+            label: "CEP*",
+            requiredErrorMsg: "CEP é obrigatório",
+            invalidErrorMsg: "Formato de CEP inválido",
+          },
+          country: {
+            label: "País*",
+            requiredErrorMsg: "País é obrigatório",
+          },
+          nameOnCard: {
+            label: "Nome no cartão*",
+            requiredErrorMsg: "Nome no cartão é obrigatório",
+          },
+          cardNumber: {
+            label: "Número do cartão*",
+            requiredErrorMsg: "Número do cartão é obrigatório",
+            invalidErrorMsg: "Número do cartão inválido (ex: 4111111111111)",
+          },
+          expiryDate: {
+            label: "Data de validade*",
+            requiredErrorMsg: "Data de validade é obrigatória",
+            invalidErrorMsg: "Data de validade inválida",
+          },
+          cvv: {
+            label: "CVV*",
+            requiredErrorMsg: "CVV é obrigatório",
+            invalidErrorMsg: "CVV inválido (ex: 357)",
+          },
+          useAddressForPaymentDetails: {
+            label: "Usar este endereço para detalhes de pagamento",
+          },
+          invoiceId: {
+            label: "Usar este invoiceId",
+          },
+        },
+      },
+      companiesManager: {
+        labels: {
+          recurrence: "Recorrência",
+        },
+        status: {
+          no: "Não",
+          yes: "Sim",
+        },
+        toasts: {
+          loadError: "Não foi possível carregar a lista de registros",
+          success: "Operação realizada com sucesso!",
+          operationError: "Não foi possível realizar a operação. Verifique se já existe uma empresa com o mesmo nome ou se os campos foram preenchidos corretamente",
+        },
+        confirmationModal: {
+          deleteTitle: "Exclusão de Registro",
+        },
+      },
+      contactNotesDialog: {
+        toasts: {
+          added: "Observação adicionada com sucesso!",
+          deleted: "Observação excluída com sucesso!",
+        },
+      },
+      messageInputCustom: {
+        errors: {
+          locationError: "Erro ao obter localização: ",
+          geolocationNotSupported: "Geolocalização não suportada pelo navegador",
+          maxFiles: "Máximo de 100 arquivos permitido",
+        },
+        labels: {
+          video: "Vídeo",
+          location: "Localização",
+        },
+      },
+      campaignReport: {
+        titles: {
+          validContacts: "Contatos Válidos",
+          requestedConfirmations: "Confirmações Solicitadas",
+          confirmations: "Confirmações",
+          delivered: "Entregues",
+          connection: "Conexão",
+          contactList: "Lista de Contatos",
+          scheduled: "Agendamento",
+          completion: "Conclusão",
+        },
+      },
+      pages: {
+        toasts: {
+          noPermission: "Esta empresa não possui permissão para acessar essa página! Estamos lhe redirecionando.",
+        },
+        errors: {
+          getTicketsInfo: "Erro ao obter informações dos atendimentos",
+          getConversationInfo: "Erro ao obter informações da conversa",
+        },
+      },
+      dashboard: {
+        cards: {
+          activeConnections: "Conexões Ativas",
+          companies: "Empresas",
+          inConversation: "Em Conversa",
+          waiting: "Aguardando",
+          newContacts: "Novos Contatos",
+          avgConversationTime: "T.M. de Conversa",
+          finished: "Finalizados",
+          avgWaitTime: "T.M. de Espera",
+        },
+        filters: {
+          filterType: "Tipo de Filtro",
+          dateFilter: "Filtro por Data",
+          periodFilter: "Filtro por Período",
+          startDate: "Data Inicial",
+          endDate: "Data Final",
+          period: "Período",
+          noneSelected: "Nenhum selecionado",
+          last3Days: "Últimos 3 dias",
+          last7Days: "Últimos 7 dias",
+          last15Days: "Últimos 15 dias",
+          last30Days: "Últimos 30 dias",
+          last60Days: "Últimos 60 dias",
+          last90Days: "Últimos 90 dias",
+          filter: "Filtrar",
+          configureFilter: "Parametrize o filtro",
+        },
+        table: {
+          name: "Nome",
+          ratings: "Avaliações",
+          avgServiceTime: "T.M. de Atendimento",
+          currentStatus: "Status (Atual)",
+        },
+        charts: {
+          perDay: {
+            title: "Atendimentos hoje: ",
+          },
+          user: {
+            title: "Gráfico de Conversas",
+            totalConversationsByUsers: "Total de Conversas por Usuários",
+          },
+          date: {
+            total: "Total",
+            title: "Gráfico de Conversas",
+            error: "Erro ao buscar informações dos tickets",
+          },
+          appointmentsAtendent: {
+            label: "Número de Atendimentos",
+            title: "Atendimentos por Atendentes",
+            description: "Saiba quais são os atendentes mais produtivos",
+            byDepartments: "Atendimentos por Departamentos/Filas",
+            departmentsDescription: "Saiba quais são os departamentos mais procurados",
+          },
+          rushHour: {
+            title: "Horário de Pico - Troca de mensagens",
+            description: "Quantidade de mensagens recebidas e enviados em cada hora do dia.",
+            hourOfDay: "Hora do Dia",
+            quantity: "Quantidade",
+          },
+          departamentRatings: {
+            title: "Avaliações por Departamento/Fila",
+            description: "Veja as avaliações médias de cada departamento/fila.",
+            quantity: "Quantidade",
+          },
+          dateLabels: {
+            start: "Inicio",
+            end: "Fim",
+          },
+          common: {
+            filter: "Filtrar",
+            quantity: "Quantidade",
+          },
+        },
+      },
+      announcementModal: {
+        form: {
+          sendToAllCompanies: "Enviar para todas as empresas",
+          showToSuperadmin: "Mostrar para superadmin",
+          sendToAllCompaniesDesc: "Quando ativado, o anúncio será enviado para todas as empresas cadastradas",
+          showToSuperadminDesc: "Quando desativado, o anúncio não será exibido para superadmins",
+        },
+        buttons: {
+          preview: "Visualizar",
+        },
+        toasts: {
+          successAllCompanies: "Anúncio enviado com sucesso para {{count}} {{count, plural, one {empresa} other {empresas}}}!",
+        },
+      },
+      kanban: {
+        open: "Em Aberto",
+        tooltips: {
+          notes: "Anotações",
+          createSchedule: "Criar agendamento",
+          goToConversation: "Ir para conversa",
+        },
+        menu: {
+          finalize: "Finalizar",
+        },
+        dialog: {
+          unlinkTicket: "Desvincular Ticket",
+          deleteTicket: "Excluir Ticket",
+          unlinkMessage: "Tem certeza que deseja desvincular este ticket de todas as tags kanban? O chat permanecerá intacto.",
+          deleteMessage: "Atenção: Esta ação é irreversível. Todas as mensagens serão perdidas.",
+          cancel: "Cancelar",
+          confirm: "Confirmar",
+        },
+      },
+      languageSettings: {
+        title: "Configuração de Idioma do Sistema",
+        subtitle: "Idioma Padrão",
+        description: "Defina o idioma padrão do sistema. Todos os usuários verão este idioma por padrão, mas podem alterar individualmente através do seletor de idioma no topo da tela.",
+        form: {
+          defaultLanguage: "Idioma Padrão do Sistema",
+        },
+        buttons: {
+          save: "Salvar",
+          saving: "Salvando...",
+        },
+        toasts: {
+          accessDenied: "Acesso negado. Apenas superadmin pode acessar esta página.",
+          saved: "Idioma padrão do sistema atualizado com sucesso!",
+        },
+      },
+      emojiGifStickerPicker: {
+        searchGifs: "Buscar GIFs",
+        stickers: {
+          selectStickers: "Selecione os stickers",
+          selected_one: "{{count}} sticker selecionado",
+          selected_other: "{{count}} stickers selecionados",
+          selectAll: "Selecionar Todos",
+          clear: "Limpar",
+          delete: "Apagar ({{count}})",
+          noStickers: "Nenhum sticker salvo. Clique no + para adicionar.",
+          deleteStickerTitle: "Excluir Sticker",
+          deleteStickerMessage: "Deseja realmente excluir este sticker?",
+          deleteMultipleTitle: "Excluir Stickers Selecionados",
+          deleteMultipleMessage: "Deseja realmente excluir {{count}} sticker(s) selecionado(s)? Esta ação não pode ser desfeita.",
+          loadError: "Erro ao carregar",
+        },
       },
     },
   },

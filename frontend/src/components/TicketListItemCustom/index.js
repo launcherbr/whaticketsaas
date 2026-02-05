@@ -5,7 +5,6 @@ import { useHistory, useParams } from "react-router-dom";
 import Avatar from "@material-ui/core/Avatar";
 import Badge from "@material-ui/core/Badge";
 import Box from "@material-ui/core/Box";
-import Divider from "@material-ui/core/Divider";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemAvatar from "@material-ui/core/ListItemAvatar";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
@@ -37,13 +36,14 @@ import TransferTicketModal from "../TransferTicketModalCustom";
 const useStyles = makeStyles((theme) => ({
   ticket: {
     position: "relative",
-    margin: "8px 0",
-    borderRadius: "8px",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-    transition: "all 0.3s ease",
+    margin: "0px",
+    padding: "12px 60px 12px 28px",
+    borderRadius: "0px",
+    borderBottom: `1px solid ${theme.palette.divider}`,
+    transition: "all 0.2s ease",
+    backgroundColor: theme.palette.background.paper,
     "&:hover": {
-      boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
-      transform: "translateY(-2px)",
+      backgroundColor: theme.palette.action.hover,
     },
   },
   pendingTicket: {
@@ -51,82 +51,140 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: theme.palette.ticketlist.main,
   },
   selectedTicket: {
-    backgroundColor: "#e3f2fd",
+    backgroundColor: theme.palette.action.selected,
   },
   ticketQueueColor: {
-    width: "6px",
+    minWidth: "4px",
+    width: "auto",
+    maxWidth: "25px",
     height: "100%",
     position: "absolute",
     top: 0,
     left: 0,
-    borderTopLeftRadius: "8px",
-    borderBottomLeftRadius: "8px",
+    borderRadius: "0px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "4px 1px",
+    overflow: "hidden",
+  },
+  queueLabel: {
+    writingMode: "vertical-rl",
+    textOrientation: "mixed",
+    fontSize: "0.55rem",
+    fontWeight: "700",
+    color: "#fff",
+    textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+    letterSpacing: "0.5px",
+    whiteSpace: "nowrap",
+    textTransform: "uppercase",
   },
   eyeIcon: {
-    fontSize: "16px",
+    fontSize: "14px",
     marginLeft: "4px",
     color: blue[500],
     cursor: "pointer",
-    verticalAlign: "middle",
+    "&:hover": {
+      color: blue[700],
+      opacity: 0.8,
+    },
+  },
+  whatsappNameBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: "2px",
+  },
+  whatsappName: {
+    fontSize: "0.65rem",
+    color: green[600],
+    fontWeight: 600,
   },
   avatar: {
-    width: "60px",
-    height: "60px",
-    marginRight: "12px",
+    width: "55px",
+    height: "55px",
+    marginRight: "10px",
     position: "relative",
+    "& .MuiAvatar-root": {
+      borderRadius: "8px",
+    },
   },
   avatarBadge: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    transform: "translate(-30%, -30%)",
+    top: -4,
+    right: -4,
   },
   headerContainer: {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'space-between',
     width: '100%',
+    marginBottom: '2px',
+    paddingRight: '0px',
   },
   timeLabel: {
-    fontSize: "0.75rem",
-    color: theme.palette.common.white,
-    backgroundColor: theme.palette.common.black,
-    padding: "2px 8px",
-    borderRadius: "12px",
-    marginRight: "8px",
-    fontWeight: 500,
-    minWidth: "40px",
-    textAlign: "center",
+    fontSize: "0.65rem",
+    color: theme.palette.text.secondary,
+    fontWeight: 400,
+    whiteSpace: "nowrap",
+    marginLeft: "4px",
   },
   nameContainer: {
     display: 'flex',
     alignItems: 'center',
-    flexGrow: 1,
+    gap: '4px',
+    flex: 1,
     overflow: 'hidden',
   },
   contactName: {
-    fontWeight: "bold",
+    fontWeight: "700",
     fontSize: "0.95rem",
     color: theme.palette.text.primary,
-    display: "flex",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    maxWidth: "180px",
+  },
+  statusBadge: {
+    display: "inline-flex",
     alignItems: "center",
+    padding: "2px 8px",
+    borderRadius: "12px",
+    fontSize: "0.7rem",
+    fontWeight: "600",
+    textTransform: "uppercase",
+    whiteSpace: "nowrap",
+  },
+  statusBadgePending: {
+    backgroundColor: "#ffc107",
+    color: "#000",
+  },
+  statusBadgeOpen: {
+    backgroundColor: "#28a745",
+    color: "#fff",
+  },
+  statusBadgeClosed: {
+    backgroundColor: "#dc3545",
+    color: "#fff",
   },
   whatsappIcon: {
-    fontSize: "16px",
-    marginLeft: "4px",
+    fontSize: "14px",
     color: green[500],
   },
   lastMessage: {
-    fontSize: "0.85rem",
+    fontSize: "0.75rem",
     color: theme.palette.text.secondary,
     display: "-webkit-box",
-    "-webkit-line-clamp": 2,
+    "-webkit-line-clamp": 1,
     "-webkit-box-orient": "vertical",
     overflow: "hidden",
+    marginTop: "2px",
   },
   unreadBadge: {
     "& .MuiBadge-badge": {
-      backgroundColor: green[500],
-      color: "white",
+      backgroundColor: theme.palette.primary.main,
+      color: theme.palette.primary.contrastText || "white",
+      fontWeight: "bold",
+      fontSize: "0.65rem",
     },
   },  tagContainer: {
     display: "flex",
@@ -210,8 +268,9 @@ const useStyles = makeStyles((theme) => ({
     fontSize: "0.8rem",
   },
   interactionTime: {
-    fontSize: "0.75rem",
-    marginLeft: "4px",
+    fontSize: "0.7rem",
+    marginLeft: "6px",
+    fontWeight: "600",
     "&.recent": { color: green[500] },
     "&.warning": { color: orange[500] },
     "&.critical": { color: red[500] },
@@ -219,13 +278,31 @@ const useStyles = makeStyles((theme) => ({
   actionIcon: {
     fontSize: "22px",
     cursor: "pointer",
-    margin: "0 4px",
+    margin: "2px 0",
+    padding: "2px",
+    color: blue[500],
     "&:hover": {
-      opacity: 0.8,
+      opacity: 0.7,
     },
+  },
+  actionIconSuccess: {
+    color: green[500],
+  },
+  actionIconDanger: {
+    color: red[500],
+  },
+  secondaryActions: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "4px",
+    right: "8px",
+    top: "50%",
+    transform: "translateY(-50%)",
   },  chatbotIcon: {
-    fontSize: "16px",
-    marginLeft: "4px",
+    fontSize: "13px",
+    marginLeft: "3px",
     color: grey[600],
   },
   mainContainer: {
@@ -290,6 +367,8 @@ const TicketListItemCustom = ({ ticket }) => {
   const [openTicketMessageDialog, setOpenTicketMessageDialog] = useState(false);
   const { ticketId } = useParams();
   const isMounted = useRef(true);
+  const initialTagsRef = useRef(null);
+  const initialUserRef = useRef(null);
   const { setCurrentTicket } = useContext(TicketsContext);
   const { user } = useContext(AuthContext);
   const { profile } = user;
@@ -309,10 +388,25 @@ const TicketListItemCustom = ({ ticket }) => {
   };
 
   useEffect(() => {
+    // Armazena o usuário do ticket
     if (ticket.userId && ticket.user) {
-      setTicketUser(ticket.user?.name);
+      const userName = ticket.user?.name;
+      if (userName && !initialUserRef.current) {
+        initialUserRef.current = userName;
+      }
+      setTicketUser(initialUserRef.current || userName);
     }
-    setTag(ticket?.tags);
+    
+    // Armazena as tags do ticket
+    if (ticket?.tags && ticket.tags.length > 0) {
+      if (!initialTagsRef.current || initialTagsRef.current.length === 0) {
+        initialTagsRef.current = ticket.tags;
+      }
+      setTag(initialTagsRef.current);
+    } else if (initialTagsRef.current) {
+      // Mantém as tags iniciais mesmo se o ticket vier sem tags
+      setTag(initialTagsRef.current);
+    }
 
     return () => {
       isMounted.current = false;
@@ -457,16 +551,20 @@ const TicketListItemCustom = ({ ticket }) => {
           <>
             <Tooltip title="Aceitar">
               <CheckIcon
-                className={classes.actionIcon}
-                style={{ color: green[500] }}
-                onClick={() => handleAcceptTicket(ticket.id)}
+                className={clsx(classes.actionIcon, classes.actionIconSuccess)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAcceptTicket(ticket.id);
+                }}
               />
             </Tooltip>
             <Tooltip title="Recusar">
               <CloseIcon
-                className={classes.actionIcon}
-                style={{ color: red[500] }}
-                onClick={() => handleCloseTicket(ticket.id)}
+                className={clsx(classes.actionIcon, classes.actionIconDanger)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCloseTicket(ticket.id);
+                }}
               />
             </Tooltip>
           </>
@@ -476,8 +574,10 @@ const TicketListItemCustom = ({ ticket }) => {
           <Tooltip title="Reabrir">
             <ReplayIcon
               className={classes.actionIcon}
-              style={{ color: blue[500] }}
-              onClick={() => handleReopenTicket(ticket.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleReopenTicket(ticket.id);
+              }}
             />
           </Tooltip>
         );
@@ -487,15 +587,19 @@ const TicketListItemCustom = ({ ticket }) => {
             <Tooltip title="Transferir">
               <TransferWithinAStationIcon
                 className={classes.actionIcon}
-                style={{ color: blue[500] }}
-                onClick={handleTransferTicket}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleTransferTicket();
+                }}
               />
             </Tooltip>
             <Tooltip title="Fechar">
               <CloseIcon
-                className={classes.actionIcon}
-                style={{ color: red[500] }}
-                onClick={() => handleCloseTicket(ticket.id)}
+                className={clsx(classes.actionIcon, classes.actionIconDanger)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCloseTicket(ticket.id);
+                }}
               />
             </Tooltip>
           </>
@@ -526,10 +630,20 @@ const TicketListItemCustom = ({ ticket }) => {
           [classes.selectedTicket]: ticketId && +ticketId === ticket.id,
         })}
       >
+        <Tooltip
+          arrow
+          placement="left"
+          title={ticket.queue?.name || "Sem Fila"}
+      >
         <span
           style={{ backgroundColor: ticket.queue?.color || grey[500] }}
           className={classes.ticketQueueColor}
-        />
+          >
+            <span className={classes.queueLabel}>
+              {ticket.queue?.name || "SEM FILA"}
+            </span>
+          </span>
+        </Tooltip>
 
         <ListItemAvatar>
           <div className={classes.avatar}>
@@ -538,6 +652,7 @@ const TicketListItemCustom = ({ ticket }) => {
               style={{ 
                 width: "100%",
                 height: "100%",
+                borderRadius: "8px",
                 backgroundColor: generateColor(ticket?.contact?.number) 
               }}
             >
@@ -555,14 +670,19 @@ const TicketListItemCustom = ({ ticket }) => {
         <ListItemText
           primary={
             <Box className={classes.headerContainer}>
-              <Typography className={classes.timeLabel}>
-                {getTimeLabel()}
-              </Typography>
               <Box className={classes.nameContainer}>
-                <Typography className={classes.contactName}>
-                  {truncateText(ticket.contact.name, 21)}
-                  <Tooltip title="WhatsApp">
+                <Tooltip title={ticket.contact.name}>
+                  <Typography className={classes.contactName}>
+                    {truncateText(ticket.contact.name, 25)}
+                  </Typography>
+                </Tooltip>
+                <Tooltip title={ticket.whatsapp?.name || "WhatsApp"}>
+                  <Box className={classes.whatsappNameBox}>
                     <WhatsAppIcon className={classes.whatsappIcon} />
+                    <Typography className={classes.whatsappName}>
+                      {truncateText(ticket.whatsapp?.name || "", 8)}
+                    </Typography>
+                  </Box>
                   </Tooltip>
                   {ticket.chatbot && (
                     <Tooltip title="Chatbot">
@@ -579,86 +699,68 @@ const TicketListItemCustom = ({ ticket }) => {
                     />
                   </Tooltip>
                   {getInteractionTimeLabel()}
-                </Typography>
               </Box>
+              <Typography className={classes.timeLabel}>
+                {getTimeLabel()}
+              </Typography>
             </Box>
           }
           secondary={
             <>
-              {ticket.presence && (
-                <span className={classes.presenceIndicator}>
-                  {presenceMessage[ticket.presence] || ticket.presence}
-                </span>
-              )}
-
               <Typography className={classes.lastMessage}>
                 {ticket.lastMessage.includes('data:image/png;base64')
-                  ? "Localização"
-                  : <MarkdownWrapper>{truncateText(ticket.lastMessage, 21)}</MarkdownWrapper>}
-              </Typography>              <Box className={classes.mainContainer}>
-                <Box className={classes.infoContainer}>
-                  {ticket.whatsapp?.name && (
-                    <Tooltip title={`Conexão: ${ticket.whatsapp.name}`}>
-                      <span className={clsx(classes.tagBadge, classes.connectionBadge)}>
-                        <AndroidIcon className={classes.tagBadgeIcon} />
-                        <span className={classes.tagBadgeText}>{ticket.whatsapp.name}</span>
-                      </span>
-                    </Tooltip>
-                  )}
+                  ? "📍 Localização"
+                  : <MarkdownWrapper>{truncateText(ticket.lastMessage, 65)}</MarkdownWrapper>}
+              </Typography>
+              <Box display="flex" flexWrap="wrap" gap="4px" mt={0.5} alignItems="center">
                   {ticketUser && (
                     <Tooltip title={`Atendente: ${ticketUser}`}>
-                      <span className={clsx(classes.tagBadge, classes.agentBadge)}>
-                        <FaceIcon className={classes.tagBadgeIcon} />
-                        <span className={classes.tagBadgeText}>{ticketUser}</span>
-                      </span>
-                    </Tooltip>
-                  )}
-                  {ticket.queue?.name && (
-                    <Tooltip title={`Fila: ${ticket.queue.name}`}>
                       <span 
-                        className={clsx(classes.tagBadge, classes.queueBadge)}
-                        style={{ backgroundColor: ticket.queue.color ? `${ticket.queue.color}30` : grey[100] }}
-                      >
-                        <span className={classes.tagBadgeIcon}>Q</span>
-                        <span className={classes.tagBadgeText}>{ticket.queue.name}</span>
+                      style={{ 
+                        backgroundColor: blue[500],
+                        color: "#fff",
+                        padding: "2px 6px",
+                        borderRadius: "10px",
+                        fontSize: "0.65rem",
+                        fontWeight: "600",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "3px",
+                        textShadow: "0 1px 2px rgba(0,0,0,0.3)"
+                      }}
+                    >
+                      <FaceIcon style={{ fontSize: "0.75rem" }} />
+                      {ticketUser}
                       </span>
                     </Tooltip>
                   )}
-                </Box>
-                {tag && tag.length > 0 && (
-                  <Box className={classes.tagContainer}>
-                    <span className={classes.tagLabel}>Tags:</span>
-                    <Box className={classes.tagList}>
-                      {tag.map((tag) => (
-                        <Tooltip key={tag.id} title={`Tag: ${tag.name}`}>
+                {tag && tag.length > 0 && tag.map((t) => (
+                  <Tooltip key={t.id} title={t.name}>
                           <span 
-                            className={classes.tagPill}
                             style={{ 
-                              backgroundColor: tag.color ? `${tag.color}30` : grey[100],
-                              color: tag.color || grey[600],
-                              borderColor: tag.color || grey[400],
-                            }}
-                          >
-                            <span className={classes.tagHash}>#</span>
-                            {tag.name}
+                        backgroundColor: t.color || grey[300],
+                        color: "#fff",
+                        padding: "2px 6px",
+                        borderRadius: "10px",
+                        fontSize: "0.65rem",
+                        fontWeight: "600",
+                        display: "inline-block",
+                        textShadow: "0 1px 2px rgba(0,0,0,0.3)"
+                      }}
+                    >
+                      #{t.name}
                           </span>
                         </Tooltip>
                       ))}
-                    </Box>
-                  </Box>
-                )}
               </Box>
             </>
           }
         />
 
-        <ListItemSecondaryAction>
-          <Box display="flex">
+        <ListItemSecondaryAction className={classes.secondaryActions}>
             {renderStatusIcons()}
-          </Box>
         </ListItemSecondaryAction>
       </ListItem>
-      <Divider variant="inset" component="li" />
     </>
   );
 };

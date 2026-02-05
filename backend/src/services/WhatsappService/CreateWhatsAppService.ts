@@ -20,6 +20,8 @@ interface Request {
   status?: string;
   isDefault?: boolean;
   token?: string;
+  pix?: string;
+  pixMessage?: string;
   provider?: string;
   //sendIdQueue?: number;
   //timeSendQueue?: number;
@@ -51,6 +53,8 @@ const CreateWhatsAppService = async ({
   isDefault = false,
   companyId,
   token = "",
+  pix = "",
+  pixMessage = "",
   provider = "beta",
   //timeSendQueue,
   //sendIdQueue,
@@ -165,6 +169,8 @@ const CreateWhatsAppService = async ({
       isDefault,
       companyId,
       token,
+      pix,
+      pixMessage,
       provider,
       //timeSendQueue,
       //sendIdQueue,

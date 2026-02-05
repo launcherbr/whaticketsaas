@@ -27,6 +27,7 @@ import Tag from "./Tag";
 import TicketTag from "./TicketTag";
 import QueueIntegrations from "./QueueIntegrations";
 import Prompt from "./Prompt";
+import TicketUser from "./TicketUser";
 
 @Table
 class Ticket extends Model<Ticket> {
@@ -100,6 +101,12 @@ class Ticket extends Model<Ticket> {
 
   @BelongsToMany(() => Tag, () => TicketTag)
   tags: Tag[];
+
+  @HasMany(() => TicketUser)
+  ticketUsers: TicketUser[];
+
+  @BelongsToMany(() => User, () => TicketUser)
+  users: Array<User & { TicketUser: TicketUser }>;
 
   @ForeignKey(() => Company)
   @Column

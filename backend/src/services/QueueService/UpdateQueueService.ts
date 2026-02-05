@@ -13,6 +13,7 @@ interface QueueData {
   orderQueue?: number;
   integrationId?: number;
   promptId?: number;
+  linkToGroup?: boolean;
 }
 
 const UpdateQueueService = async (

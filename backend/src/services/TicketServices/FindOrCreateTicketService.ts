@@ -2,6 +2,7 @@ import { subHours } from "date-fns";
 import { Op } from "sequelize";
 import Contact from "../../models/Contact";
 import Ticket from "../../models/Ticket";
+import Queue from "../../models/Queue";
 import ShowTicketService from "./ShowTicketService";
 import FindOrCreateATicketTrakingService from "./FindOrCreateATicketTrakingService";
 import Setting from "../../models/Setting";
@@ -59,12 +60,13 @@ const FindOrCreateTicketService = async (
         userId: null,
         unreadMessages,
         queueId: null,
-        companyId
+        companyId,
+        whatsappId
       });
       await FindOrCreateATicketTrakingService({
         ticketId: ticket.id,
         companyId,
-        whatsappId: ticket.whatsappId,
+        whatsappId,
         userId: ticket.userId
       });
     }
@@ -92,12 +94,13 @@ const FindOrCreateTicketService = async (
         userId: null,
         unreadMessages,
         queueId: null,
-        companyId
+        companyId,
+        whatsappId
       });
       await FindOrCreateATicketTrakingService({
         ticketId: ticket.id,
         companyId,
-        whatsappId: ticket.whatsappId,
+        whatsappId,
         userId: ticket.userId
       });
     }
@@ -108,6 +111,21 @@ const FindOrCreateTicketService = async (
   });
 
   if (!ticket) {
+    // Se for ticket de grupo, verificar se há fila com linkToGroup ativo
+    let queueIdToLink = null;
+    if (groupContact) {
+      const queueWithLinkToGroup = await Queue.findOne({
+        where: {
+          companyId,
+          linkToGroup: true
+        },
+        order: [["id", "DESC"]]
+      });
+      if (queueWithLinkToGroup) {
+        queueIdToLink = queueWithLinkToGroup.id;
+      }
+    }
+
     ticket = await Ticket.create({
       contactId: groupContact ? groupContact.id : contact.id,
       status: "pending",
@@ -115,7 +133,8 @@ const FindOrCreateTicketService = async (
       unreadMessages,
       whatsappId,
       whatsapp,
-      companyId
+      companyId,
+      queueId: queueIdToLink
     });
     await FindOrCreateATicketTrakingService({
       ticketId: ticket.id,
@@ -123,6 +142,18 @@ const FindOrCreateTicketService = async (
       whatsappId,
       userId: ticket.userId
     });
+  } else if (groupContact && ticket.isGroup && !ticket.queueId) {
+    // Se o ticket já existe e é de grupo sem fila, verificar se há fila com linkToGroup ativo
+    const queueWithLinkToGroup = await Queue.findOne({
+      where: {
+        companyId,
+        linkToGroup: true
+      },
+      order: [["id", "DESC"]]
+    });
+    if (queueWithLinkToGroup) {
+      await ticket.update({ queueId: queueWithLinkToGroup.id });
+    }
   }
 
   ticket = await ShowTicketService(ticket.id, companyId);

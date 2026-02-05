@@ -72,8 +72,8 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const QuickeMessageSchema = Yup.object().shape({
-    shortcode: Yup.string().required("Obrigatório"),
-    //   message: Yup.string().required("Obrigatório"),
+    shortcode: Yup.string().required(i18n.t("quickMessages.validation.required")),
+    //   message: Yup.string().required(i18n.t("quickMessages.validation.required")),
 });
 
 const QuickMessageDialog = ({ open, onClose, quickemessageId, reload }) => {
@@ -258,8 +258,8 @@ const QuickMessageDialog = ({ open, onClose, quickemessageId, reload }) => {
 											name="geral"
 											error={touched.geral && Boolean(errors.geral)}
 										  >
-											<MenuItem value={true}>Ativo</MenuItem>
-											<MenuItem value={false}>Inativo</MenuItem>
+											<MenuItem value={true}>{i18n.t("quickMessages.dialog.active")}</MenuItem>
+											<MenuItem value={false}>{i18n.t("quickMessages.dialog.inactive")}</MenuItem>
 										  </Field>
 										</FormControl>
 									  </Grid>
@@ -295,7 +295,7 @@ const QuickMessageDialog = ({ open, onClose, quickemessageId, reload }) => {
                                                     color="primary"
                                                 />
                                             }
-                                            label="Editar antes de enviar"
+                                            label={i18n.t("quickMessages.dialog.editBeforeSend")}
                                         />
                                     </Grid>
                                     {(quickemessage.mediaPath || attachment) && (

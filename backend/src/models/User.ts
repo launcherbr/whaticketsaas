@@ -22,6 +22,7 @@ import UserQueue from "./UserQueue";
 import Company from "./Company";
 import QuickMessage from "./QuickMessage";
 import Whatsapp from "./Whatsapp";
+import TicketUser from "./TicketUser";
 
 @Table
 class User extends Model<User> {
@@ -77,6 +78,12 @@ class User extends Model<User> {
 
   @HasMany(() => Ticket)
   tickets: Ticket[];
+
+  @HasMany(() => TicketUser)
+  ticketUsers: TicketUser[];
+
+  @BelongsToMany(() => Ticket, () => TicketUser)
+  assignedTickets: Array<Ticket & { TicketUser: TicketUser }>;
 
   @BelongsToMany(() => Queue, () => UserQueue)
   queues: Queue[];

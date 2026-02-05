@@ -28,6 +28,8 @@ interface WhatsappData {
   status?: string;
   isDefault?: boolean;
   token?: string;
+  pix?: string;
+  pixMessage?: string;
   //sendIdQueue?: number;
   //timeSendQueue?: number;
   transferQueueId?: number;
@@ -65,6 +67,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     outOfHoursMessage,
     queueIds,
     token,
+    pix,
+    pixMessage,
     //timeSendQueue,
     //sendIdQueue,
 	transferQueueId,
@@ -91,6 +95,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     queueIds,
     companyId,
     token,
+    pix,
+    pixMessage,
     //timeSendQueue,
     //sendIdQueue,
 	transferQueueId,

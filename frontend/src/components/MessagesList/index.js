@@ -31,6 +31,8 @@ import whatsBackground from "../../assets/wa-background.png";
 import LocationPreview from "../LocationPreview";
 import whatsBackgroundDark from "../../assets/wa-background-dark.png";
 import VCardPreview from "../VCardPreview";
+import StickerPreview from "../StickerPreview";
+import GifPreview from "../GifPreview";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { SocketContext } from "../../context/Socket/SocketContext";
@@ -150,6 +152,11 @@ const useStyles = makeStyles((theme) => ({
     paddingTop: 5,
     paddingBottom: 0,
     boxShadow: "0 1px 1px #b3b3b3",
+  },
+  messageSticker: {
+    backgroundColor: "transparent !important",
+    boxShadow: "none !important",
+    padding: "0 !important",
   },
   quotedContainerRight: {
     margin: "-3px -80px 6px -6px",
@@ -723,6 +730,10 @@ const MessagesList = ({ ticket, ticketId, isGroup, onMessagesLoad }) => {
         }
       }
       return <VCardPreview contact={contact} numbers={obj[0].number} />
+    } else if (message.mediaType === "sticker") {
+      return <StickerPreview stickerUrl={message.mediaUrl} />;
+    } else if (message.mediaType === "gif") {
+      return <GifPreview gifUrl={message.mediaUrl} />;
     } else if (message.mediaType === "image") {
       return <ModalImageCors imageUrl={message.mediaUrl} />;
     } else if (message.mediaType === "audio") {
@@ -959,10 +970,24 @@ const MessagesList = ({ ticket, ticketId, isGroup, onMessagesLoad }) => {
             )
           }
 
+          {message.quotedMsg.mediaType === "gif" && (
+            <GifPreview gifUrl={message.quotedMsg.mediaUrl} />
+          )}
+          {message.quotedMsg.mediaType === "sticker" && (
+            <StickerPreview stickerUrl={message.quotedMsg.mediaUrl} />
+          )}
           {message.quotedMsg.mediaType === "image"
             && (
               <ModalImageCors imageUrl={message.quotedMsg.mediaUrl} />)
-            || message.quotedMsg?.body}
+            }
+          {!message.quotedMsg.mediaType || 
+           (message.quotedMsg.mediaType !== "audio" && 
+            message.quotedMsg.mediaType !== "video" && 
+            message.quotedMsg.mediaType !== "application" && 
+            message.quotedMsg.mediaType !== "image" && 
+            message.quotedMsg.mediaType !== "gif" && 
+            message.quotedMsg.mediaType !== "sticker" &&
+            message.quotedMsg?.body)}
 
         </div>
       </div>
@@ -1012,7 +1037,9 @@ const MessagesList = ({ ticket, ticketId, isGroup, onMessagesLoad }) => {
               {renderMessageDivider(message, index)}
               <div
                 id={`message-${message.id}`}
-                className={classes.messageLeft}
+                className={clsx(classes.messageLeft, {
+                  [classes.messageSticker]: message.mediaType === "sticker"
+                })}
                 title={message.queueId && message.queue?.name}
                 onDoubleClick={(e) => hanldeReplyMessage(e, message)}
               >
@@ -1063,7 +1090,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, onMessagesLoad }) => {
                 ) && checkMessageMedia(message)}
                 <div className={message.isEdited ? classes.textContentItemEdited : classes.textContentItem}>
                   {message.quotedMsg && renderQuotedMessage(message)}
-                  {message.mediaType !== "reactionMessage" && message.mediaType !== "audio" && message.mediaType !== "document" && message.mediaType !== "application" && message.mediaType !== "documentMessage" && message.mediaType !== "documentWithCaptionMessage" && (
+                  {message.mediaType !== "reactionMessage" && message.mediaType !== "audio" && message.mediaType !== "document" && message.mediaType !== "application" && message.mediaType !== "documentMessage" && message.mediaType !== "documentWithCaptionMessage" && message.mediaType !== "sticker" && message.mediaType !== "image" && message.mediaType !== "video" && message.mediaType !== "gif" && (
                     <MarkdownWrapper>
                       {message.mediaType === "locationMessage" || message.mediaType === "contactMessage"
                         ? null
@@ -1095,7 +1122,9 @@ const MessagesList = ({ ticket, ticketId, isGroup, onMessagesLoad }) => {
               {renderMessageDivider(message, index)}
               <div 
                 id={`message-${message.id}`}
-                className={classes.messageRight}
+                className={clsx(classes.messageRight, {
+                  [classes.messageSticker]: message.mediaType === "sticker"
+                })}
                 onDoubleClick={(e) => hanldeReplyMessage(e, message)}
               >
               {showSelectMessageCheckbox && (
@@ -1122,7 +1151,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, onMessagesLoad }) => {
                     <br />
                   </div>
                 )}
-                {(message.mediaUrl || message.mediaType === "locationMessage" || message.mediaType === "vcard" || message.mediaType === "contactMessage" || message.mediaType === "document" || message.mediaType === "application" || message.mediaType === "documentMessage" || message.mediaType === "documentWithCaptionMessage"
+                {(message.mediaUrl || message.mediaType === "locationMessage" || message.mediaType === "vcard" || message.mediaType === "contactMessage" || message.mediaType === "document" || message.mediaType === "application" || message.mediaType === "documentMessage" || message.mediaType === "documentWithCaptionMessage" || message.mediaType === "sticker" || message.mediaType === "gif" || message.mediaType === "image" || message.mediaType === "video" || message.mediaType === "audio"
                 ) && checkMessageMedia(message)}
                 <div
                   className={clsx({
@@ -1139,7 +1168,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, onMessagesLoad }) => {
                     />
                   )}
                   {message.quotedMsg && renderQuotedMessage(message)}
-                  {message.mediaType !== "reactionMessage" && message.mediaType !== "locationMessage" && message.mediaType !== "contactMessage" && message.mediaType !== "audio" && message.mediaType !== "document" && message.mediaType !== "application" && message.mediaType !== "documentMessage" && message.mediaType !== "documentWithCaptionMessage" && (
+                  {message.mediaType !== "reactionMessage" && message.mediaType !== "locationMessage" && message.mediaType !== "contactMessage" && message.mediaType !== "audio" && message.mediaType !== "document" && message.mediaType !== "application" && message.mediaType !== "documentMessage" && message.mediaType !== "documentWithCaptionMessage" && message.mediaType !== "sticker" && message.mediaType !== "image" && message.mediaType !== "video" && message.mediaType !== "gif" && (
                     <MarkdownWrapper>{message.body}</MarkdownWrapper>
                   )}
                   {message.quotedMsg && message.mediaType === "reactionMessage" && (

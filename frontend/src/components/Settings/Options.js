@@ -155,6 +155,10 @@ export default function Options(props) {
   const [geminiModel, setGeminiModel] = useState("gemini-2.0-flash-exp");
   const [showGeminiModelSelector, setShowGeminiModelSelector] = useState(false);
 
+  // Giphy API Key
+  const [giphyApiKey, setGiphyApiKey] = useState("");
+  const [loadingGiphyApiKey, setLoadingGiphyApiKey] = useState(false);
+
   
   // recursos a mais...
   const [trial, settrial] = useState('3');
@@ -414,6 +418,11 @@ export default function Options(props) {
         setGeminiModel(geminiModel.value);
       } else {
         setGeminiModel("gemini-2.0-flash-exp");
+      }
+
+      const giphyApiKeySetting = settings.find((s) => s.key === "giphyApiKey");
+      if (giphyApiKeySetting) {
+        setGiphyApiKey(giphyApiKeySetting.value);
       }
 
     }
@@ -863,6 +872,17 @@ export default function Options(props) {
     });
     toast.success("Token do Gemini atualizado com sucesso.");
     setLoadingGeminiApiToken(false);
+  }
+
+  async function handleChangeGiphyApiKey(value) {
+    setGiphyApiKey(value);
+    setLoadingGiphyApiKey(true);
+    await update({
+      key: "giphyApiKey",
+      value,
+    });
+    toast.success("Chave do Giphy atualizada com sucesso!");
+    setLoadingGiphyApiKey(false);
   }
 
   async function handleChangeMercadoPagoPublicKey(value) {
@@ -1389,6 +1409,43 @@ export default function Options(props) {
                 </FormControl>
               </Grid>
 
+              {/* GIPHY API Key */}
+              <Grid spacing={3} container style={{ marginTop: 20 }}>
+                <Tabs
+                  indicatorColor="primary"
+                  textColor="primary"
+                  scrollButtons="on"
+                  variant="scrollable"
+                  className={classes.tab}
+                  style={{
+                    marginBottom: 20,
+                    marginTop: 20
+                  }}
+                >
+                  <Tab label="GIPHY API" />
+                </Tabs>
+              </Grid>
+              
+              <Grid xs={12} sm={12} md={12} item>
+                <FormControl className={classes.selectContainer}>
+                  <TextField
+                    id="giphyApiKey"
+                    name="giphyApiKey"
+                    margin="dense"
+                    label="Chave da API do Giphy"
+                    variant="outlined"
+                    value={giphyApiKey}
+                    onChange={async (e) => {
+                      handleChangeGiphyApiKey(e.target.value);
+                    }}
+                    helperText="Configure a chave da API do Giphy para buscar GIFs. Obtenha sua chave gratuita em https://developers.giphy.com/"
+                    fullWidth
+                  />
+                  <FormHelperText>
+                    {loadingGiphyApiKey && "Atualizando..."}
+                  </FormHelperText>
+                </FormControl>
+              </Grid>
       </>
         )}
       />

@@ -3,6 +3,7 @@ import multer from "multer";
 import fs from "fs";
 import Whatsapp from "../models/Whatsapp";
 import AppError from "../errors/AppError";
+import { ensureFolderPermissions } from "../helpers/EnsurePermissions";
 
 const publicFolder = path.resolve(__dirname, "..", "..", "public");
 
@@ -31,20 +32,11 @@ export default {
       }
 
       const companyFolder = `${publicFolder}/company${companyId}`;
-
-      // Criar a pasta company{companyId} caso ela não exista
-      if (!fs.existsSync(companyFolder)) {
-        fs.mkdirSync(companyFolder, { recursive: true });
-        fs.chmodSync(companyFolder, 0o777);
-      }
-
       const folder = `${companyFolder}/quick/`;
 
-      // Criar a pasta quick/ caso ela não exista
-      if (!fs.existsSync(folder)) {
-        fs.mkdirSync(folder, { recursive: true });
-        fs.chmodSync(folder, 0o777);
-      }
+      // Criar pastas e garantir permissões corretas
+      ensureFolderPermissions(companyFolder);
+      ensureFolderPermissions(folder);
 
       return cb(null, folder);
     },

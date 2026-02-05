@@ -104,6 +104,10 @@ class Queue extends Model<Queue> {
 
   @Column
   mediaName: string;
+
+  @Default(false)
+  @Column
+  linkToGroup: boolean;
 }
 
 export default Queue;

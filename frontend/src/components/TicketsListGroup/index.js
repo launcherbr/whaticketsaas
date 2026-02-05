@@ -191,7 +191,35 @@ const TicketsListGroup = (props) => {
   useEffect(() => {
     const queueIds = queues.map((q) => q.id);
     const filteredTickets = tickets.filter(
-      (t) => queueIds.indexOf(t.queueId) > -1
+      (t) => {
+        // Se for grupo, verificar se o usuário está atribuído
+        if (t.isGroup) {
+          // Verificar se está nos ticketUsers
+          if (t.ticketUsers && Array.isArray(t.ticketUsers)) {
+            const userInTicket = t.ticketUsers.find(
+              (tu) => tu.user && tu.user.id === user?.id
+            );
+            if (userInTicket) {
+              return true;
+            }
+          }
+          // Verificar se é o userId principal
+          if (t.userId === user?.id) {
+            return true;
+          }
+          // Se showAll estiver ativo, mostrar todos os grupos
+          if (showAll) {
+            return true;
+          }
+          // Se tiver fila e o usuário tiver acesso à fila
+          if (t.queueId && queueIds.indexOf(t.queueId) > -1) {
+            return true;
+          }
+          return false;
+        }
+        // Para tickets normais, aplicar filtro de fila
+        return queueIds.indexOf(t.queueId) > -1;
+      }
     );
 
     if (profile === 'user') {
@@ -199,18 +227,65 @@ const TicketsListGroup = (props) => {
     } else {
       dispatch({ type: 'LOAD_TICKETS', payload: tickets });
     }
-  }, [tickets, status, searchParam, queues, profile]);
+  }, [tickets, status, searchParam, queues, profile, user, showAll]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
     const socket = socketManager.getSocket(companyId);
 
-    const shouldUpdateTicket = (ticket) =>
-      (!ticket.userId || ticket.userId === user?.id || showAll) &&
-      (!ticket.queueId || selectedQueueIds.indexOf(ticket.queueId) > -1);
+    const shouldUpdateTicket = (ticket) => {
+      // Se for grupo, verificar se o usuário está atribuído via ticketUsers
+      if (ticket.isGroup) {
+        // Verificar se o usuário está nos ticketUsers
+        if (ticket.ticketUsers && Array.isArray(ticket.ticketUsers)) {
+          const userInTicket = ticket.ticketUsers.find(
+            (tu) => tu.user && tu.user.id === user?.id
+          );
+          if (userInTicket) {
+            return true;
+          }
+        }
+        // Se não tiver ticketUsers mas tiver userId e for o usuário atual
+        if (ticket.userId === user?.id) {
+          return true;
+        }
+        // Se showAll estiver ativo, mostrar todos os grupos
+        if (showAll) {
+          return true;
+        }
+        // Se tiver fila com linkToGroup e o usuário tiver acesso à fila
+        if (ticket.queueId && selectedQueueIds.indexOf(ticket.queueId) > -1) {
+          return true;
+        }
+      }
+      // Para tickets normais, aplicar filtro padrão
+      return (
+        (!ticket.userId || ticket.userId === user?.id || showAll) &&
+        (!ticket.queueId || selectedQueueIds.indexOf(ticket.queueId) > -1)
+      );
+    };
 
-    const notBelongsToUserQueues = (ticket) =>
-      ticket.queueId && selectedQueueIds.indexOf(ticket.queueId) === -1;
+    const notBelongsToUserQueues = (ticket) => {
+      // Grupos sempre aparecem se o usuário estiver atribuído
+      if (ticket.isGroup) {
+        if (ticket.ticketUsers && Array.isArray(ticket.ticketUsers)) {
+          const userInTicket = ticket.ticketUsers.find(
+            (tu) => tu.user && tu.user.id === user?.id
+          );
+          if (userInTicket) {
+            return false; // Não remover se o usuário estiver atribuído
+          }
+        }
+        if (ticket.userId === user?.id) {
+          return false; // Não remover se for o usuário principal
+        }
+        // Se tiver fila com linkToGroup e o usuário tiver acesso
+        if (ticket.queueId && selectedQueueIds.indexOf(ticket.queueId) > -1) {
+          return false;
+        }
+      }
+      return ticket.queueId && selectedQueueIds.indexOf(ticket.queueId) === -1;
+    };
 
     socket.on("ready", () => {
       if (status) {
@@ -229,14 +304,35 @@ const TicketsListGroup = (props) => {
         });
       }
 
-      if (data.action === "update" && shouldUpdateTicket(data.ticket) && data.ticket.status === status) {
-        dispatch({
-          type: "UPDATE_TICKET",
-          payload: data.ticket,
-        });
+      // Para grupos, verificar se o usuário está atribuído
+      if (data.action === "update" && data.ticket?.isGroup) {
+        // Sempre processar atualizações de grupos
+        if (shouldUpdateTicket(data.ticket)) {
+          // Se o status mudou e não corresponde mais ao filtro atual, remover
+          if (status && data.ticket.status !== status) {
+            dispatch({ type: "DELETE_TICKET", payload: data.ticket.id });
+          } else {
+            dispatch({
+              type: "UPDATE_TICKET",
+              payload: data.ticket,
+            });
+          }
+        } else {
+          // Se não deveria mais aparecer, remover
+          dispatch({ type: "DELETE_TICKET", payload: data.ticket.id });
+        }
+      } else if (data.action === "update" && shouldUpdateTicket(data.ticket)) {
+        if (status === undefined || data.ticket.status === status) {
+          dispatch({
+            type: "UPDATE_TICKET",
+            payload: data.ticket,
+          });
+        } else {
+          dispatch({ type: "DELETE_TICKET", payload: data.ticket.id });
+        }
       }
 
-      if (data.action === "update" && notBelongsToUserQueues(data.ticket)) {
+      if (data.action === "update" && !data.ticket?.isGroup && notBelongsToUserQueues(data.ticket)) {
         dispatch({ type: "DELETE_TICKET", payload: data.ticket.id });
       }
 

@@ -22,6 +22,7 @@ import { i18n } from "../../translate/i18n";
 
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
+import CountryCodeSelector from "../CountryCodeSelector";
 
 const useStyles = makeStyles(theme => ({
 	root: {
@@ -53,18 +54,14 @@ const useStyles = makeStyles(theme => ({
 	},
 }));
 
-const phoneRegExp =
-  /^((\\+[1-9]{1,4}[ \\-]*)|(\\([0-9]{2,3}\\)[ \\-]*)|([0-9]{2,4})[ \\-]*)*?[0-9]{3,4}?[ \\-]*[0-9]{3,4}?$/;
-  
 const ContactSchema = Yup.object().shape({
   name: Yup.string()
     .min(2, "Too Short!")
     .max(50, "Too Long!")
     .required("Required"),
   number: Yup.string()
-    .min(12, "Número inválido")
-    .max(16, "Número inválido")
-    .matches(phoneRegExp, "Número inválido")
+    .min(10, "Número inválido")
+    .max(20, "Número inválido")
     .required("Informe o número"),
   email: Yup.string().email("Email inválido"),
 });
@@ -188,16 +185,31 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 									margin="dense"
 									className={classes.textField}
 								/>
-								<Field
-									as={TextField}
-									label={i18n.t("contactModal.form.number")}
-									name="number"
-									error={touched.number && Boolean(errors.number)}
-									helperText={touched.number && errors.number}
-									placeholder="5541998608485"
-									variant="outlined"
-									margin="dense"
-								/>
+								<div style={{ marginBottom: 8 }}>
+									<Typography 
+										variant="caption" 
+										style={{ 
+											marginBottom: 4, 
+											display: "block",
+											color: errors.number && touched.number ? "#f44336" : "rgba(0, 0, 0, 0.54)"
+										}}
+									>
+										{i18n.t("contactModal.form.number")}
+									</Typography>
+									<Field name="number">
+										{({ field, form }) => (
+											<CountryCodeSelector
+												value={field.value || ""}
+												onChange={(e) => {
+													form.setFieldValue("number", e.target.value);
+													form.setFieldTouched("number", true);
+												}}
+												error={touched.number && Boolean(errors.number)}
+												helperText={touched.number && errors.number}
+											/>
+										)}
+									</Field>
+								</div>
 								<div>
 									<Field
 										as={TextField}
@@ -214,7 +226,7 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 								<div>
 									<Field
 										as={TextField}
-										label="Aniversário"
+										label={i18n.t("contactModal.form.birthday")}
 										name="birthday"
 										type="date"
 										InputLabelProps={{

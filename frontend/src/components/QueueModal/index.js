@@ -21,7 +21,9 @@ import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import ColorPicker from "../ColorPicker";
 import {
+  Checkbox,
   FormControl,
+  FormControlLabel,
   Grid,
   IconButton,
   InputAdornment,
@@ -88,7 +90,8 @@ const QueueModal = ({ open, onClose, queueId }) => {
     outOfHoursMessage: "",
     orderQueue: "",
     integrationId: "",
-    promptId: ""
+    promptId: "",
+    linkToGroup: false
   };
 
   const [colorPickerModalOpen, setColorPickerModalOpen] = useState(false);
@@ -291,7 +294,7 @@ const QueueModal = ({ open, onClose, queueId }) => {
                 }, 400);
               }}
             >
-              {({ touched, errors, isSubmitting, values }) => (
+              {({ touched, errors, isSubmitting, values, setFieldValue }) => (
                 <Form>
                   <DialogContent dividers>
                     <Field
@@ -470,6 +473,20 @@ const QueueModal = ({ open, onClose, queueId }) => {
                       )}
                     </div>
                     <QueueOptions queueId={queueId} companyId={localStorage.getItem("companyId")} />
+                    <div style={{ marginTop: 10, marginBottom: 10 }}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={values.linkToGroup || false}
+                            onChange={(e) => {
+                              setFieldValue("linkToGroup", e.target.checked);
+                            }}
+                            color="primary"
+                          />
+                        }
+                        label="Vincular Fila ao Grupo"
+                      />
+                    </div>
                     {(queue.mediaPath || attachment) && (
                     <Grid xs={12} item>
                       <Button startIcon={<AttachFile />}>

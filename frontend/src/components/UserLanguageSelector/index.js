@@ -3,13 +3,17 @@ import { IconButton, Menu, MenuItem, Box } from "@material-ui/core";
 import TranslateIcon from "@material-ui/icons/Translate";
 import { i18n } from "../../translate/i18n";
 import { AuthContext } from "../../context/Auth/AuthContext";
+import api from "../../services/api";
+import toastError from "../../errors/toastError";
+import brFlag from "../../assets/flags/br.webp";
+import usFlag from "../../assets/flags/us.webp";
+import esFlag from "../../assets/flags/es.webp";
 
 // Objeto com os dados de cada idioma (bandeira + nome)
 const languageData = {
-  "pt-BR": { flag: "🇧🇷", name: "Português (BR)" },
-  "en": { flag: "🇺🇸", name: "English" },
-  "es": { flag: "🇪🇸", name: "Español" },
-  "tr": { flag: "🇹🇷", name: "Türkçe" }
+  "pt": { flag: brFlag, name: "Português" },
+  "en": { flag: usFlag, name: "English" },
+  "es": { flag: esFlag, name: "Español" }
 };
 
 const UserLanguageSelector = ({ iconOnly = true }) => {
@@ -21,17 +25,38 @@ const UserLanguageSelector = ({ iconOnly = true }) => {
   };
 
   const handleChangeLanguage = async language => {
-    localStorage.setItem("language", language);
-    handleCloseLanguageMenu();
-    window.location.reload(false);
+    try {
+      // Muda o idioma no i18n
+      await i18n.changeLanguage(language);
+      
+      // Salva no localStorage com a chave correta
+      localStorage.setItem("i18nextLng", language);
+      
+      // Salva no backend se o usuário estiver logado
+      if (user && user.id) {
+        try {
+          await api.put(`/users/${user.id}`, { language });
+        } catch (err) {
+          console.error("Erro ao salvar idioma no backend:", err);
+        }
+      }
+      
+      handleCloseLanguageMenu();
+      
+      // Recarrega a página para aplicar todas as traduções
+      window.location.reload(false);
+    } catch (err) {
+      toastError(err);
+      handleCloseLanguageMenu();
+    }
   };
 
   const handleCloseLanguageMenu = () => {
     setLangueMenuAnchorEl(null);
   };
 
-  // Obtém o idioma atual ou usa 'pt-BR' como padrão
-  const currentLanguage = user?.language || "pt-BR";
+  // Obtém o idioma atual do i18n ou localStorage
+  const currentLanguage = i18n.language || localStorage.getItem("i18nextLng") || "pt";
 
   return (
     <>
@@ -40,7 +65,7 @@ const UserLanguageSelector = ({ iconOnly = true }) => {
         onClick={handleOpenLanguageMenu}
         aria-label="Selecionar idioma"
       >
-        <TranslateIcon />
+        <TranslateIcon style={{ color: "white" }} />
       </IconButton>
       
       <Menu
@@ -56,9 +81,17 @@ const UserLanguageSelector = ({ iconOnly = true }) => {
             selected={currentLanguage === code}
           >
             <Box display="flex" alignItems="center">
-              <span style={{ fontSize: '1.2rem', marginRight: 12 }}>
-                {flag}
-              </span>
+              <img 
+                src={flag} 
+                alt={name}
+                style={{ 
+                  width: '24px', 
+                  height: '16px', 
+                  marginRight: 12,
+                  borderRadius: '2px',
+                  objectFit: 'cover'
+                }}
+              />
               {name}
             </Box>
           </MenuItem>

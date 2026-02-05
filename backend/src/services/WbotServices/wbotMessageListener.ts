@@ -71,6 +71,8 @@ import { addMsgAckJob } from "./BullAckService";
 import { CreateOrUpdateBaileysChatService } from "../BaileysChatServices/CreateOrUpdateBaileysChatService";
 
 import ffmpegPath from 'ffmpeg-static';
+import mime from "mime-types";
+import { ensureFolderPermissions, ensureFilePermissions } from "../../helpers/EnsurePermissions";
 ffmpeg.setFfmpegPath(ffmpegPath);
 
 const request = require("request");
@@ -623,16 +625,57 @@ const downloadMedia = async (msg: proto.IWebMessageInfo) => {
     console.log(msg)
 
   if (!filename) {
-    const ext = mineType.mimetype.split("/")[1].split(";")[0];
+    // IMPORTANTE: Verificar se o mimetype é image/gif para garantir extensão correta
+    // GIFs podem vir como videoMessage mas o mimetype sempre será image/gif
+    const ext = mineType.mimetype === "image/gif" ? "gif" : mineType.mimetype.split("/")[1].split(";")[0];
     filename = `${new Date().getTime()}.${ext}`;
   } else {
+    // Se já tem filename mas o mimetype é image/gif, garantir que a extensão seja .gif
+    if (mineType.mimetype === "image/gif" && !filename.toLowerCase().endsWith('.gif')) {
+      const nameWithoutExt = filename.replace(/\.[^/.]+$/, "");
+      filename = `${nameWithoutExt}.gif`;
+    }
     filename = `${new Date().getTime()}_${filename}`;
+  }
+
+  // IMPORTANTE: Preservar mimetype correto para GIFs
+  // GIFs podem vir como videoMessage com mimetype video/mp4 mas com gifPlayback: true
+  // Ou podem vir como videoMessage/imageMessage com mimetype image/gif
+  const videoMsg = msg.message?.videoMessage;
+  const imageMsg = msg.message?.imageMessage;
+  const isGifByMimetype = videoMsg?.mimetype === "image/gif" || imageMsg?.mimetype === "image/gif";
+  const isGifByPlayback = videoMsg?.gifPlayback === true;
+  const isGif = isGifByMimetype || isGifByPlayback;
+  
+  let finalMimetype = mineType.mimetype;
+  let finalFilename = filename;
+  
+  if (isGif) {
+    // Se for GIF detectado por gifPlayback, manter mimetype como video/mp4 mas salvar como .mp4
+    // Se for GIF detectado por mimetype, usar image/gif e salvar como .gif
+    if (isGifByPlayback && !isGifByMimetype) {
+      // GIF convertido para MP4 pelo WhatsApp - manter como MP4
+      finalMimetype = "video/mp4";
+      // Garantir que a extensão seja .mp4
+      if (!finalFilename.toLowerCase().endsWith('.mp4')) {
+        const nameWithoutExt = finalFilename.replace(/\.[^/.]+$/, "");
+        finalFilename = `${nameWithoutExt}.mp4`;
+      }
+    } else {
+      // GIF tradicional - usar image/gif
+      finalMimetype = "image/gif";
+      // Garantir que a extensão seja .gif
+      if (!finalFilename.toLowerCase().endsWith('.gif')) {
+        const nameWithoutExt = finalFilename.replace(/\.[^/.]+$/, "");
+        finalFilename = `${nameWithoutExt}.gif`;
+      }
+    }
   }
 
   const media = {
     data: buffer,
-    mimetype: mineType.mimetype,
-    filename
+    mimetype: finalMimetype,
+    filename: finalFilename
   };
 
   return media;
@@ -1103,11 +1146,31 @@ const verifyMediaMessage = async (
     const isVideo = msgType === "videoMessage" || msgType === "videoWithCaptionMessage";
     const isAudio = msgType === "audioMessage";
     const isDocument = msgType === "documentMessage" || msgType === "documentWithCaptionMessage";
+    const isSticker = msgType === "stickerMessage";
+    
+    // Cria um objeto media simulado para continuar o fluxo
+    // IMPORTANTE: Verificar se é GIF pelo mimetype da mensagem ANTES de definir o mimetype
+    const imageMsg = msg.message?.imageMessage;
+    const videoMsg = msg.message?.videoMessage;
+    const isGif = imageMsg?.mimetype === "image/gif" || videoMsg?.mimetype === "image/gif";
+    
+    let mimetype: string;
+    if (isGif) {
+      // Se for GIF, sempre usar image/gif mesmo que venha como videoMessage
+      mimetype = "image/gif";
+    } else {
+      // Caso contrário, usar a lógica padrão
+      mimetype = isImage ? "image/jpeg" : 
+                 isVideo ? "video/mp4" : 
+                 isAudio ? "audio/ogg" : 
+                 isDocument ? "application/pdf" : 
+                 isSticker ? "image/webp" : "image/jpeg";
+    }
     
     // Cria um objeto media simulado para continuar o fluxo
     media = {
       filename: mediaFilename,
-      mimetype: isImage ? "image/jpeg" : isVideo ? "video/mp4" : isAudio ? "audio/ogg" : isDocument ? "application/pdf" : "image/jpeg",
+      mimetype: mimetype,
       data: null // Não precisa dos dados, arquivo já está salvo
     };
   } else {
@@ -1118,24 +1181,57 @@ const verifyMediaMessage = async (
       throw new Error("ERR_WAPP_DOWNLOAD_MEDIA");
     }
 
+    // Verificar se é GIF antes de determinar extensão
+    const videoMsg = msg.message?.videoMessage;
+    const isGifByPlayback = videoMsg?.gifPlayback === true;
+    const isGifByMimetype = media.mimetype === "image/gif";
+    
     if (!media.filename) {
-      const ext = media.mimetype.split("/")[1].split(";")[0];
+      // Se for GIF por gifPlayback, usar .mp4, senão usar extensão do mimetype
+      const ext = isGifByPlayback ? "mp4" : 
+                  isGifByMimetype ? "gif" : 
+                  media.mimetype.split("/")[1].split(";")[0];
       media.filename = `${new Date().getTime()}.${ext}`;
+    } else {
+      // Se já tem filename, verificar se precisa ajustar extensão
+      if (isGifByPlayback && !media.filename.toLowerCase().endsWith('.mp4')) {
+        const nameWithoutExt = media.filename.replace(/\.[^/.]+$/, "");
+        media.filename = `${nameWithoutExt}.mp4`;
+      } else if (isGifByMimetype && !media.filename.toLowerCase().endsWith('.gif')) {
+        const nameWithoutExt = media.filename.replace(/\.[^/.]+$/, "");
+        media.filename = `${nameWithoutExt}.gif`;
+      }
     }
     mediaFilename = media.filename;
+  }
 
+  // Determinar se é sticker ANTES de salvar (para escolher a pasta correta)
+  const baileysMsgTypeForFolder = getTypeMessage(msg);
+  const isStickerForFolder = baileysMsgTypeForFolder === 'stickerMessage';
+
+  // Salvar arquivo se não foi predefinido
+  if (!preDefinedMediaUrl) {
     try {
-      const folder = `public/company${ticket.companyId}`;
-      if (!fs.existsSync(folder)) {
-        fs.mkdirSync(folder);
-        fs.chmodSync(folder, 0o777)
-      }
+      // Para stickers, salvar em companyId/stickers/ (não na raiz)
+      // Para outros tipos de mídia, salvar na raiz companyId/
+      const baseFolder = `public/company${ticket.companyId}`;
+      const folder = isStickerForFolder ? `${baseFolder}/stickers` : baseFolder;
+      
+      // Criar pasta e garantir permissões corretas
+      const folderFullPath = join(__dirname, "..", "..", "..", folder);
+      ensureFolderPermissions(folderFullPath);
 
-      await writeFileAsync(
-        join(__dirname, "..", "..", "..", folder, media.filename),
-        media.data,
-        "base64"
-      );
+      // Salvar arquivo: se for Buffer, salvar como binário; se for string, salvar como base64
+      const savedFilePath = join(folderFullPath, media.filename);
+      
+      if (Buffer.isBuffer(media.data)) {
+        await writeFileAsync(savedFilePath, media.data);
+      } else {
+        await writeFileAsync(savedFilePath, media.data, "base64");
+      }
+      
+      // CORRIGIR PERMISSÕES DO ARQUIVO SALVO
+      ensureFilePermissions(savedFilePath);
 
       await new Promise<void>((resolve, reject) => {
         if (media.filename.includes('.ogg')) {
@@ -1155,6 +1251,52 @@ const verifyMediaMessage = async (
             resolve(); // Resolve immediately since no conversion is needed.
         }
       });
+      
+      // NOVO SISTEMA: Renomear stickers para padrão sequencial (stickers01, stickers02, etc)
+      if (isStickerForFolder) {
+        try {
+          const Sticker = (await import("../../models/Sticker")).default;
+          
+          // Buscar último sticker da empresa para gerar próximo ID
+          const lastSticker = await Sticker.findOne({
+            where: { companyId: ticket.companyId },
+            order: [['id', 'DESC']]
+          });
+          
+          // Gerar próximo número
+          const nextNumber = lastSticker ? lastSticker.id + 1 : 1;
+          const paddedNumber = String(nextNumber).padStart(2, '0');
+          
+          // Obter extensão do arquivo original
+          const ext = path.extname(media.filename).toLowerCase() || '.webp';
+          const newFileName = `stickers${paddedNumber}${ext}`;
+          
+          // Caminhos dos arquivos
+          const oldPath = path.join(__dirname, "..", "..", "..", folder, media.filename);
+          let newPath = path.join(__dirname, "..", "..", "..", folder, newFileName);
+          
+          // Se arquivo já existe, encontrar próximo disponível
+          let finalFileName = newFileName;
+          let counter = nextNumber;
+          
+          while (fs.existsSync(newPath)) {
+            counter++;
+            const paddedCounter = String(counter).padStart(2, '0');
+            finalFileName = `stickers${paddedCounter}${ext}`;
+            newPath = path.join(__dirname, "..", "..", "..", folder, finalFileName);
+          }
+          
+          // Renomear arquivo
+          fs.renameSync(oldPath, newPath);
+          media.filename = finalFileName; // Atualizar o filename no objeto media
+          mediaFilename = finalFileName; // Atualizar também a variável local
+          
+          logger.info(`✅ Sticker renomeado: ${media.filename}`);
+        } catch (err) {
+          logger.error('Erro ao renomear sticker:', err);
+          // Continuar com o nome original em caso de erro
+        }
+      }
     } catch (err) {
       Sentry.captureException(err);
       logger.error(err);
@@ -1162,13 +1304,60 @@ const verifyMediaMessage = async (
   }
 
   let body = getBodyMessage(msg);
-  let mediaType = media.mimetype.split("/")[0];
   
-  // Normalizar mediaType para documentos
-  // Se o tipo do Baileys for "documentMessage" ou "documentWithCaptionMessage", garantir que seja salvo como "document" ou "application"
+  // IMPORTANTE: Verificar se é GIF PRIMEIRO, antes de qualquer outra coisa
+  // GIFs podem vir como videoMessage com mimetype video/mp4 mas com gifPlayback: true
+  // Ou podem vir como videoMessage/imageMessage com mimetype image/gif
   const baileysMsgType = getTypeMessage(msg);
-  if (baileysMsgType === 'documentMessage' || baileysMsgType === 'documentWithCaptionMessage') {
-    mediaType = media.mimetype.split("/")[0] === "application" ? "application" : "document";
+  const videoMsg = msg.message?.videoMessage;
+  const imageMsg = msg.message?.imageMessage;
+  
+  // Verificar se é GIF:
+  // 1. Pelo mimetype image/gif
+  // 2. Pela propriedade gifPlayback: true (GIFs convertidos para MP4 pelo WhatsApp)
+  const isGifByMimetype = videoMsg?.mimetype === "image/gif" || imageMsg?.mimetype === "image/gif" || media.mimetype === "image/gif";
+  const isGifByPlayback = videoMsg?.gifPlayback === true;
+  const isGif = isGifByMimetype || isGifByPlayback;
+  
+  // Log para debug
+  if (isGif || baileysMsgType === 'videoMessage' || baileysMsgType === 'imageMessage') {
+    console.log("DEBUG GIF - verifyMediaMessage:", {
+      baileysMsgType,
+      videoMsgMimetype: videoMsg?.mimetype,
+      imageMsgMimetype: imageMsg?.mimetype,
+      mediaMimetype: media.mimetype,
+      gifPlayback: videoMsg?.gifPlayback,
+      isGifByMimetype,
+      isGifByPlayback,
+      isGif,
+      mediaFilename
+    });
+  }
+  
+  let mediaType: string;
+  if (isGif) {
+    // GIFs devem ser tratados como mídia especial "gif", não como vídeo ou imagem comum
+    mediaType = "gif";
+    // Se foi detectado por gifPlayback mas o mimetype é video/mp4, 
+    // manter o mimetype como video/mp4 mas salvar como mediaType "gif"
+    // O arquivo já foi salvo como .mp4, mas vamos tratar como GIF no sistema
+    if (isGifByPlayback && !isGifByMimetype) {
+      // Não alterar o mimetype do media, apenas o mediaType
+      console.log("DEBUG GIF - GIF detectado por gifPlayback, mantendo mimetype video/mp4 mas mediaType=gif");
+    } else if (media.mimetype !== "image/gif") {
+      // Se foi detectado por mimetype, garantir que o mimetype esteja correto
+      media.mimetype = "image/gif";
+    }
+    console.log("DEBUG GIF - Definindo mediaType como 'gif'");
+  } else {
+    // Se não é GIF, então normalizar mediaType baseado no tipo do Baileys
+    mediaType = media.mimetype.split("/")[0];
+    
+    if (baileysMsgType === 'documentMessage' || baileysMsgType === 'documentWithCaptionMessage') {
+      mediaType = media.mimetype.split("/")[0] === "application" ? "application" : "document";
+    } else if (baileysMsgType === 'stickerMessage') {
+      mediaType = "sticker";
+    }
   }
   
   // Garantir que body nunca seja null ou undefined
@@ -1181,9 +1370,37 @@ const verifyMediaMessage = async (
       body = "🎥 Vídeo";
     } else if (mediaType === 'audio') {
       body = "🎵 Áudio";
+    } else if (mediaType === 'sticker') {
+      body = "🎨 Sticker";
+    } else if (mediaType === 'gif') {
+      body = "GIF";
     } else {
       body = "📎 Mídia";
     }
+  }
+
+  // Log final antes de salvar
+  if (mediaType === "gif" || baileysMsgType === 'videoMessage' || baileysMsgType === 'imageMessage') {
+    console.log("DEBUG GIF - verifyMediaMessage: Salvando mensagem com mediaType:", mediaType, {
+      mediaFilename,
+      mediaMimetype: media.mimetype
+    });
+  }
+
+  // Para stickers, incluir o path completo no mediaUrl para facilitar o carregamento no frontend
+  let finalMediaUrl = mediaFilename;
+  if (mediaType === "sticker") {
+    // Incluir path stickers/ no mediaUrl para que o frontend saiba onde buscar
+    // Verificar se já não tem o path (para compatibilidade)
+    if (!finalMediaUrl.startsWith('stickers/')) {
+      finalMediaUrl = `stickers/${mediaFilename}`;
+    }
+    console.log("DEBUG STICKER - verifyMediaMessage: mediaUrl ajustado:", {
+      original: mediaFilename,
+      final: finalMediaUrl,
+      mediaType,
+      isStickerForFolder
+    });
   }
 
   const messageData = {
@@ -1193,7 +1410,7 @@ const verifyMediaMessage = async (
     body: formatBody(body, ticket.contact) || body || "📎 Mídia",
     fromMe: msg.key.fromMe,
     read: msg.key.fromMe,
-    mediaUrl: mediaFilename,
+    mediaUrl: finalMediaUrl,
     mediaType: mediaType,
     quotedMsgId: quotedMsg?.id,
     ack: msg.status ?? 0, 
@@ -1211,6 +1428,76 @@ const verifyMediaMessage = async (
     companyId: ticket.companyId,
   });
 
+  // DESABILITADO: Não salvar stickers automaticamente ao receber/enviar
+  // Os stickers devem ser salvos apenas quando o usuário clicar explicitamente em "Salvar Sticker"
+  /*
+  if (mediaType === "sticker" && finalMediaUrl) {
+    try {
+      const Sticker = (await import("../../models/Sticker")).default;
+      const { isAnimatedWebP } = await import("../../utils/webpDetector");
+      const publicFolder = path.resolve(__dirname, "..", "..", "..", "public");
+      
+      let stickerFileName: string;
+      if (finalMediaUrl.includes("/")) {
+        stickerFileName = path.basename(finalMediaUrl);
+      } else {
+        stickerFileName = finalMediaUrl;
+      }
+      
+      const sourceFile = path.resolve(publicFolder, `company${ticket.companyId}`, "stickers", stickerFileName);
+      
+      if (!fs.existsSync(sourceFile)) {
+        logger.warn(`Sticker file not found: ${sourceFile} for company ${ticket.companyId}`);
+      } else {
+        const stickersSalvosFolder = path.join(publicFolder, `company${ticket.companyId}`, "stickers", "salvos");
+        ensureFolderPermissions(stickersSalvosFolder);
+
+        const isAnimated = await isAnimatedWebP(sourceFile);
+        
+        const ext = path.extname(stickerFileName).toLowerCase();
+        let finalStickerFileName = stickerFileName;
+        let finalDestination = path.join(stickersSalvosFolder, stickerFileName);
+        
+        if (isAnimated && ext !== ".webp") {
+          const nameWithoutExt = path.basename(stickerFileName, ext);
+          finalStickerFileName = `${nameWithoutExt}.webp`;
+          finalDestination = path.join(stickersSalvosFolder, finalStickerFileName);
+        }
+        
+        if (!fs.existsSync(finalDestination)) {
+          fs.copyFileSync(sourceFile, finalDestination);
+          logger.info(`Sticker copiado para galeria: ${finalStickerFileName}`);
+        }
+        
+        const stickerPath = `stickers/salvos/${finalStickerFileName}`;
+
+        const existingSticker = await Sticker.findOne({
+          where: {
+            companyId: ticket.companyId,
+            path: stickerPath
+          }
+        });
+
+        if (!existingSticker) {
+          await Sticker.create({
+            companyId: ticket.companyId,
+            name: finalStickerFileName,
+            path: stickerPath,
+            mimetype: isAnimated ? "image/webp" : (mime.lookup(finalDestination) || "image/webp"),
+            userId: null
+          });
+          logger.info(`Sticker salvo no banco: ${stickerPath}`);
+        } else if (isAnimated && existingSticker.mimetype !== "image/webp") {
+          await existingSticker.update({ mimetype: "image/webp" });
+          logger.info(`Sticker atualizado para WebP animado: ${stickerPath}`);
+        }
+      }
+    } catch (err) {
+      logger.error("Erro ao salvar sticker na galeria:", err);
+      Sentry.captureException(err);
+    }
+  }
+  */
 
   if (!msg.key.fromMe && ticket.status === "closed") {
     await ticket.update({ status: "pending" });
@@ -1268,25 +1555,74 @@ export const verifyMessage = async (
   const quotedMsg = await verifyQuotedMessage(msg);
   let body = getBodyMessage(msg);
   const isEdited = getTypeMessage(msg) == 'editedMessage';
-  let mediaType = getTypeMessage(msg);
+  const baileysMsgType = getTypeMessage(msg);
 
-  // Normalizar mediaType para o formato esperado pelo frontend
-  if (mediaType === 'documentMessage' || mediaType === 'documentWithCaptionMessage') {
-    // Verificar o mimetype do documento para determinar se é "document" ou "application"
-    const docMsg = msg.message?.documentMessage || 
-                   msg.message?.documentWithCaptionMessage?.message?.documentMessage;
-    if (docMsg?.mimetype) {
-      const mimeType = docMsg.mimetype.split("/")[0];
-      mediaType = mimeType === "application" ? "application" : "document";
-    } else {
-      mediaType = "document";
+  // IMPORTANTE: Verificar se é GIF PRIMEIRO, antes de qualquer outra coisa
+  // GIFs podem vir como videoMessage com mimetype video/mp4 mas com gifPlayback: true
+  // Ou podem vir como videoMessage/imageMessage com mimetype image/gif
+  const videoMsg = msg.message?.videoMessage;
+  const imageMsg = msg.message?.imageMessage;
+  
+  // Verificar se é GIF:
+  // 1. Pelo mimetype image/gif
+  // 2. Pela propriedade gifPlayback: true (GIFs convertidos para MP4 pelo WhatsApp)
+  const isGifByMimetype = videoMsg?.mimetype === "image/gif" || imageMsg?.mimetype === "image/gif";
+  const isGifByPlayback = videoMsg?.gifPlayback === true;
+  const isGif = isGifByMimetype || isGifByPlayback;
+  
+  // Log para debug
+  if (isGif || baileysMsgType === 'videoMessage' || baileysMsgType === 'imageMessage') {
+    console.log("DEBUG GIF - verifyMessage:", {
+      baileysMsgType,
+      videoMsgMimetype: videoMsg?.mimetype,
+      imageMsgMimetype: imageMsg?.mimetype,
+      gifPlayback: videoMsg?.gifPlayback,
+      isGifByMimetype,
+      isGifByPlayback,
+      isGif,
+      fromMe: msg.key.fromMe
+    });
+  }
+  
+  // Verificar se forceMediaType foi passado (para GIFs e Stickers enviados)
+  const forceMediaType = (msg as any).forceMediaType;
+  
+  // Verificar se é GIF pelo nome do arquivo (quando há mediaUrl predefinido)
+  const tempMediaUrl = (msg as any).mediaUrl;
+  const isGifByFilename = tempMediaUrl && typeof tempMediaUrl === 'string' && tempMediaUrl.toLowerCase().endsWith('.gif');
+  
+  let mediaType: string;
+  
+  // Prioridade 1: Verificar se é GIF (pelo mimetype ou forceMediaType ou filename)
+  if (isGif || forceMediaType === "gif" || isGifByFilename) {
+    mediaType = "gif";
+    console.log("DEBUG GIF - verifyMessage: Definindo mediaType como 'gif'");
+  } else if (forceMediaType === "sticker") {
+    mediaType = "sticker";
+  } else {
+    // Se não é GIF, então normalizar mediaType baseado no tipo do Baileys
+    mediaType = baileysMsgType;
+    
+    // Normalizar mediaType para o formato esperado pelo frontend
+    if (mediaType === 'documentMessage' || mediaType === 'documentWithCaptionMessage') {
+      // Verificar o mimetype do documento para determinar se é "document" ou "application"
+      const docMsg = msg.message?.documentMessage || 
+                     msg.message?.documentWithCaptionMessage?.message?.documentMessage;
+      if (docMsg?.mimetype) {
+        const mimeType = docMsg.mimetype.split("/")[0];
+        mediaType = mimeType === "application" ? "application" : "document";
+      } else {
+        mediaType = "document";
+      }
+    } else if (mediaType === 'imageMessage') {
+      mediaType = "image";
+    } else if (mediaType === 'videoMessage') {
+      mediaType = "video";
+    } else if (mediaType === 'audioMessage' || mediaType === 'pttMessage') {
+      mediaType = "audio";
+    } else if (mediaType === 'stickerMessage') {
+      mediaType = "sticker";
     }
-  } else if (mediaType === 'imageMessage') {
-    mediaType = "image";
-  } else if (mediaType === 'videoMessage') {
-    mediaType = "video";
-  } else if (mediaType === 'audioMessage' || mediaType === 'pttMessage') {
-    mediaType = "audio";
   }
 
   // Garantir que body nunca seja null ou undefined
@@ -1301,6 +1637,10 @@ export const verifyMessage = async (
       body = "🎥 Vídeo";
     } else if (mediaType === 'audio') {
       body = "🎵 Áudio";
+    } else if (mediaType === 'sticker') {
+      body = "🎨 Sticker";
+    } else if (mediaType === 'gif') {
+      body = "GIF";
     } else {
       body = "📎 Mídia";
     }
@@ -1309,10 +1649,16 @@ export const verifyMessage = async (
   // Extrair mediaUrl se for uma mensagem de mídia enviada
   // Quando enviamos uma mensagem, o mediaUrl pode estar no objeto sentMessage
   let mediaUrl: string | undefined = undefined;
-  if ((mediaType === 'document' || mediaType === 'application' || mediaType === 'image' || mediaType === 'video' || mediaType === 'audio') && msg.key.fromMe) {
+  
+  if ((mediaType === 'document' || mediaType === 'application' || mediaType === 'image' || mediaType === 'video' || mediaType === 'audio' || mediaType === 'gif' || mediaType === 'sticker') && msg.key.fromMe) {
     // Tentar obter mediaUrl do objeto msg se foi adicionado pelo SendWhatsAppMedia
     if ((msg as any).mediaUrl) {
       mediaUrl = (msg as any).mediaUrl;
+      // Se for sticker e o mediaUrl não tiver o path stickers/, adicionar
+      if (mediaType === 'sticker' && mediaUrl && !mediaUrl.startsWith('stickers/')) {
+        mediaUrl = `stickers/${mediaUrl}`;
+        console.log("DEBUG STICKER - verifyMessage: Ajustando mediaUrl para incluir path:", mediaUrl);
+      }
     } else {
       // Tentar extrair do dataJson
       try {
@@ -1330,6 +1676,14 @@ export const verifyMessage = async (
         // Ignora erro
       }
     }
+  }
+
+  // Log final antes de salvar
+  if (mediaType === "gif" || baileysMsgType === 'videoMessage' || baileysMsgType === 'imageMessage') {
+    console.log("DEBUG GIF - verifyMessage: Salvando mensagem com mediaType:", mediaType, {
+      mediaUrl,
+      fromMe: msg.key.fromMe
+    });
   }
 
   const messageData = {
@@ -1355,6 +1709,77 @@ export const verifyMessage = async (
 
 
   await CreateMessageService({ messageData, companyId: ticket.companyId });
+
+  // DESABILITADO: Não salvar stickers automaticamente ao receber/enviar
+  // Os stickers devem ser salvos apenas quando o usuário clicar explicitamente em "Salvar Sticker"
+  /*
+  if (mediaType === "sticker" && mediaUrl) {
+    try {
+      const Sticker = (await import("../../models/Sticker")).default;
+      const { isAnimatedWebP } = await import("../../utils/webpDetector");
+      const publicFolder = path.resolve(__dirname, "..", "..", "..", "public");
+      
+      let stickerFileName: string;
+      if (mediaUrl.includes("/")) {
+        stickerFileName = path.basename(mediaUrl);
+      } else {
+        stickerFileName = mediaUrl;
+      }
+      
+      const sourceFile = path.resolve(publicFolder, `company${ticket.companyId}`, "stickers", stickerFileName);
+      
+      if (!fs.existsSync(sourceFile)) {
+        logger.warn(`Sticker file not found: ${sourceFile} for company ${ticket.companyId}`);
+      } else {
+        const stickersSalvosFolder = path.join(publicFolder, `company${ticket.companyId}`, "stickers", "salvos");
+        ensureFolderPermissions(stickersSalvosFolder);
+
+        const isAnimated = await isAnimatedWebP(sourceFile);
+        
+        const ext = path.extname(stickerFileName).toLowerCase();
+        let finalStickerFileName = stickerFileName;
+        let finalDestination = path.join(stickersSalvosFolder, stickerFileName);
+        
+        if (isAnimated && ext !== ".webp") {
+          const nameWithoutExt = path.basename(stickerFileName, ext);
+          finalStickerFileName = `${nameWithoutExt}.webp`;
+          finalDestination = path.join(stickersSalvosFolder, finalStickerFileName);
+        }
+        
+        if (!fs.existsSync(finalDestination)) {
+          fs.copyFileSync(sourceFile, finalDestination);
+          logger.info(`Sticker copiado para galeria: ${finalStickerFileName}`);
+        }
+        
+        const stickerPath = `stickers/salvos/${finalStickerFileName}`;
+
+        const existingSticker = await Sticker.findOne({
+          where: {
+            companyId: ticket.companyId,
+            path: stickerPath
+          }
+        });
+
+        if (!existingSticker) {
+          await Sticker.create({
+            companyId: ticket.companyId,
+            name: finalStickerFileName,
+            path: stickerPath,
+            mimetype: isAnimated ? "image/webp" : (mime.lookup(finalDestination) || "image/webp"),
+            userId: null
+          });
+          logger.info(`Sticker salvo no banco: ${stickerPath}`);
+        } else if (isAnimated && existingSticker.mimetype !== "image/webp") {
+          await existingSticker.update({ mimetype: "image/webp" });
+          logger.info(`Sticker atualizado para WebP animado: ${stickerPath}`);
+        }
+      }
+    } catch (err) {
+      logger.error("Erro ao salvar sticker na galeria:", err);
+      Sentry.captureException(err);
+    }
+  }
+  */
 
   if (!msg.key.fromMe && ticket.status === "closed") {
     await ticket.update({ status: "pending" });
@@ -1444,6 +1869,16 @@ const verifyQueue = async (
   mediaSent?: Message | undefined
 ) => {
   const companyId = ticket.companyId;
+
+  // Verificar se o ticket é de grupo e se a fila tem linkToGroup ativo
+  if (ticket.isGroup && ticket.queueId) {
+    const Queue = (await import("../../models/Queue")).default;
+    const queue = await Queue.findByPk(ticket.queueId);
+    if (queue?.linkToGroup) {
+      // Se linkToGroup estiver ativo, não executar automações
+      return;
+    }
+  }
 
   const { queues, greetingMessage, greetingMediaPath, greetingMediaName, maxUseBotQueues, timeUseBotQueues } = await ShowWhatsAppService(
     wbot.id!,
@@ -1729,7 +2164,7 @@ const verifyQueue = async (
       });
     }
 
-  {/* A DUPLICAÇÃO OCORRIA AQUI!
+  {/* A DUPLICAÇÃO OCORRIA AQUI 
     
     const body = formatBody(`\u200e${choosenQueue.greetingMessage}`, ticket.contact);
     if (choosenQueue.greetingMessage) {
@@ -1887,6 +2322,15 @@ export const handleRating = async (
 
 
 const handleChartbot = async (ticket: Ticket, msg: proto.IWebMessageInfo, wbot: Session, dontReadTheFirstQuestion = false) => {
+  // Verificar se o ticket é de grupo e se a fila tem linkToGroup ativo
+  if (ticket.isGroup && ticket.queueId) {
+    const queue = await Queue.findByPk(ticket.queueId);
+    if (queue?.linkToGroup) {
+      // Se linkToGroup estiver ativo, não executar chatbot
+      return;
+    }
+  }
+
   const queue = await Queue.findByPk(ticket.queueId, {
     include: [
       {
@@ -3110,8 +3554,7 @@ const handleMessage = async (
           !isNil(currentSchedule) &&
           (!currentSchedule || currentSchedule.inActivity === false)
         ) {
-          const body = `\u200e ${whatsapp.outOfHoursMessage},
-            contact`;
+          const body = formatBody(`\u200e${whatsapp.outOfHoursMessage}`, ticket.contact);
 
           console.log('body9341023', body)
           const debouncedSentMessage = debounce(

@@ -11,6 +11,7 @@ import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessa
 import EditMessageModal from "../EditMessageModal";
 import { ForwardMessageContext } from "../../context/ForwarMessage/ForwardMessageContext";
 import ForwardModal from "../../components/ForwardMessageModal";
+import { AuthContext } from "../../context/Auth/AuthContext";
 import {toast} from "react-toastify";
 import toastError from "../../errors/toastError";
 
@@ -52,11 +53,13 @@ const useStyles = makeStyles((theme) => ({
 const MessageOptionsMenu = ({ message, menuOpen, handleClose, anchorEl }) => {
 	const classes = useStyles();
 	const { setReplyingMessage } = useContext(ReplyMessageContext);
+	const { user } = useContext(AuthContext);
 	const [confirmationOpen, setConfirmationOpen] = useState(false);
 	const [confirmationEditOpen, setEditMessageOpenModal] = useState(false);
 	const [messageEdit, setMessageEdit] = useState(false);
 	const [reactionAnchorEl, setReactionAnchorEl] = useState(null);
 	const [moreAnchorEl, setMoreAnchorEl] = useState(null);
+	const [savingSticker, setSavingSticker] = useState(false);
 	const {
 		showSelectMessageCheckbox,
 		setShowSelectMessageCheckbox,
@@ -143,6 +146,90 @@ const MessageOptionsMenu = ({ message, menuOpen, handleClose, anchorEl }) => {
 		handleClose();
 	};
 
+	const handleSaveSticker = async () => {
+		if (!message.mediaUrl || message.mediaType !== "sticker") return;
+
+		setSavingSticker(true);
+		try {
+			// O mediaUrl já vem como URL completa do backend
+			// Vamos usar diretamente para buscar o arquivo
+			let stickerUrl = message.mediaUrl;
+			
+			// Se a URL não começar com http, adicionar baseURL
+			if (!stickerUrl.startsWith('http')) {
+				const baseURL = process.env.REACT_APP_BACKEND_URL || api.defaults.baseURL || '';
+				stickerUrl = stickerUrl.startsWith('/') ? `${baseURL}${stickerUrl}` : `${baseURL}/${stickerUrl}`;
+			}
+			
+			const response = await fetch(stickerUrl);
+			if (!response.ok) {
+				throw new Error("Erro ao buscar sticker");
+			}
+			
+			const blob = await response.blob();
+			
+			// Extrair nome do arquivo da URL
+			const urlParts = message.mediaUrl.split('/');
+			const fileName = urlParts[urlParts.length - 1] || `sticker_${Date.now()}.png`;
+			
+			// Criar File object
+			const file = new File([blob], fileName, { type: blob.type || "image/png" });
+
+			// Converter JPG para PNG se necessário
+			let fileToUpload = file;
+			if (file.type === "image/jpeg" || file.type === "image/jpg") {
+				fileToUpload = await convertJpgToPng(file);
+			}
+
+			const formData = new FormData();
+			formData.append("sticker", fileToUpload);
+			formData.append("typeArch", "stickers");
+
+			await api.post("/stickers", formData, {
+				headers: {
+					"Content-Type": "multipart/form-data",
+				},
+			});
+
+			toast.success("Sticker salvo com sucesso!");
+			handleClose();
+		} catch (err) {
+			toastError(err);
+		} finally {
+			setSavingSticker(false);
+		}
+	};
+
+	const convertJpgToPng = (file) => {
+		return new Promise((resolve, reject) => {
+			const reader = new FileReader();
+			reader.onload = (e) => {
+				const img = new Image();
+				img.onload = () => {
+					const canvas = document.createElement("canvas");
+					canvas.width = img.width;
+					canvas.height = img.height;
+					const ctx = canvas.getContext("2d");
+					ctx.drawImage(img, 0, 0);
+					canvas.toBlob(
+						(blob) => {
+							const pngFile = new File([blob], file.name.replace(/\.(jpg|jpeg)$/i, ".png"), {
+								type: "image/png",
+							});
+							resolve(pngFile);
+						},
+						"image/png",
+						1.0
+					);
+				};
+				img.onerror = reject;
+				img.src = e.target.result;
+			};
+			reader.onerror = reject;
+			reader.readAsDataURL(file);
+		});
+	};
+
 	return (
 		<>
 			<ForwardModal
@@ -200,6 +287,11 @@ const MessageOptionsMenu = ({ message, menuOpen, handleClose, anchorEl }) => {
 				<MenuItem onClick={hanldeReplyMessage}>
 					{i18n.t("messageOptionsMenu.reply")}
 				</MenuItem>
+				{message.mediaType === "sticker" && (
+					<MenuItem onClick={handleSaveSticker} disabled={savingSticker}>
+						{savingSticker ? "Salvando..." : "Salvar Sticker"}
+					</MenuItem>
+				)}
 				<MenuItem onClick={openReactionsMenu}>
 				{i18n.t("messageOptionsMenu.react")}
 				</MenuItem>

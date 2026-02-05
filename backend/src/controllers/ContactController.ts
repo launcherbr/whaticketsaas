@@ -233,22 +233,11 @@ export const getContactVcard = async (
   const { name, number } = req.query as IndexGetContactQuery;
   const { companyId } = req.user;
 
-  let vNumber = number;
-  const numberDDI = vNumber.toString().substr(0, 2);
-  const numberDDD = vNumber.toString().substr(2, 2);
-  const numberUser = vNumber.toString().substr(-8, 8);
-
-  if (numberDDD <= '30' && numberDDI === '55') {
-    console.log("menor 30")
-    vNumber = `${numberDDI + numberDDD + 9 + numberUser}@s.whatsapp.net`;
-  } else if (numberDDD > '30' && numberDDI === '55') {
-    console.log("maior 30")
-    vNumber = `${numberDDI + numberDDD + numberUser}@s.whatsapp.net`;
-  } else {
-    vNumber = `${number}@s.whatsapp.net`;
-  }
-
-  console.log(vNumber);
+  // Formatar número para JID do WhatsApp
+  // Remove caracteres não numéricos e adiciona o sufixo @s.whatsapp.net
+  // Suporta números de qualquer país
+  let vNumber = number.toString().replace(/\D/g, "");
+  vNumber = `${vNumber}@s.whatsapp.net`;
 
   const contact = await GetContactService({
     name,

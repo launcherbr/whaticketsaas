@@ -45,6 +45,9 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     alignItems: "center",
     marginBottom: 4,
+    overflow: "hidden",
+    width: "100%",
+    minWidth: 0,
   },
   progressDot: {
     width: 8,
@@ -75,8 +78,10 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: 2,
     marginLeft: 4,
     flex: 1,
-    minWidth: 100,
+    minWidth: 0,
     maxWidth: 150,
+    overflow: "hidden",
+    flexShrink: 1,
   },
   waveformBar: {
     width: 2.5,
@@ -204,8 +209,20 @@ const AudioMessageWhatsApp = ({ url, contact, fromMe }) => {
   }, [waveform.length, playbackRate]);
 
   const generateWaveform = (duration) => {
-    const bars = Math.min(Math.floor(duration * 2) || 20, 60); // Máximo 60 barras
-    const newWaveform = Array.from({ length: bars }, () => 
+    // Limitar número de barras baseado no espaço disponível
+    // Cada barra tem ~4px (2.5px width + 1.5px gap)
+    // Para maxWidth de 150px, máximo ~37 barras (150/4)
+    // Para áudios muito longos, manter número fixo e proporcional
+    let bars;
+    if (duration <= 10) {
+      bars = Math.floor(duration * 2) || 10; // 2 barras por segundo para áudios curtos
+    } else if (duration <= 60) {
+      bars = 20 + Math.floor((duration - 10) / 3); // Escala para áudios médios
+    } else {
+      bars = 37; // Fixo para áudios longos (máximo que cabe no espaço)
+    }
+    
+    const newWaveform = Array.from({ length: Math.min(bars, 37) }, () => 
       Math.random() * 25 + 15 // Altura aleatória entre 15 e 40
     );
     setWaveform(newWaveform);

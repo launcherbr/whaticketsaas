@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import { Formik, Form, Field } from "formik";
 import usePlans from "../../hooks/usePlans";
 import api from "../../services/api";
-import InputMask from 'react-input-mask';
+import CountryCodeSelector from "../../components/CountryCodeSelector";
 import {
   Avatar,
   Button,
@@ -322,7 +322,8 @@ const UserSchema = Yup.object().shape({
     .email("Email inválido")
     .required("Obrigatório"),
   phone: Yup.string()
-    .min(15, "Telefone incompleto")
+    .min(10, "Telefone incompleto")
+    .max(20, "Telefone muito longo")
     .required("Obrigatório"),
 });
 
@@ -652,35 +653,31 @@ const SignUp = () => {
                           </Grid>
                           
                           <Grid item xs={12}>
-                            <Field name="phone">
-                              {({ field, form }) => (
-                                <InputMask
-                                  mask="(99) 99999-9999"
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                  onBlur={field.onBlur}
-                                >
-                                  {() => (
-                                    <TextField
-                                      variant="outlined"
-                                      fullWidth
-                                      id="phone"
-                                      label="Telefone"
-                                      error={touched.phone && Boolean(errors.phone)}
-                                      helperText={touched.phone && errors.phone}
-                                      placeholder="(00) 00000-0000"
-                                      required
-                                      className={classes.inputField}
-                                      InputProps={{
-                                        startAdornment: (
-                                          <Phone color="action" style={{ marginRight: 12 }} />
-                                        ),
-                                      }}
-                                    />
-                                  )}
-                                </InputMask>
-                              )}
-                            </Field>
+                            <div style={{ marginBottom: 8 }}>
+                              <Typography 
+                                variant="caption" 
+                                style={{ 
+                                  marginBottom: 4, 
+                                  display: "block",
+                                  color: errors.phone && touched.phone ? "#f44336" : "rgba(0, 0, 0, 0.54)"
+                                }}
+                              >
+                                Telefone *
+                              </Typography>
+                              <Field name="phone">
+                                {({ field, form }) => (
+                                  <CountryCodeSelector
+                                    value={field.value || ""}
+                                    onChange={(e) => {
+                                      form.setFieldValue("phone", e.target.value);
+                                      form.setFieldTouched("phone", true);
+                                    }}
+                                    error={touched.phone && Boolean(errors.phone)}
+                                    helperText={touched.phone && errors.phone}
+                                  />
+                                )}
+                              </Field>
+                            </div>
                           </Grid>
                           
                           <Grid item xs={12}>

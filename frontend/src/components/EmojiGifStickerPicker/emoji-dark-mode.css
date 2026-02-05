@@ -1,0 +1,34 @@
+/* Dark mode override for emoji-mart */
+.emoji-mart[theme="dark"] {
+  background-color: #1e1e1e !important;
+  border-color: #333 !important;
+}
+
+.emoji-mart[theme="dark"] .emoji-mart-bar {
+  background-color: #252525 !important;
+  border-color: #333 !important;
+}
+
+.emoji-mart[theme="dark"] .emoji-mart-search input {
+  background-color: #2a2a2a !important;
+  border-color: #444 !important;
+  color: #e0e0e0 !important;
+}
+
+.emoji-mart[theme="dark"] .emoji-mart-category-label span {
+  background-color: #1e1e1e !important;
+  color: #e0e0e0 !important;
+}
+
+.emoji-mart[theme="dark"] .emoji-mart-anchor {
+  color: #999 !important;
+}
+
+.emoji-mart[theme="dark"] .emoji-mart-anchor:hover,
+.emoji-mart[theme="dark"] .emoji-mart-anchor-selected {
+  color: #fff !important;
+}
+
+.emoji-mart[theme="dark"] .emoji-mart-scroll {
+  background-color: #1e1e1e !important;
+}

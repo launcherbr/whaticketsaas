@@ -61,7 +61,8 @@ const ImportContactsService = async (companyId: number): Promise<void> => {
   if (isArray(phoneContactsList)) {
     phoneContactsList.forEach(async ({ id, name, notify }) => {
       if (id === "status@broadcast" || id.includes("g.us")) return;
-      const number = id.replace(/\D/g, "").slice(0, 13);
+      // Suporta números de qualquer país (até 15 dígitos conforme padrão internacional)
+      const number = id.replace(/\D/g, "").slice(0, 15);
 
       const existingContact = await Contact.findOne({
         where: { number, companyId }

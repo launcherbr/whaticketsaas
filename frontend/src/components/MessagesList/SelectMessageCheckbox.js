@@ -9,11 +9,15 @@ const SelectMessageCheckbox = ({ message }) => {
     const isChecked = selectedMessages.some((m) => m.id === message.id);
 
     const handleSelectMessage = (e) => {
-        const updatedList = e.target.checked
-            ? [...selectedMessages, message]  // Adiciona mensagem se marcada
-            : selectedMessages.filter((m) => m.id !== message.id);  // Remove mensagem se desmarcada
-
-        setSelectedMessages(updatedList);
+        e.stopPropagation();
+        
+        if (e.target.checked) {
+            if (!selectedMessages.some((m) => m.id === message.id)) {
+                setSelectedMessages([...selectedMessages, message]);
+            }
+        } else {
+            setSelectedMessages(selectedMessages.filter((m) => m.id !== message.id));
+        }
     };
 
     // Reseta o checkbox quando o resetSelection é chamado

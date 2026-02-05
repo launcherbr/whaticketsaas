@@ -35,6 +35,7 @@ import versionRouter from "./versionRoutes";
 import reportsRoutes from './reportsRoutes';
 import geminiRoutes from "./geminiRoutes";
 import backupsRoutes from "./backupsRoutes";
+import stickerRoutes from "./stickerRoutes";
 
 const routes = Router();
 
@@ -74,5 +75,6 @@ routes.use(reportsRoutes);
 routes.use(versionRouter);
 routes.use(geminiRoutes);
 routes.use(backupsRoutes);
+routes.use(stickerRoutes);
 
 export default routes;

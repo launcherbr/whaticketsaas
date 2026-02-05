@@ -154,6 +154,13 @@ class Whatsapp extends Model<Whatsapp> {
   
   @Column
   number: string;
+
+  @Column(DataType.TEXT)
+  pix: string;
+
+  @Default("")
+  @Column(DataType.TEXT)
+  pixMessage: string;
   
   @Column
   expiresInactiveMessage: string;

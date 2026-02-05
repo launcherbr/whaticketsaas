@@ -86,7 +86,9 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
     expiresInactiveMessage: "",
     expiresTicket: 0,
     timeUseBotQueues: 0,
-    maxUseBotQueues: 3
+    maxUseBotQueues: 3,
+    pix: "",
+    pixMessage: ""
   };
   const [whatsApp, setWhatsApp] = useState(initialState);
   const [selectedQueueIds, setSelectedQueueIds] = useState([]);
@@ -436,6 +438,32 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
                     type="token"
                     fullWidth
                     name="token"
+                    variant="outlined"
+                    margin="dense"
+                  />
+                </div>
+                <div>
+                  <Field
+                    as={TextField}
+                    label="Chave PIX"
+                    type="text"
+                    fullWidth
+                    name="pix"
+                    placeholder="Digite a chave PIX (Email, CPF, CNPJ, Telefone ou Chave Aleatória)"
+                    variant="outlined"
+                    margin="dense"
+                  />
+                </div>
+                <div>
+                  <Field
+                    as={TextField}
+                    label="Mensagem Personalizada PIX"
+                    type="text"
+                    multiline
+                    rows={4}
+                    fullWidth
+                    name="pixMessage"
+                    placeholder="Digite a mensagem que será enviada ANTES da chave PIX"
                     variant="outlined"
                     margin="dense"
                   />

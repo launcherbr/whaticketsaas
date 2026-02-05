@@ -42,8 +42,9 @@ type MessageData = {
   read: boolean;
   quotedMsg?: Message;
   number?: string;
-  closeTicket?: true;
   forceMediaType?: string;
+  stickerPath?: string;
+  closeTicket?: true;
 };
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
@@ -75,7 +76,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { ticketId } = req.params;
-  const { body, quotedMsg, forceMediaType }: MessageData = req.body;
+  const { body, quotedMsg, forceMediaType, stickerPath }: MessageData = req.body;
   const medias = req.files as Express.Multer.File[];
   const { companyId } = req.user;
 
@@ -83,8 +84,42 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
 
   SetTicketMessagesAsRead(ticket);
 
-  console.log('bodyyyyyyyyyy:', body)
-  if (medias) {
+  if (medias && medias.length > 0) {
+    const hasStickerPath = stickerPath && forceMediaType === "sticker";
+    
+    if (hasStickerPath) {
+      const publicFolder = path.resolve(__dirname, "..", "..", "public");
+      const fullPath = path.join(publicFolder, `company${companyId}`, stickerPath);
+      
+      if (fs.existsSync(fullPath)) {
+        const fileName = path.basename(stickerPath);
+        const mimetype = lookup(fileName) || "image/webp";
+        
+        const mockMedia: Express.Multer.File = {
+          fieldname: 'medias',
+          originalname: fileName,
+          encoding: '7bit',
+          mimetype,
+          destination: path.dirname(fullPath),
+          filename: fileName,
+          path: fullPath,
+          size: fs.statSync(fullPath).size,
+          stream: null as any,
+          buffer: null as any
+        };
+        
+        await SendWhatsAppMedia({ 
+          media: mockMedia, 
+          ticket, 
+          body: body || "",
+          forceMediaType: "sticker",
+          skipSave: true
+        });
+        
+        return res.send();
+      }
+    }
+    
     await Promise.all(
       medias.map(async (media: Express.Multer.File, index) => {
         await SendWhatsAppMedia({ 
@@ -397,23 +432,35 @@ export const forwardMessage = async (
     return res.status(422).send("Media URL not available for forwarding");
   }
 
-  const fileName = obterNomeEExtensaoDoArquivo(mediaUrl);
+  let fileName: string;
+  let filePath: string;
+  const publicFolder = path.join(__dirname, '..', '..', 'public');
+  const sourceCompanyId = message.companyId || createTicket.companyId;
+
+  if (mediaUrl.includes('stickers/')) {
+    fileName = mediaUrl;
+    filePath = path.join(publicFolder, `company${sourceCompanyId}`, mediaUrl);
+  } else {
+    fileName = obterNomeEExtensaoDoArquivo(mediaUrl);
+    filePath = path.join(publicFolder, `company${sourceCompanyId}`, fileName);
+  }
+
+  if (!fs.existsSync(filePath)) {
+    const alternativePath = path.join(publicFolder, `company${sourceCompanyId}`, mediaUrl);
+    if (fs.existsSync(alternativePath)) {
+      filePath = alternativePath;
+    } else {
+      return res.status(404).send("Media file not found for forwarding");
+    }
+  }
 
   let caption = originalBody;
-  if (caption === fileName) {
+  if (caption === fileName || caption === path.basename(fileName)) {
     caption = "";
   }
 
   if (shouldSign) {
     caption = `${caption}${caption ? "\n\n" : ""}${requestUser.name}`;
-  }
-
-  const publicFolder = path.join(__dirname, '..', '..', 'public');
-  const sourceCompanyId = message.companyId || createTicket.companyId;
-  const filePath = path.join(publicFolder, `company${sourceCompanyId}`, fileName);
-
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).send("Media file not found for forwarding");
   }
 
   const resolvedMimeRaw = lookup(fileName) || message.mediaType || 'application/octet-stream';
@@ -423,14 +470,29 @@ export const forwardMessage = async (
 
   const mediaSrc = {
     fieldname: 'medias',
-    originalname: fileName,
+    originalname: path.basename(fileName),
     encoding: '7bit',
     mimetype: resolvedMime,
-    filename: fileName,
+    filename: path.basename(fileName),
     path: filePath
   } as Express.Multer.File;
 
-  await SendWhatsAppMedia({ media: mediaSrc, ticket: createTicket, body: caption, isForwarded });
+  let forceMediaType: string | undefined;
+  if (message.mediaType === "sticker") {
+    forceMediaType = "sticker";
+  } else if (message.mediaType === "gif") {
+    forceMediaType = "gif";
+  } else if (message.mediaType === "document" || message.mediaType === "application") {
+    forceMediaType = "document";
+  }
+
+  await SendWhatsAppMedia({ 
+    media: mediaSrc, 
+    ticket: createTicket, 
+    body: caption, 
+    isForwarded,
+    forceMediaType
+  });
 
   return res.send();
 }

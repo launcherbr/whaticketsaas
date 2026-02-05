@@ -38,16 +38,36 @@ export const update = async (
   }
   const { settingKey: key } = req.params;
   const { value } = req.body;
-  const { companyId } = req.user;
+  const { companyId, id: userId } = req.user;
+
+  // Configurações globais devem ser salvas com SUPER_ADMIN_COMPANY_ID
+  // e apenas superadmins podem modificar
+  const globalSettings = [
+    "giphyApiKey",
+    "enablePasswordRecovery",
+    "passwordRecoveryWhatsAppId",
+    "passwordRecoveryMessage",
+    "geminiApiToken",
+    "geminiModel"
+  ];
+
+  let targetCompanyId = companyId;
+  if (globalSettings.includes(key)) {
+    const requestUser = await User.findByPk(userId);
+    if (!requestUser?.super) {
+      throw new AppError("Você não tem permissão para modificar esta configuração!", 403);
+    }
+    targetCompanyId = SUPER_ADMIN_COMPANY_ID;
+  }
 
   const setting = await UpdateSettingService({
     key,
     value,
-    companyId
+    companyId: targetCompanyId
   });
 
   const io = getIO();
-  io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-settings`, {
+  io.to(`company-${targetCompanyId}-mainchannel`).emit(`company-${targetCompanyId}-settings`, {
     action: "update",
     setting
   });

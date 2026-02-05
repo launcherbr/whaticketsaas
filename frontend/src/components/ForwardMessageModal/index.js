@@ -17,6 +17,7 @@ import ButtonWithSpinner from "../ButtonWithSpinner";
 import ContactModal from "../ContactModal";
 import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
+import { ForwardMessageContext } from "../../context/ForwarMessage/ForwardMessageContext";
 
 import { FormControlLabel, Switch, Typography } from "@material-ui/core";
 
@@ -28,6 +29,7 @@ const ForwardMessageModal = ({ messages, onClose, modalOpen }) => {
 	const [newContact, setNewContact] = useState({});
 	const [contactModalOpen, setContactModalOpen] = useState(false);
 	const { user } = useContext(AuthContext);
+	const { resetSelection } = useContext(ForwardMessageContext);
 	const [sending, setSending] = useState(false);
 	const [messageSending, setMessageSending] = useState('');
 	const [signMessage, setSignMessage] = useState(true);
@@ -64,21 +66,36 @@ const ForwardMessageModal = ({ messages, onClose, modalOpen }) => {
 	};
 
 	const handleForwardMessage = async (contactL) => {
+		if (!contactL || !contactL.id) {
+			toastError("Selecione um contato válido");
+			return;
+		}
+		
+		if (!messages || messages.length === 0) {
+			toastError("Nenhuma mensagem selecionada");
+			return;
+		}
+		
+		setSending(true);
 		const responseList = [];
-		for (const message of messages) {
-			setSending(true);
+		const uniqueMessages = Array.from(new Map(messages.map(msg => [msg.id, msg])).values());
+		
+		for (const message of uniqueMessages) {
 			try {
 				setMessageSending(message.id);
-				const response = await api.post('/message/forward', { messageId: message.id, contactId: contactL.id, signMessage: signMessage });
+				const response = await api.post('/message/forward', { 
+					messageId: message.id, 
+					contactId: contactL.id, 
+					signMessage: signMessage 
+				});
 				responseList.push(response);
-				sleep(900);
+				await sleep(900);
 			} catch (error) {
 				toastError(error);
 			}
 		}
 		setSending(false);
 		handleClose();
-		// history.push('/tickets');
 	}
 
 	const handleSelectOption = (e, newValue) => {
@@ -95,6 +112,7 @@ const ForwardMessageModal = ({ messages, onClose, modalOpen }) => {
 		setSearchParam("");
 		setSelectedContact(null);
 		setSending(false);
+		resetSelection();
 	};
 
 	const handleCloseContactModal = () => {

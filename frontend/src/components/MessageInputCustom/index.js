@@ -19,7 +19,8 @@ import ClearIcon from "@material-ui/icons/Clear";
 import MicIcon from "@material-ui/icons/Mic";
 import CheckCircleOutlineIcon from "@material-ui/icons/CheckCircleOutline";
 import HighlightOffIcon from "@material-ui/icons/HighlightOff";
-import { FormControlLabel, Switch } from "@material-ui/core";
+import MonetizationOnIcon from "@material-ui/icons/MonetizationOn";
+import { FormControlLabel, Switch, Tooltip } from "@material-ui/core";
 import { isString, isEmpty, isObject, has } from "lodash";
 import AddIcon from "@material-ui/icons/Add";
 import ImageIcon from "@material-ui/icons/Image";
@@ -43,12 +44,14 @@ import { ForwardMessageContext } from "../../context/ForwarMessage/ForwardMessag
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 import toastError from "../../errors/toastError";
+import { toast } from "react-toastify";
 
 import Compressor from 'compressorjs';
 import LinearWithValueLabel from "./ProgressBarCustom";
 import useQuickMessages from "../../hooks/useQuickMessages";
 import MediaPreview from "../MediaPreview";
 import QuickMessageEditModal from "../QuickMessageEditModal";
+import EmojiGifStickerPicker from "../EmojiGifStickerPicker";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
@@ -248,6 +251,12 @@ const useStyles = makeStyles((theme) => ({
   },
   audioIcon: {
     color: green[500],
+  },
+  pixButton: {
+    color: green[600],
+    '&:hover': {
+      color: green[800],
+    },
   },
   // Drag and drop styles
   dragOverlay: {
@@ -477,6 +486,28 @@ const FileInput = (props) => {
         }}
       />
     </>
+  );
+};
+
+const PixButton = (props) => {
+  const { disabled, onSendPix, sending } = props;
+  const classes = useStyles();
+
+  return (
+    <Tooltip title={sending ? "Enviando PIX..." : "Enviar Chave PIX"}>
+      <span>
+        <IconButton
+          aria-label="send-pix"
+          component="span"
+          disabled={disabled || sending}
+          onClick={onSendPix}
+          className={classes.pixButton}
+          style={{ opacity: sending ? 0.5 : 1 }}
+        >
+          <MonetizationOnIcon className={classes.sendMessageIcons} />
+        </IconButton>
+      </span>
+    </Tooltip>
   );
 };
 
@@ -900,6 +931,8 @@ const MessageInputCustom = (props) => {
   const requestCountRef = useRef(0); // Contador de requisições
   const MIN_TIME_BETWEEN_REQUESTS = 2000; // 2 segundos entre requisições
   const MIN_CHARS_FOR_REQUEST = 3; // Mínimo de 3 caracteres após "!"
+  
+  const [sendingPix, setSendingPix] = useState(false);
 
   useEffect(() => {
     inputRef.current.focus();
@@ -1063,6 +1096,136 @@ const MessageInputCustom = (props) => {
     setInputMessage((prevState) => prevState + emoji);
   };
 
+  const handleStickerSelect = async (sticker) => {
+    if (!sticker || !sticker.path) return;
+    
+    setLoading(true);
+    try {
+      const baseURL = process.env.REACT_APP_BACKEND_URL || api.defaults.baseURL || '';
+      let stickerPath = sticker.path;
+      
+      if (!stickerPath.startsWith('stickers/salvos/')) {
+        if (stickerPath.startsWith('stickers/')) {
+          if (!stickerPath.includes('/salvos/')) {
+            stickerPath = `stickers/salvos/${stickerPath.replace('stickers/', '')}`;
+          }
+        } else if (stickerPath.startsWith('salvos/')) {
+          stickerPath = `stickers/${stickerPath}`;
+        } else {
+          stickerPath = `stickers/salvos/${stickerPath}`;
+        }
+      }
+      
+      const stickerUrl = `${baseURL}/public/company${user.companyId}/${stickerPath}`.replace(/([^:]\/)\/+/g, '$1');
+      
+      const response = await fetch(stickerUrl);
+      if (!response.ok) {
+        throw new Error(`Erro ao carregar sticker: ${response.statusText}`);
+      }
+      
+      const blob = await response.blob();
+      const fileName = stickerPath.split('/').pop() || sticker.name || 'sticker.webp';
+      const file = new File([blob], fileName, { type: sticker.mimetype || "image/webp" });
+
+      const formData = new FormData();
+      formData.append("medias", file);
+      formData.append("body", "");
+      formData.append("fromMe", "true");
+      formData.append("forceMediaType", "sticker");
+      formData.append("stickerPath", stickerPath);
+
+      await api.post(`/messages/${ticketId}`, formData);
+
+      setShowEmoji(false);
+      setReplyingMessage(null);
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGifSelect = async (gifData) => {
+    setLoading(true);
+    try {
+      let file;
+      
+      if (gifData.isUrl && gifData.url) {
+        // Se é apenas uma URL, fazer download
+        const response = await fetch(gifData.url);
+        const blob = await response.blob();
+        const fileName = `gif_${Date.now()}.gif`;
+        file = new File([blob], fileName, { type: "image/gif" });
+      } else if (gifData.file) {
+        // Se já é um File
+        file = gifData.file;
+      } else {
+        throw new Error("Dados de GIF inválidos");
+      }
+
+      // Criar FormData para envio como GIF
+      const formData = new FormData();
+      formData.append("medias", file);
+      formData.append("body", "");
+      formData.append("fromMe", "true");
+      formData.append("forceMediaType", "gif");
+
+      await api.post(`/messages/${ticketId}`, formData);
+
+      setShowEmoji(false);
+      setReplyingMessage(null);
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendPixMessage = async () => {
+    setSendingPix(true);
+    try {
+      // Buscar dados do ticket
+      const { data: ticket } = await api.get(`/tickets/${ticketId}`);
+      
+      if (!ticket.whatsapp?.pix) {
+        toastError("Chave PIX não configurada para esta conexão");
+        return;
+      }
+      
+      const pixKey = ticket.whatsapp.pix;
+      const customMessage = ticket.whatsapp.pixMessage;
+      
+      // Envia mensagem personalizada primeiro (se existir)
+      if (customMessage && customMessage.trim() !== "") {
+        const firstMessage = {
+          read: 1,
+          fromMe: true,
+          mediaUrl: "",
+          body: customMessage,
+        };
+        await api.post(`/messages/${ticketId}`, firstMessage);
+        
+        // Pequeno delay entre as mensagens
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      // Envia a chave PIX
+      const pixMessage = {
+        read: 1,
+        fromMe: true,
+        mediaUrl: "",
+        body: pixKey,
+      };
+      
+      await api.post(`/messages/${ticketId}`, pixMessage);
+      toast.success("Chave PIX enviada com sucesso!");
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setSendingPix(false);
+    }
+  };
+
   const isMediaFile = (file) => {
     return file.type.startsWith('image/') || 
            file.type.startsWith('video/') || 
@@ -1188,7 +1351,6 @@ const MessageInputCustom = (props) => {
                 resolve();
               },
               error: async (err) => {
-                console.log(err.message);
                 formData.append("medias", media);
                 formData.append("body", messageBody);
                 await uploadMedia(formData);
@@ -1341,7 +1503,6 @@ const MessageInputCustom = (props) => {
             formData.append("body", messageBody);
           },
           error(err) {
-            console.log(err.message);
           },
         });
       } else {
@@ -1366,7 +1527,7 @@ const MessageInputCustom = (props) => {
             setPercentLoading(0);
           })
           .catch((err) => {
-            console.error(err);
+            toastError(err);
           });
       } catch (err) {
         toastError(err);
@@ -1554,11 +1715,11 @@ const MessageInputCustom = (props) => {
           )}
 
           <div className={classes.newMessageBox}>
-            <EmojiOptions
+            <EmojiGifStickerPicker
               disabled={disableOption()}
-              handleAddEmoji={handleAddEmoji}
-              showEmoji={showEmoji}
-              setShowEmoji={setShowEmoji}
+              onSelectEmoji={handleAddEmoji}
+              onSelectGif={handleGifSelect}
+              onSelectSticker={handleStickerSelect}
             />
 
             <FileInput
@@ -1567,6 +1728,12 @@ const MessageInputCustom = (props) => {
               setMedias={setMedias}
               setInputMessage={setInputMessage}
               setSelectedMediaType={setSelectedMediaType}
+            />
+
+            <PixButton
+              disabled={disableOption()}
+              onSendPix={handleSendPixMessage}
+              sending={sendingPix}
             />
 
             <SignSwitch

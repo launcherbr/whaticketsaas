@@ -8,7 +8,6 @@ import {
   Toolbar,
   List,
   Typography,
-  Divider,
   MenuItem,
   IconButton,
   Menu,
@@ -17,7 +16,7 @@ import {
 } from "@material-ui/core";
 
 import MenuIcon from "@material-ui/icons/Menu";
-import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
+import MenuOpenIcon from "@material-ui/icons/MenuOpen";
 import AccountCircle from "@material-ui/icons/AccountCircle";
 import LanguageIcon from "@material-ui/icons/Language";
 
@@ -37,16 +36,16 @@ import { useDate } from "../hooks/useDate";
 import ColorModeContext from "../layout/themeContext";
 import Brightness4Icon from '@material-ui/icons/Brightness4';
 import Brightness7Icon from '@material-ui/icons/Brightness7';
+import usePlans from "../hooks/usePlans";
 
-const drawerWidth = 310;
+const drawerWidth = 300;
 
 const useStyles = makeStyles((theme) => ({
   root: {
     display: "flex",
+    flexDirection: "column",
+    width: "100%",
     height: "100vh",
-    [theme.breakpoints.down("sm")]: {
-      height: "calc(100vh - 56px)",
-    },
     backgroundColor: theme.palette.fancyBackground,
     '& .MuiButton-outlinedPrimary': {
       color: theme.mode === 'light' ? '#FFF' : '#FFF',
@@ -60,9 +59,38 @@ const useStyles = makeStyles((theme) => ({
     width: "100%",
   },
   toolbar: {
-    paddingRight: 24,
+    paddingRight: theme.spacing(2),
+    paddingLeft: theme.spacing(1),
+    minHeight: 56,
     color: theme.palette.dark.main,
     background: theme.palette.barraSuperior,
+  },
+  branding: {
+    display: 'flex',
+    alignItems: 'center',
+    marginLeft: theme.spacing(1),
+    gap: theme.spacing(1.5),
+  },
+  companyName: {
+    color: 'white',
+    fontSize: '1rem',
+    fontWeight: 500,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    maxWidth: '200px',
+    [theme.breakpoints.down('sm')]: {
+      display: 'none',
+    },
+  },
+  logo: {
+    maxHeight: 32,
+    width: 'auto',
+    cursor: 'pointer',
+    [theme.breakpoints.down('sm')]: {
+      maxWidth: '100px',
+      maxHeight: 28,
+    }
   },
   toolbarIcon: {
     display: "flex",
@@ -75,25 +103,27 @@ const useStyles = makeStyles((theme) => ({
     }
   },
   appBar: {
-    zIndex: theme.zIndex.drawer + 1,
-    transition: theme.transitions.create(["width", "margin"], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
-  },
-  appBarShift: {
-    marginLeft: drawerWidth,
-    width: `calc(100% - ${drawerWidth}px)`,
-    transition: theme.transitions.create(["width", "margin"], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-    [theme.breakpoints.down("sm")]: {
-      display: "none"
-    }
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    width: "100%",
+    zIndex: theme.zIndex.drawer + 100,
+    boxShadow: '0 1px 8px rgba(0,0,0,.3)',
   },
   menuButton: {
-    marginRight: 36,
+    marginRight: theme.spacing(1),
+    padding: theme.spacing(1),
+    "&:hover": {
+      backgroundColor: "transparent",
+    },
+    "& .MuiTouchRipple-root": {
+      display: "none",
+    },
+  },
+  menuIcon: {
+    color: "#ffffff",
+    transition: "opacity 0.3s ease, transform 0.3s ease",
   },
   menuButtonHidden: {
     display: "none",
@@ -104,15 +134,27 @@ const useStyles = makeStyles((theme) => ({
     color: "white",
   },
   drawerPaper: {
-    position: "relative",
+    position: "fixed",
+    top: 56,
+    left: 0,
+    bottom: 0,
+    height: "calc(100vh - 56px)",
     whiteSpace: "nowrap",
     width: drawerWidth,
+    maxWidth: drawerWidth,
+    overflowX: "hidden",
+    display: "flex",
+    flexDirection: "column",
     transition: theme.transitions.create("width", {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
     }),
-    [theme.breakpoints.down("sm")]: {
-      width: "100%"
+    [theme.breakpoints.down("md")]: {
+      top: 56,
+      height: "calc(100vh - 56px)",
+      bottom: 0,
+      width: "280px",
+      maxWidth: "80vw",
     },
     ...theme.scrollbarStylesSoft
   },
@@ -123,19 +165,56 @@ const useStyles = makeStyles((theme) => ({
       duration: theme.transitions.duration.leavingScreen,
     }),
     width: theme.spacing(7),
-    [theme.breakpoints.up("sm")]: {
+    [theme.breakpoints.up("md")]: {
       width: theme.spacing(9),
     },
-    [theme.breakpoints.down("sm")]: {
-      width: "100%"
-    }
+    [theme.breakpoints.down("md")]: {
+      width: 0,
+      transform: "translateX(-100%)",
+    },
+    position: "fixed",
+    top: 56,
+    left: 0,
+    bottom: 0,
+    height: "calc(100vh - 56px)",
+    display: "flex",
+    flexDirection: "column",
   },
-  appBarSpacer: {
-    minHeight: "48px",
+  contentWrapper: {
+    display: "flex",
+    width: "100%",
+    flex: 1,
+    marginTop: 56,
+    overflow: "hidden",
+    height: "calc(100vh - 56px)",
   },
   content: {
     flex: 1,
+    width: "100%",
+    height: "100%",
     overflow: "auto",
+    marginLeft: drawerWidth,
+    minWidth: 0,
+    transition: theme.transitions.create(["margin"], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+    [theme.breakpoints.down("md")]: {
+      marginLeft: 0,
+    }
+  },
+  contentShift: {
+    marginLeft: theme.spacing(7),
+    transition: theme.transitions.create(["margin"], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen,
+    }),
+    [theme.breakpoints.up("sm")]: {
+      marginLeft: theme.spacing(9),
+    },
+    [theme.breakpoints.down("md")]: {
+      marginLeft: 0,
+    }
   },
   container: {
     paddingTop: theme.spacing(4),
@@ -149,8 +228,18 @@ const useStyles = makeStyles((theme) => ({
   },
   containerWithScroll: {
     flex: 1,
-    padding: theme.spacing(1),
-    overflowY: "scroll",
+    padding: theme.spacing(0.5),
+    paddingLeft: 0,
+    paddingRight: 0,
+    paddingBottom: 0,
+    overflowY: "auto",
+    overflowX: "hidden",
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box",
+    display: "flex",
+    flexDirection: "column",
+    minHeight: 0,
     ...theme.scrollbarStyles,
   },
   flagIcon: {
@@ -174,10 +263,12 @@ const LoggedInLayout = ({ children }) => {
   const [drawerVariant, setDrawerVariant] = useState("permanent");
   const { user } = useContext(AuthContext);
   const companyId = user?.companyId;
+  const { getPlanCompany } = usePlans();
+  const [companyName, setCompanyName] = useState("");
 
   const theme = useTheme();
   const { colorMode } = useContext(ColorModeContext);
-  const greaterThenSm = useMediaQuery(theme.breakpoints.up("sm"));
+  const greaterThenSm = useMediaQuery(theme.breakpoints.up("md"));
 
   // Default logos based on theme
   const defaultLogoLight = `${process.env.REACT_APP_BACKEND_URL}/public/logotipos/interno.png`;
@@ -203,6 +294,26 @@ const LoggedInLayout = ({ children }) => {
 
   }, [theme.palette.type, companyId, customLogoBaseUrl, defaultLogoLight, defaultLogoDark]);
 
+  // Buscar nome da company
+  useEffect(() => {
+    async function fetchCompanyName() {
+      if (!companyId) {
+        setCompanyName("");
+        return;
+      }
+      try {
+        const planConfigs = await getPlanCompany(undefined, companyId);
+        if (planConfigs && planConfigs.name) {
+          setCompanyName(planConfigs.name);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar nome da empresa:", err);
+        setCompanyName("");
+      }
+    }
+    fetchCompanyName();
+  }, [companyId, getPlanCompany]);
+
   useEffect(() => {
     if (document.body.offsetWidth > 1200) {
       setDrawerOpen(true);
@@ -210,12 +321,14 @@ const LoggedInLayout = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (document.body.offsetWidth < 1000) {
-      setDrawerVariant("temporary");
-    } else {
+    if (greaterThenSm) {
       setDrawerVariant("permanent");
+      setDrawerOpen(true);
+    } else {
+      setDrawerVariant("temporary");
+      setDrawerOpen(false);
     }
-  }, [drawerOpen]);
+  }, [greaterThenSm]);
 
   useEffect(() => {
     const storedCompanyId = localStorage.getItem("companyId");
@@ -265,7 +378,7 @@ const LoggedInLayout = ({ children }) => {
   };
 
   const drawerClose = () => {
-    if (document.body.offsetWidth < 600) {
+    if (!greaterThenSm) {
       setDrawerOpen(false);
     }
   };
@@ -330,27 +443,16 @@ const LoggedInLayout = ({ children }) => {
           ),
         }}
         open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        ModalProps={{
+          keepMounted: true,
+        }}
       >
-        <div className={classes.toolbarIcon}>
-          {/* Logo Display with Fallback */}
-          {finalLogoUrl && (
-            <img
-              key={finalLogoUrl} // Add key to force re-render on URL change
-              src={`${finalLogoUrl}?r=${Math.random()}`} // Use state variable
-              style={{ margin: "0 auto", width: "50%" }}
-              alt={`${process.env.REACT_APP_NAME_SYSTEM} Logo`}
-              onError={handleLogoError} // Add onError handler
-            />
-          )}
-          <IconButton onClick={() => setDrawerOpen(!drawerOpen)}>
-            <ChevronLeftIcon />
-          </IconButton>
+        <div className={classes.containerWithScroll}>
+          <List style={{ padding: 0, width: '100%', flex: 1 }}>
+            <MainListItems drawerClose={drawerClose} collapsed={!drawerOpen} />
+          </List>
         </div>
-        <Divider />
-        <List className={classes.containerWithScroll}>
-          <MainListItems drawerClose={drawerClose} collapsed={!drawerOpen} />
-        </List>
-        <Divider />
       </Drawer>
       <UserModal
         open={userModalOpen}
@@ -358,41 +460,45 @@ const LoggedInLayout = ({ children }) => {
         userId={user?.id}
       />
       <AppBar
-        position="absolute"
-        className={clsx(classes.appBar, drawerOpen && classes.appBarShift)}
+        position="fixed"
+        className={classes.appBar}
         color="primary"
       >
         <Toolbar variant="dense" className={classes.toolbar}>
           <IconButton
             edge="start"
-            variant="contained"
+            className={classes.menuButton}
+            color="inherit"
             aria-label="open drawer"
             onClick={() => setDrawerOpen(!drawerOpen)}
-            className={clsx(
-              classes.menuButton,
-              drawerOpen && classes.menuButtonHidden
-            )}
           >
-            <MenuIcon />
+            {drawerOpen ? (
+              <MenuOpenIcon className={classes.menuIcon} />
+            ) : (
+              <MenuIcon className={classes.menuIcon} />
+            )}
           </IconButton>
 
-          <Typography
-            component="h2"
-            variant="h6"
-            color="inherit"
-            noWrap
-            className={classes.title}
-          >
-            {greaterThenSm && user?.profile === "admin" && user?.company?.dueDate ? (
-              <>
-                Olá <b>{user.name}</b>, Bem vindo a <b>{user?.company?.name}</b>! (Ativo até {dateToClient(user?.company?.dueDate)})
-              </>
-            ) : (
-              <>
-                Olá  <b>{user.name}</b>, Bem vindo a <b>{user?.company?.name}</b>!
-              </>
-            )}
-          </Typography>
+          {/* Logo Display with Fallback */}
+          {finalLogoUrl && (
+            <div className={classes.branding}>
+              <img
+                key={finalLogoUrl}
+                src={`${finalLogoUrl}?r=${Math.random()}`}
+                className={classes.logo}
+                alt={`${process.env.REACT_APP_NAME_SYSTEM} Logo`}
+                onError={handleLogoError}
+                onClick={() => window.location.href = '/'}
+              />
+              {companyName && (
+                <Typography className={classes.companyName}>
+                  {companyName}
+                </Typography>
+              )}
+            </div>
+          )}
+
+          <div style={{ flexGrow: 1 }} />
 
           <UserLanguageSelector iconOnly={true} />
 
@@ -454,10 +560,11 @@ const LoggedInLayout = ({ children }) => {
           </div>
         </Toolbar>
       </AppBar>
-      <main className={classes.content}>
-        <div className={classes.appBarSpacer} />
-        {children ? children : null}
-      </main>
+      <div className={classes.contentWrapper}>
+        <main className={clsx(classes.content, !drawerOpen && classes.contentShift)}>
+          {children ? children : null}
+        </main>
+      </div>
     </div>
   );
 };

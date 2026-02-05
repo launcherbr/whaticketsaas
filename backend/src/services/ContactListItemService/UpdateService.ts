@@ -28,7 +28,8 @@ const UpdateService = async (data: Data): Promise<ContactListItem> => {
   try {
     const response = await CheckContactNumber(record.number, record.companyId);
     record.isWhatsappValid = response.exists;
-    const number = response.jid.replace(/\D/g, "").slice(0, 13);
+    // Suporta números de qualquer país (até 15 dígitos conforme padrão internacional)
+    const number = response.jid.replace(/\D/g, "").slice(0, 15);
     record.number = number;
     await record.save();
   } catch (e) {

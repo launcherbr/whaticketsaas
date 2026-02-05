@@ -11,34 +11,37 @@ import { i18n } from "../../translate/i18n";
 const useStyles = makeStyles(theme => ({
 	chatContainer: {
 		flex: 1,
-		// backgroundColor: "#eee",
-		padding: theme.spacing(0), //Aqui ele ajusta espaço na tela de ticket
-		height: `calc(100% - 48px)`,
+		padding: 0,
+		height: `calc(100vh - 56px)`,
+		minHeight: `calc(100vh - 56px)`,
+		maxHeight: `calc(100vh - 56px)`,
 		overflowY: "hidden",
-	},
-
-	chatPapper: {
-		// backgroundColor: "red",
 		display: "flex",
-		height: "100%",
+		flexDirection: "column",
 	},
 
 	contactsWrapper: {
 		display: "flex",
+		flex: 1,
+		minHeight: 0,
 		height: "100%",
 		flexDirection: "column",
 		overflowY: "hidden",
 	},
 	messagesWrapper: {
 		display: "flex",
+		flex: 1,
+		minHeight: 0,
 		height: "100%",
 		flexDirection: "column",
 	},
 	welcomeMsg: {
-		backgroundColor: theme.palette.boxticket, //DARK MODE//
+		backgroundColor: theme.palette.boxticket,
 		display: "flex",
 		justifyContent: "space-evenly",
 		alignItems: "center",
+		flex: 1,
+		minHeight: 0,
 		height: "100%",
 		textAlign: "center",
 	},
@@ -58,33 +61,28 @@ const TicketsCustom = () => {
 
 	return (
 		<div className={classes.chatContainer}>
-			<div className={classes.chatPapper}>
-				<Grid container spacing={0}>
-					<Grid item xs={4} className={classes.contactsWrapper}>
-						<TicketsManager />
-					</Grid>
-					<Grid item xs={8} className={classes.messagesWrapper}>
-						{ticketId ? (
-							<>
-								<Ticket />
-							</>
-						) : (
-							<Paper square variant="outlined" className={classes.welcomeMsg}>
-								<div>
-									<center>
-										<img
-											style={{ margin: "0 auto", width: "80%" }}
-											src={`${logoImg}?r=${Math.random()}`}
-											alt={`${process.env.REACT_APP_NAME_SYSTEM}`}
-										/>
-									</center>
-								</div>
-								{/* <span>{i18n.t("chat.noTicketMessage")}</span> */}
-							</Paper>
-						)}
-					</Grid>
+			<Grid container spacing={0} style={{ flex: 1, minHeight: 0, height: "100%" }}>
+				<Grid item xs={4} className={classes.contactsWrapper}>
+					<TicketsManager />
 				</Grid>
-			</div>
+				<Grid item xs={8} className={classes.messagesWrapper}>
+					{ticketId ? (
+						<Ticket />
+					) : (
+						<Paper square variant="outlined" className={classes.welcomeMsg}>
+							<div>
+								<center>
+									<img
+										style={{ margin: "0 auto", width: "80%" }}
+										src={`${logoImg}?r=${Math.random()}`}
+										alt={`${process.env.REACT_APP_NAME_SYSTEM}`}
+									/>
+								</center>
+							</div>
+						</Paper>
+					)}
+				</Grid>
+			</Grid>
 		</div>
 	);
 };

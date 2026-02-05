@@ -68,7 +68,7 @@ const useStyles = makeStyles((theme) => ({
     height: 100,
     margin: '0 auto -50px',
     borderRadius: '50%',
-    background: theme.palette.primary.dark, // Usando primary.dark
+    background: theme.palette.primary.dark,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -76,10 +76,12 @@ const useStyles = makeStyles((theme) => ({
     border: '4px solid ' + (theme.palette.type === 'dark' ? theme.palette.grey[900] : 'white'),
     position: 'relative',
     zIndex: 2,
+    overflow: 'hidden',
     '& img': {
-      width: '70%',
-      height: 'auto',
-      filter: 'brightness(0) invert(1)',
+      width: '95%',
+      height: '95%',
+      objectFit: 'contain',
+      display: 'block',
     }
   },
   formTitle: {

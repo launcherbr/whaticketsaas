@@ -13,13 +13,15 @@ import {
   TableRow,
   TextField,
   makeStyles,
+  useTheme,
+  Chip,
 } from "@material-ui/core";
 import { Field, Form, Formik } from "formik";
 import React, { useEffect, useState } from "react";
 import ButtonWithSpinner from "../ButtonWithSpinner";
 import ConfirmationModal from "../ConfirmationModal";
 
-import { Edit as EditIcon } from "@material-ui/icons";
+import { Edit as EditIcon, Star as StarIcon } from "@material-ui/icons";
 
 import { has, head, isArray } from "lodash";
 import { toast } from "react-toastify";
@@ -398,6 +400,7 @@ export function CompanyForm(props) {
 export function CompaniesManagerGrid(props) {
   const { records, onSelect } = props;
   const classes = useStyles();
+  const theme = useTheme();
   const { dateToClient } = useDate();
 
   const renderStatus = (row) => {
@@ -423,19 +426,24 @@ export function CompaniesManagerGrid(props) {
   };*/}
 
   const rowStyle = (record) => {
+    if (record.id === 1) {
+      return { 
+        backgroundColor: theme.palette.type === "dark" ? "rgba(25, 118, 210, 0.25)" : "#e3f2fd",
+        border: `2px solid ${theme.palette.primary.main}`,
+        fontWeight: 500
+      };
+    }
+    
     if (moment(record.dueDate).isValid()) {
       const now = moment();
       const dueDate = moment(record.dueDate);
       const diff = dueDate.diff(now, "days");
       if (diff >= 1 && diff <= 5) {
-        return { backgroundColor: "#fffead" };
+        return { backgroundColor: theme.palette.type === "dark" ? "rgba(255, 235, 59, 0.15)" : "#fffead" };
       }
       if (diff <= 0) {
-        return { backgroundColor: "#fa8c8c" };
+        return { backgroundColor: theme.palette.type === "dark" ? "rgba(244, 67, 54, 0.25)" : "#fa8c8c" };
       }
-      // else {
-      //   return { backgroundColor: "#affa8c" };
-      // }
     }
     return {};
   };
@@ -472,7 +480,22 @@ export function CompaniesManagerGrid(props) {
                 </IconButton>
               </TableCell>
 			  <TableCell align="left">{row.id || "-"}</TableCell>
-              <TableCell align="left">{row.name || "-"}</TableCell>
+              <TableCell align="left">
+                {row.name || "-"}
+                {row.id === 1 && (
+                  <Chip
+                    icon={<StarIcon style={{ fontSize: 16 }} />}
+                    label="SUPERADMIN"
+                    size="small"
+                    color="primary"
+                    style={{ 
+                      marginLeft: 8,
+                      fontWeight: 600,
+                      fontSize: 10
+                    }}
+                  />
+                )}
+              </TableCell>
               <TableCell align="left">{row.email || "-"}</TableCell>
               <TableCell align="left">{row.phone || "-"}</TableCell>
               <TableCell align="left">{renderPlan(row)}</TableCell>

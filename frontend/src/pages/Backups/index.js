@@ -48,6 +48,7 @@ const useStyles = makeStyles((theme) => ({
   title: {
     fontSize: "1.5rem",
     fontWeight: 600,
+    color: theme.palette.text.primary,
   },
   createButton: {
     backgroundColor: theme.palette.primary.main,
@@ -73,6 +74,7 @@ const useStyles = makeStyles((theme) => ({
   progressText: {
     marginTop: theme.spacing(1),
     textAlign: "center",
+    color: theme.palette.text.primary,
   },
   sizeCell: {
     whiteSpace: "nowrap",

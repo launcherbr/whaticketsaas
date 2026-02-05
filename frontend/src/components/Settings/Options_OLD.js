@@ -178,12 +178,12 @@ export default function Options(props) {
         setallowregister(allowregister.value);
       }
       
-	  {/*PLW DESIGN SAUDAÇÃO*/}
+	  {/*SAUDAÇÃO*/}
       const SendGreetingAccepted = settings.find((s) => s.key === "sendGreetingAccepted");
       if (SendGreetingAccepted) {
         setSendGreetingAccepted(SendGreetingAccepted.value);
       }	 
-	  {/*PLW DESIGN SAUDAÇÃO*/}	 
+	  {/*SAUDAÇÃO*/}	 
 	  
 	  {/*TRANSFERIR TICKET*/}	
 	  const SettingsTransfTicket = settings.find((s) => s.key === "sendMsgTransfTicket");

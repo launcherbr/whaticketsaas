@@ -20,6 +20,7 @@ import QueueOption from "../models/QueueOption";
 import Schedule from "../models/Schedule";
 import Tag from "../models/Tag";
 import TicketTag from "../models/TicketTag";
+import TicketUser from "../models/TicketUser";
 import ContactList from "../models/ContactList";
 import ContactListItem from "../models/ContactListItem";
 import Campaign from "../models/Campaign";
@@ -38,6 +39,7 @@ import FilesOptions from "../models/FilesOptions";
 import Prompt from "../models/Prompt";
 import QueueIntegrations from "../models/QueueIntegrations";
 import HolidayPeriod from "../models/HolidayPeriod";
+import Sticker from "../models/Sticker";
 
 // eslint-disable-next-line
 const dbConfig = require("../config/database");
@@ -67,6 +69,7 @@ const models = [
   Schedule,
   Tag,
   TicketTag,
+  TicketUser,
   ContactList,
   ContactListItem,
   Campaign,
@@ -85,6 +88,7 @@ const models = [
   Prompt,
   QueueIntegrations,
   HolidayPeriod,
+  Sticker,
 ];
 
 sequelize.addModels(models);
