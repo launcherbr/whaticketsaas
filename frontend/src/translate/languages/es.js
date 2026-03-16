@@ -229,10 +229,8 @@ const messages = {
           attachImage: "Adjuntar Imagen",
           transferAfterMinutes: "Transferir después de x (minutos)",
           transferQueue: "Cola de Transferencia",
-          expiresTicket: "Cerrar chats abiertos después de X horas",
+          expiresTicket: "Cerrar chats abiertos después de x minutos",
           expiresInactiveMessage: "Mensaje de cierre por inactividad",
-          //maxUseBotQueues: "Enviar bot x veces",
-          //timeUseBotQueues: "Intervalo en minutos entre envíos del bot",
           greetingMessage: "Mensaje de bienvenida",
           complationMessage: "Mensaje de finalización",
         },
@@ -394,6 +392,17 @@ const messages = {
         buttons: {
           add: "Agregar Prompt",
         },
+        warning: {
+          title: "Aviso Importante:",
+          message: "Para todos los usuarios de Whaticket que notaron una interrupción en el funcionamiento de OpenAI, nos gustaría aclarar que esto no es un error del sistema. OpenAI ofrece un crédito gratuito de $5 USD para nuevos registros, sin embargo, este beneficio también está sujeto a un límite de tiempo, generalmente alrededor de tres meses. Cuando el crédito disponible se agota, es necesario recargar la cuenta para continuar usando el servicio. Es importante estar al tanto de esta política para garantizar una experiencia continua e ininterrumpida en el uso de OpenAI con Whaticket. Si notó que el servicio dejó de funcionar, verifique si su crédito gratuito ha expirado y considere recargar la cuenta si es necesario. Estamos disponibles para ayudar y aclarar cualquier duda adicional que pueda surgir. Gracias por su comprensión y continuaremos trabajando para ofrecer el mejor servicio posible a nuestros usuarios.",
+          usefulLinks: "Enlaces Útiles:",
+          usage: "Uso:",
+          billing: "Facturación:",
+          api: "API:",
+        },
+        toasts: {
+          noPermission: "¡Esta empresa no tiene permiso para acceder a esta página! Lo estamos redirigiendo.",
+        },
       },
       contactModal: {
         title: {
@@ -455,6 +464,7 @@ const messages = {
           token: "Token",
           orderQueue: "Orden de cola (Bot)",
           integrationId: "Integración",
+          linkToGroups: "Vincular a Grupos",
         },
         buttons: {
           okAdd: "Agregar",
@@ -607,15 +617,9 @@ const messages = {
           message: "Mensaje de",
         },
         tabs: {
-          open: {
-            title: "Abierto"
-          },
-          closed: {
-            title: "Resuelto"
-          },
-          search: {
-            title: "Buscar"
-          },
+          open: { title: "Abierto" },
+          closed: { title: "Resuelto" },
+          search: { title: "Buscar" },
         },
         search: {
           placeholder: "Buscar tickets y mensajes",
@@ -636,6 +640,18 @@ const messages = {
         buttons: {
           showAll: "Todos",
         },
+      },
+      addUsersToTicketModal: {
+        title: "Agregar Usuarios al Grupo",
+        assignedUsers: "Usuarios Asignados:",
+        fieldLabel: "Seleccionar usuarios",
+        typeToSearch: "Escriba al menos 3 caracteres",
+        noOptions: "Ningún usuario encontrado",
+        addUsers: "Agregar usuarios",
+        buttons: {
+          cancel: "Cancelar",
+          add: "Agregar"
+        }
       },
       transferTicketModal: {
         title: "Transferir Ticket",
@@ -709,6 +725,7 @@ const messages = {
           prompts: "Open.Ai",
           reports: "Informes",
           queueIntegration: "Integraciones",
+          languageSettings: "Configuración de Idioma",
         },
         appBar: {
           notRegister: "Sin notificaciones",
@@ -924,16 +941,18 @@ const messages = {
           inConversation: "En Conversación",
           waiting: "Esperando",
           newContacts: "Nuevos Contactos",
-          avgConversationTime: "T.M. de Conversación",
+          avgConversationTime: "Tiempo Prom. Conversación",
           finished: "Finalizados",
-          avgWaitTime: "T.M. de Espera",
+          avgWaitTime: "Tiempo Prom. Espera",
         },
         filters: {
           filterType: "Tipo de Filtro",
-          dateFilter: "Filtro por Fecha",
-          periodFilter: "Filtro por Período",
+          dateFilter: "Filtro de Fecha",
+          periodFilter: "Filtro de Período",
           dateFrom: "Fecha Inicial",
           dateTo: "Fecha Final",
+          startDate: "Fecha de Inicio",
+          endDate: "Fecha de Fin",
           period: "Período",
           noneSelected: "Ninguno seleccionado",
           last3Days: "Últimos 3 días",
@@ -943,9 +962,16 @@ const messages = {
           last60Days: "Últimos 60 días",
           last90Days: "Últimos 90 días",
           filter: "Filtrar",
+          configureFilter: "Configurar el filtro",
         },
         messages: {
           parameterizeFilter: "Configure los parámetros del filtro",
+        },
+        table: {
+          name: "Nombre",
+          ratings: "Evaluaciones",
+          avgServiceTime: "Tiempo Prom. Servicio",
+          currentStatus: "Estado (Actual)",
         },
         charts: {
           ticketsCreated: "Tickets Creados: ",
@@ -954,6 +980,44 @@ const messages = {
           quantity: "Cantidad",
           hourOfDay: "Hora del Día",
           errorLoadingData: "Error al obtener información de los tickets",
+          perDay: {
+            title: "Tickets hoy: ",
+          },
+          user: {
+            title: "Gráfico de Conversaciones",
+            totalConversationsByUsers: "Total de Conversaciones por Usuarios",
+          },
+          date: {
+            total: "Total",
+            title: "Gráfico de Conversaciones",
+            error: "Error obteniendo información de tickets",
+          },
+          appointmentsAtendent: {
+            label: "Número de Tickets",
+            title: "Tickets por Atendentes",
+            description: "Descubra qué atendentes son más productivos",
+            byDepartments: "Tickets por Departamentos/Colas",
+            departmentsDescription: "Descubra qué departamentos son los más solicitados",
+          },
+          rushHour: {
+            title: "Horas Pico - Intercambio de Mensajes",
+            description: "Número de mensajes recibidos y enviados cada hora del día.",
+            hourOfDay: "Hora del Día",
+            quantity: "Cantidad",
+          },
+          departamentRatings: {
+            title: "Evaluaciones por Departamento/Cola",
+            description: "Vea las evaluaciones promedio para cada departamento/cola.",
+            quantity: "Cantidad",
+          },
+          dateLabels: {
+            start: "Inicio",
+            end: "Fin",
+          },
+          common: {
+            filter: "Filtrar",
+            quantity: "Cantidad",
+          },
         },
       },
       contactLists: {
@@ -1017,6 +1081,10 @@ const messages = {
         },
         toasts: {
           deleted: "Registro eliminado",
+        },
+        tooltips: {
+          validWhatsapp: "Whatsapp Válido",
+          invalidWhatsapp: "Whatsapp Inválido",
         },
       },
       campaigns: {
@@ -1236,10 +1304,6 @@ const messages = {
           time: "Hora",
           event: "Evento",
           showMore: "más",
-        },
-        tooltips: {
-          edit: "Editar",
-          delete: "Eliminar",
         },
       },
       tags: {
@@ -1575,19 +1639,6 @@ const messages = {
         ERR_WAPP_GREETING_REQUIRED: "El mensaje de bienvenida es obligatorio cuando hay más de una cola.",
         ERR_CHECK_NUMBER: "Número inválido. Verifique el número e intente nuevamente.",
       },
-      prompts: {
-        warning: {
-          title: "Aviso Importante:",
-          message: "Para todos los usuarios de Whaticket que notaron una interrupción en el funcionamiento de OpenAI, nos gustaría aclarar que esto no es un error del sistema. OpenAI ofrece un crédito gratuito de $5 USD para nuevos registros, sin embargo, este beneficio también está sujeto a un límite de tiempo, generalmente alrededor de tres meses. Cuando el crédito disponible se agota, es necesario recargar la cuenta para continuar usando el servicio. Es importante estar al tanto de esta política para garantizar una experiencia continua e ininterrumpida en el uso de OpenAI con Whaticket. Si notó que el servicio dejó de funcionar, verifique si su crédito gratuito ha expirado y considere recargar la cuenta si es necesario. Estamos disponibles para ayudar y aclarar cualquier duda adicional que pueda surgir. Gracias por su comprensión y continuaremos trabajando para ofrecer el mejor servicio posible a nuestros usuarios.",
-          usefulLinks: "Enlaces Útiles:",
-          usage: "Uso:",
-          billing: "Facturación:",
-          api: "API:",
-        },
-        toasts: {
-          noPermission: "¡Esta empresa no tiene permiso para acceder a esta página! Lo estamos redirigiendo.",
-        },
-      },
       queueOptions: {
         title: "Título no definido",
         placeholder: {
@@ -1637,7 +1688,7 @@ const messages = {
           hour6: "6 horas",
           hour12: "12 horas",
           hour24: "24 horas (1 día)",
-          hour48: "48 horas (2 días)",
+          hour48: "48 hours (2 días)",
           hour72: "72 horas (3 días)",
         },
         dialog: {
@@ -1806,31 +1857,6 @@ const messages = {
         table: {
           shortcut: "Atajo",
           content: "Contenido",
-        },
-      },
-      campaignReport: {
-        titles: {
-          validContacts: "Contactos Válidos",
-          requestedConfirmations: "Confirmaciones Solicitadas",
-          confirmations: "Confirmaciones",
-          delivered: "Entregado",
-          connection: "Conexión",
-          contactList: "Lista de Contactos",
-          scheduled: "Programación",
-          completion: "Finalización",
-        },
-      },
-       
-      contactListItems: {
-        tooltips: {
-          validWhatsapp: "Whatsapp Válido",
-          invalidWhatsapp: "Whatsapp Inválido",
-        },
-      },
-      announcementModal: {
-        validation: {
-          titleRequired: "Requerido",
-          textRequired: "Requerido",
         },
       },
       financeiro: {
@@ -2043,6 +2069,9 @@ const messages = {
           filter: "Filtrar",
           configureFilter: "Configurar el filtro",
         },
+        messages: {
+          parameterizeFilter: "Configure los parámetros del filtro",
+        },
         table: {
           name: "Nombre",
           ratings: "Evaluaciones",
@@ -2050,6 +2079,12 @@ const messages = {
           currentStatus: "Estado (Actual)",
         },
         charts: {
+          ticketsCreated: "Tickets Creados: ",
+          tickets: "Tickets",
+          conversationsChart: "Gráfico de Conversaciones",
+          quantity: "Cantidad",
+          hourOfDay: "Hora del Día",
+          errorLoadingData: "Error al obtener información de los tickets",
           perDay: {
             title: "Tickets hoy: ",
           },
@@ -2103,6 +2138,10 @@ const messages = {
         toasts: {
           successAllCompanies: "¡Anuncio enviado con éxito a {{count}} {{count, plural, one {empresa} other {empresas}}}!",
         },
+        validation: {
+          titleRequired: "Requerido",
+          textRequired: "Requerido",
+        },
       },
       kanban: {
         open: "Abierto",
@@ -2121,6 +2160,22 @@ const messages = {
           deleteMessage: "Advertencia: Esta acción es irreversible. Todos los mensajes se perderán.",
           cancel: "Cancelar",
           confirm: "Confirmar",
+        },
+      },
+      languageSettings: {
+        title: "Configuración de Idioma del Sistema",
+        subtitle: "Idioma Predeterminado",
+        description: "Configure el idioma predeterminado del sistema. Todos los usuarios verán este idioma por defecto, pero pueden cambiarlo individualmente a través del selector de idioma en la parte superior de la pantalla.",
+        form: {
+          defaultLanguage: "Idioma Predeterminado del Sistema",
+        },
+        buttons: {
+          save: "Guardar",
+          saving: "Guardando...",
+        },
+        toasts: {
+          accessDenied: "Acceso denegado. Solo el superadmin puede acceder a esta página.",
+          saved: "¡Idioma predeterminado del sistema actualizado con éxito!",
         },
       },
       emojiGifStickerPicker: {
