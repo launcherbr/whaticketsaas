@@ -233,15 +233,10 @@ const messages = {
           attachImage: "Anexar Imagem",
           transferAfterMinutes: "Transferir após x (minutos)",
           transferQueue: "Fila de Transferência",
-          expiresTicket: "Encerrar chats abertos após X horas",
-          expiresInactiveMessage: "Mensagem por Inatividade",
-          //maxUseBotQueues: "Enviar bot x vezes",
-          //timeUseBotQueues: "Intervalo em minutos entre envio de bot",
           expiresTicket: "Encerrar chats abertos após x minutos",
           expiresInactiveMessage: "Mensagem de encerramento por inatividade",
 		  greetingMessage: "Mensagem de saudação",
           complationMessage: "Mensagem de conclusão",
-		  sendIdQueue: "Fila",
         },
         buttons: {
           okAdd: "Adicionar",
@@ -261,19 +256,13 @@ const messages = {
         },
 		  searchPlaceholder: "Pesquisar...",
           confirmationModal: {
-          deleteTitle: "Deletar ",
+          deleteTitle: "Deletar",
           deleteAllTitle: "Deletar Todos",
           importTitle: "Importar contatos",
-          deleteMessage: "Tem certeza que deseja deletar este contato? Todos os tickets relacionados serão perdidos.",
+          deleteMessage: "Tem certeza que deseja deletar este contato? Todos os atendimentos relacionados serão perdidos.",
           deleteAllMessage: "Tem certeza que deseja deletar todos os contatos? Todos os tickets relacionados serão perdidos.",
-          importMessage: "Deseja importar todos os contatos do telefone?",
+          importMessage: "Esta ação irá importar os contatos salvos na agenda do WhatsApp. Alguns modelos podem não permitir essa funcionalidade ou de acordo com sua configuração de privacidade! Verifique em até 1 hora o resultado.",
         },
-		confirmationModal:{
-			importTitlte: "Importar contatos",
-			importMessage: "Esta ação irá importar os contatos salvos na agenda do WhatsApp. Alguns modelos podem não permitir essa funcionalidade ou de acordo com sua configuração de privacidade! Verifique em até 1 hora o resultado.",
-			deleteTitle:"Deletar",
-			deleteMessage:"Tem certeza que deseja deletar este contato? Todos os atendimentos relacionados serão perdidos.",
-		},
         buttons: {
           import: "Importar Contatos",
 		  importSheet: "Import. Excel",
@@ -406,6 +395,17 @@ const messages = {
         },
         buttons: {
           add: "Adicionar Prompt",
+        },
+        warning: {
+          title: "Aviso Importante:",
+          message: "Para todos os usuários do Whaticket que notaram uma interrupção no funcionamento do OpenAI, gostaríamos de esclarecer que isso não se trata de um erro do sistema. O OpenAI oferece um crédito gratuito de $5 USD para novos cadastros, porém, este benefício também está sujeito a um limite de tempo, geralmente em torno de três meses. Quando o crédito disponibilizado se esgota, é necessário recarregar a conta para continuar utilizando o serviço. É importante estar ciente dessa política para garantir uma experiência contínua e sem interrupções no uso do OpenAI com o Whaticket. Se você notou que o serviço parou de funcionar, verifique se seu crédito gratuito expirou e considere a recarga da conta, se necessário. Estamos à disposição para ajudar e esclarecer quaisquer dúvidas adicionais que possam surgir. Obrigado pela compreensão e continuaremos trabalhando para oferecer o melhor serviço possível aos nossos usuários.",
+          usefulLinks: "Links Úteis:",
+          usage: "Uso:",
+          billing: "Fatura:",
+          api: "API:",
+        },
+        toasts: {
+          noPermission: "Esta empresa não possui permissão para acessar essa página! Estamos lhe redirecionando.",
         },
       },
       contactModal: {
@@ -761,7 +761,7 @@ const messages = {
             "Você tem certeza? Essa ação não pode ser revertida! e será removida das filas e conexões vinculadas",
         },
       },
-	reports: {
+	  reports: {
         title: "Relatórios de Atendimentos",
         labels: {
           contact: "Contato",
@@ -957,6 +957,8 @@ const messages = {
           periodFilter: "Filtro por Período",
           dateFrom: "Data Inicial",
           dateTo: "Data Final",
+          startDate: "Data Inicial",
+          endDate: "Data Final",
           period: "Período",
           noneSelected: "Nenhum selecionado",
           last3Days: "Últimos 3 dias",
@@ -966,9 +968,16 @@ const messages = {
           last60Days: "Últimos 60 dias",
           last90Days: "Últimos 90 dias",
           filter: "Filtrar",
+          configureFilter: "Parametrize o filtro",
         },
         messages: {
           parameterizeFilter: "Parametrize o filtro",
+        },
+        table: {
+          name: "Nome",
+          ratings: "Avaliações",
+          avgServiceTime: "T.M. de Atendimento",
+          currentStatus: "Status (Atual)",
         },
         charts: {
           ticketsCreated: "Atendimentos Criados: ",
@@ -977,6 +986,44 @@ const messages = {
           quantity: "Quantidade",
           hourOfDay: "Hora do Dia",
           errorLoadingData: "Erro ao obter informações dos atendimentos",
+          perDay: {
+            title: "Atendimentos hoje: ",
+          },
+          user: {
+            title: "Gráfico de Conversas",
+            totalConversationsByUsers: "Total de Conversas por Usuários",
+          },
+          date: {
+            total: "Total",
+            title: "Gráfico de Conversas",
+            error: "Erro ao buscar informações dos tickets",
+          },
+          appointmentsAtendent: {
+            label: "Número de Atendimentos",
+            title: "Atendimentos por Atendentes",
+            description: "Saiba quais são os atendentes mais produtivos",
+            byDepartments: "Atendimentos por Departamentos/Filas",
+            departmentsDescription: "Saiba quais são os departamentos mais procurados",
+          },
+          rushHour: {
+            title: "Horário de Pico - Troca de mensagens",
+            description: "Quantidade de mensagens recebidas e enviados em cada hora do dia.",
+            hourOfDay: "Hora do Dia",
+            quantity: "Quantidade",
+          },
+          departamentRatings: {
+            title: "Avaliações por Departamento/Fila",
+            description: "Veja as avaliações médias de cada departamento/fila.",
+            quantity: "Quantidade",
+          },
+          dateLabels: {
+            start: "Inicio",
+            end: "Fim",
+          },
+          common: {
+            filter: "Filtrar",
+            quantity: "Quantidade",
+          },
         },
       },
       contactLists: {
@@ -1040,6 +1087,10 @@ const messages = {
         },
         toasts: {
           deleted: "Registro excluído",
+        },
+        tooltips: {
+          validWhatsapp: "Whatsapp Válido",
+          invalidWhatsapp: "Whatsapp Inválido",
         },
       },
       campaigns: {
@@ -1261,10 +1312,6 @@ const messages = {
           time: "Hora",
           event: "Evento",
           showMore: "mais",
-        },
-        tooltips: {
-          edit: "Editar",
-          delete: "Excluir",
         },
       },
       tags: {
@@ -1612,19 +1659,6 @@ const messages = {
           "A mensagem de saudação é obrigatório quando há mais de uma fila.",
         ERR_CHECK_NUMBER: "Número inválido. Verifique o número e tente novamente.",
       },
-      prompts: {
-        warning: {
-          title: "Aviso Importante:",
-          message: "Para todos os usuários do Whaticket que notaram uma interrupção no funcionamento do OpenAI, gostaríamos de esclarecer que isso não se trata de um erro do sistema. O OpenAI oferece um crédito gratuito de $5 USD para novos cadastros, porém, este benefício também está sujeito a um limite de tempo, geralmente em torno de três meses. Quando o crédito disponibilizado se esgota, é necessário recarregar a conta para continuar utilizando o serviço. É importante estar ciente dessa política para garantir uma experiência contínua e sem interrupções no uso do OpenAI com o Whaticket. Se você notou que o serviço parou de funcionar, verifique se seu crédito gratuito expirou e considere a recarga da conta, se necessário. Estamos à disposição para ajudar e esclarecer quaisquer dúvidas adicionais que possam surgir. Obrigado pela compreensão e continuaremos trabalhando para oferecer o melhor serviço possível aos nossos usuários.",
-          usefulLinks: "Links Úteis:",
-          usage: "Uso:",
-          billing: "Fatura:",
-          api: "API:",
-        },
-        toasts: {
-          noPermission: "Esta empresa não possui permissão para acessar essa página! Estamos lhe redirecionando.",
-        },
-      },
       queueOptions: {
         title: "Título não definido",
         placeholder: {
@@ -1845,27 +1879,6 @@ const messages = {
           content: "Conteúdo",
         },
       },
-      campaignReport: {
-        titles: {
-          validContacts: "Contatos Válidos",
-          requestedConfirmations: "Confirmações Solicitadas",
-          confirmations: "Confirmações",
-          connection: "Conexão",
-          completion: "Conclusão",
-        },
-      },
-      contactListItems: {
-        tooltips: {
-          validWhatsapp: "Whatsapp Válido",
-          invalidWhatsapp: "Whatsapp Inválido",
-        },
-      },
-      announcementModal: {
-        validation: {
-          titleRequired: "Obrigatório",
-          textRequired: "Obrigatório",
-        },
-      },
       financeiro: {
         title: "Faturas",
         table: {
@@ -2048,82 +2061,11 @@ const messages = {
           getConversationInfo: "Erro ao obter informações da conversa",
         },
       },
-      dashboard: {
-        cards: {
-          activeConnections: "Conexões Ativas",
-          companies: "Empresas",
-          inConversation: "Em Conversa",
-          waiting: "Aguardando",
-          newContacts: "Novos Contatos",
-          avgConversationTime: "T.M. de Conversa",
-          finished: "Finalizados",
-          avgWaitTime: "T.M. de Espera",
-        },
-        filters: {
-          filterType: "Tipo de Filtro",
-          dateFilter: "Filtro por Data",
-          periodFilter: "Filtro por Período",
-          startDate: "Data Inicial",
-          endDate: "Data Final",
-          period: "Período",
-          noneSelected: "Nenhum selecionado",
-          last3Days: "Últimos 3 dias",
-          last7Days: "Últimos 7 dias",
-          last15Days: "Últimos 15 dias",
-          last30Days: "Últimos 30 dias",
-          last60Days: "Últimos 60 dias",
-          last90Days: "Últimos 90 dias",
-          filter: "Filtrar",
-          configureFilter: "Parametrize o filtro",
-        },
-        table: {
-          name: "Nome",
-          ratings: "Avaliações",
-          avgServiceTime: "T.M. de Atendimento",
-          currentStatus: "Status (Atual)",
-        },
-        charts: {
-          perDay: {
-            title: "Atendimentos hoje: ",
-          },
-          user: {
-            title: "Gráfico de Conversas",
-            totalConversationsByUsers: "Total de Conversas por Usuários",
-          },
-          date: {
-            total: "Total",
-            title: "Gráfico de Conversas",
-            error: "Erro ao buscar informações dos tickets",
-          },
-          appointmentsAtendent: {
-            label: "Número de Atendimentos",
-            title: "Atendimentos por Atendentes",
-            description: "Saiba quais são os atendentes mais produtivos",
-            byDepartments: "Atendimentos por Departamentos/Filas",
-            departmentsDescription: "Saiba quais são os departamentos mais procurados",
-          },
-          rushHour: {
-            title: "Horário de Pico - Troca de mensagens",
-            description: "Quantidade de mensagens recebidas e enviados em cada hora do dia.",
-            hourOfDay: "Hora do Dia",
-            quantity: "Quantidade",
-          },
-          departamentRatings: {
-            title: "Avaliações por Departamento/Fila",
-            description: "Veja as avaliações médias de cada departamento/fila.",
-            quantity: "Quantidade",
-          },
-          dateLabels: {
-            start: "Inicio",
-            end: "Fim",
-          },
-          common: {
-            filter: "Filtrar",
-            quantity: "Quantidade",
-          },
-        },
-      },
       announcementModal: {
+        validation: {
+          titleRequired: "Obrigatório",
+          textRequired: "Obrigatório",
+        },
         form: {
           sendToAllCompanies: "Enviar para todas as empresas",
           showToSuperadmin: "Mostrar para superadmin",
