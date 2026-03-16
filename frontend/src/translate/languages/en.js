@@ -229,10 +229,8 @@ const messages = {
           attachImage: "Attach Image",
           transferAfterMinutes: "Transfer after x (minutes)",
           transferQueue: "Transfer Queue",
-          expiresTicket: "Close open chats after X hours",
+          expiresTicket: "Close open chats after x minutes",
           expiresInactiveMessage: "Inactivity closure message",
-          //maxUseBotQueues: "Send bot x times",
-          //timeUseBotQueues: "Interval in minutes between bot sends",
           greetingMessage: "Greeting message",
           complationMessage: "Completion message",
         },
@@ -394,6 +392,17 @@ const messages = {
         buttons: {
           add: "Add Prompt",
         },
+        warning: {
+          title: "Important Warning:",
+          message: "For all Whaticket users who noticed an interruption in OpenAI operation, we would like to clarify that this is not a system error. OpenAI offers a free credit of $5 USD for new registrations, however, this benefit is also subject to a time limit, usually around three months. When the available credit runs out, it is necessary to recharge the account to continue using the service. It is important to be aware of this policy to ensure a continuous and uninterrupted experience in using OpenAI with Whaticket. If you noticed that the service stopped working, check if your free credit has expired and consider recharging the account if necessary. We are available to help and clarify any additional questions that may arise. Thank you for your understanding and we will continue working to offer the best possible service to our users.",
+          usefulLinks: "Useful Links:",
+          usage: "Usage:",
+          billing: "Billing:",
+          api: "API:",
+        },
+        toasts: {
+          noPermission: "This company does not have permission to access this page! We are redirecting you.",
+        },
       },
       contactModal: {
         title: {
@@ -455,6 +464,7 @@ const messages = {
           token: "Token",
           orderQueue: "Queue order (Bot)",
           integrationId: "Integration",
+          linkToGroups: "Link to Groups",
         },
         buttons: {
           okAdd: "Add",
@@ -607,15 +617,9 @@ const messages = {
           message: "Message from",
         },
         tabs: {
-          open: {
-            title: "Open"
-          },
-          closed: {
-            title: "Resolved"
-          },
-          search: {
-            title: "Search"
-          },
+          open: { title: "Open" },
+          closed: { title: "Resolved" },
+          search: { title: "Search" },
         },
         search: {
           placeholder: "Search tickets and messages",
@@ -636,6 +640,18 @@ const messages = {
         buttons: {
           showAll: "All",
         },
+      },
+      addUsersToTicketModal: {
+        title: "Add Users to Group",
+        assignedUsers: "Assigned Users:",
+        fieldLabel: "Select users",
+        typeToSearch: "Type at least 3 characters",
+        noOptions: "No user found",
+        addUsers: "Add users",
+        buttons: {
+          cancel: "Cancel",
+          add: "Add"
+        }
       },
       transferTicketModal: {
         title: "Transfer Ticket",
@@ -709,6 +725,7 @@ const messages = {
           prompts: "Open.Ai",
           reports: "Reports",
           queueIntegration: "Integrations",
+          languageSettings: "Language Settings",
         },
         appBar: {
           notRegister: "No notifications",
@@ -934,6 +951,8 @@ const messages = {
           periodFilter: "Period Filter",
           dateFrom: "Start Date",
           dateTo: "End Date",
+          startDate: "Start Date",
+          endDate: "End Date",
           period: "Period",
           noneSelected: "None selected",
           last3Days: "Last 3 days",
@@ -943,9 +962,16 @@ const messages = {
           last60Days: "Last 60 days",
           last90Days: "Last 90 days",
           filter: "Filter",
+          configureFilter: "Configure the filter",
         },
         messages: {
           parameterizeFilter: "Please set filter parameters",
+        },
+        table: {
+          name: "Name",
+          ratings: "Ratings",
+          avgServiceTime: "Avg. Service Time",
+          currentStatus: "Status (Current)",
         },
         charts: {
           ticketsCreated: "Tickets Created: ",
@@ -954,6 +980,44 @@ const messages = {
           quantity: "Quantity",
           hourOfDay: "Hour of Day",
           errorLoadingData: "Error loading ticket information",
+          perDay: {
+            title: "Tickets today: ",
+          },
+          user: {
+            title: "Conversations Chart",
+            totalConversationsByUsers: "Total Conversations by Users",
+          },
+          date: {
+            total: "Total",
+            title: "Conversations Chart",
+            error: "Error fetching ticket information",
+          },
+          appointmentsAtendent: {
+            label: "Number of Tickets",
+            title: "Tickets by Attendants",
+            description: "Find out which attendants are most productive",
+            byDepartments: "Tickets by Departments/Queues",
+            departmentsDescription: "Find out which departments are most sought after",
+          },
+          rushHour: {
+            title: "Peak Hours - Message Exchange",
+            description: "Number of messages received and sent each hour of the day.",
+            hourOfDay: "Hour of Day",
+            quantity: "Quantity",
+          },
+          departamentRatings: {
+            title: "Ratings by Department/Queue",
+            description: "See the average ratings for each department/queue.",
+            quantity: "Quantity",
+          },
+          dateLabels: {
+            start: "Start",
+            end: "End",
+          },
+          common: {
+            filter: "Filter",
+            quantity: "Quantity",
+          },
         },
       },
       contactLists: {
@@ -1017,6 +1081,10 @@ const messages = {
         },
         toasts: {
           deleted: "Record deleted",
+        },
+        tooltips: {
+          validWhatsapp: "Valid Whatsapp",
+          invalidWhatsapp: "Invalid Whatsapp",
         },
       },
       campaigns: {
@@ -1236,10 +1304,6 @@ const messages = {
           time: "Time",
           event: "Event",
           showMore: "more",
-        },
-        tooltips: {
-          edit: "Edit",
-          delete: "Delete",
         },
       },
       tags: {
@@ -1575,19 +1639,6 @@ const messages = {
         ERR_WAPP_GREETING_REQUIRED: "Greeting message is required when there is more than one queue.",
         ERR_CHECK_NUMBER: "Invalid number. Check the number and try again.",
       },
-      prompts: {
-        warning: {
-          title: "Important Warning:",
-          message: "For all Whaticket users who noticed an interruption in OpenAI operation, we would like to clarify that this is not a system error. OpenAI offers a free credit of $5 USD for new registrations, however, this benefit is also subject to a time limit, usually around three months. When the available credit runs out, it is necessary to recharge the account to continue using the service. It is important to be aware of this policy to ensure a continuous and uninterrupted experience in using OpenAI with Whaticket. If you noticed that the service stopped working, check if your free credit has expired and consider recharging the account if necessary. We are available to help and clarify any additional questions that may arise. Thank you for your understanding and we will continue working to offer the best possible service to our users.",
-          usefulLinks: "Useful Links:",
-          usage: "Usage:",
-          billing: "Billing:",
-          api: "API:",
-        },
-        toasts: {
-          noPermission: "This company does not have permission to access this page! We are redirecting you.",
-        },
-      },
       queueOptions: {
         title: "Title not defined",
         placeholder: {
@@ -1808,31 +1859,6 @@ const messages = {
           content: "Content",
         },
       },
-      campaignReport: {
-        titles: {
-          validContacts: "Valid Contacts",
-          requestedConfirmations: "Requested Confirmations",
-          confirmations: "Confirmations",
-          delivered: "Delivered",
-          connection: "Connection",
-          contactList: "Contact List",
-          scheduled: "Scheduling",
-          completion: "Completion",
-        },
-      },
-      
-      contactListItems: {
-        tooltips: {
-          validWhatsapp: "Valid Whatsapp",
-          invalidWhatsapp: "Invalid Whatsapp",
-        },
-      },
-      announcementModal: {
-        validation: {
-          titleRequired: "Required",
-          textRequired: "Required",
-        },
-      },
       financeiro: {
         title: "Invoices",
         table: {
@@ -2002,7 +2028,7 @@ const messages = {
           delivered: "Delivered",
           connection: "Connection",
           contactList: "Contact List",
-          scheduled: "Schedule",
+          scheduled: "Scheduling",
           completion: "Completion",
         },
       },
@@ -2015,82 +2041,11 @@ const messages = {
           getConversationInfo: "Error getting conversation information",
         },
       },
-      dashboard: {
-        cards: {
-          activeConnections: "Active Connections",
-          companies: "Companies",
-          inConversation: "In Conversation",
-          waiting: "Waiting",
-          newContacts: "New Contacts",
-          avgConversationTime: "Avg. Conversation Time",
-          finished: "Finished",
-          avgWaitTime: "Avg. Wait Time",
-        },
-        filters: {
-          filterType: "Filter Type",
-          dateFilter: "Date Filter",
-          periodFilter: "Period Filter",
-          startDate: "Start Date",
-          endDate: "End Date",
-          period: "Period",
-          noneSelected: "None selected",
-          last3Days: "Last 3 days",
-          last7Days: "Last 7 days",
-          last15Days: "Last 15 days",
-          last30Days: "Last 30 days",
-          last60Days: "Last 60 days",
-          last90Days: "Last 90 days",
-          filter: "Filter",
-          configureFilter: "Configure the filter",
-        },
-        table: {
-          name: "Name",
-          ratings: "Ratings",
-          avgServiceTime: "Avg. Service Time",
-          currentStatus: "Status (Current)",
-        },
-        charts: {
-          perDay: {
-            title: "Tickets today: ",
-          },
-          user: {
-            title: "Conversations Chart",
-            totalConversationsByUsers: "Total Conversations by Users",
-          },
-          date: {
-            total: "Total",
-            title: "Conversations Chart",
-            error: "Error fetching ticket information",
-          },
-          appointmentsAtendent: {
-            label: "Number of Tickets",
-            title: "Tickets by Attendants",
-            description: "Find out which attendants are most productive",
-            byDepartments: "Tickets by Departments/Queues",
-            departmentsDescription: "Find out which departments are most sought after",
-          },
-          rushHour: {
-            title: "Peak Hours - Message Exchange",
-            description: "Number of messages received and sent each hour of the day.",
-            hourOfDay: "Hour of Day",
-            quantity: "Quantity",
-          },
-          departamentRatings: {
-            title: "Ratings by Department/Queue",
-            description: "See the average ratings for each department/queue.",
-            quantity: "Quantity",
-          },
-          dateLabels: {
-            start: "Start",
-            end: "End",
-          },
-          common: {
-            filter: "Filter",
-            quantity: "Quantity",
-          },
-        },
-      },
       announcementModal: {
+        validation: {
+          titleRequired: "Required",
+          textRequired: "Required",
+        },
         form: {
           sendToAllCompanies: "Send to all companies",
           showToSuperadmin: "Show to superadmin",
@@ -2121,6 +2076,22 @@ const messages = {
           deleteMessage: "Warning: This action is irreversible. All messages will be lost.",
           cancel: "Cancel",
           confirm: "Confirm",
+        },
+      },
+      languageSettings: {
+        title: "System Language Settings",
+        subtitle: "Default Language",
+        description: "Set the system's default language. All users will see this language by default, but can change it individually through the language selector at the top of the screen.",
+        form: {
+          defaultLanguage: "System Default Language",
+        },
+        buttons: {
+          save: "Save",
+          saving: "Saving...",
+        },
+        toasts: {
+          accessDenied: "Access denied. Only superadmin can access this page.",
+          saved: "System default language updated successfully!",
         },
       },
       emojiGifStickerPicker: {
