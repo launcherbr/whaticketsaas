@@ -1182,7 +1182,7 @@ const messages = {
         },
         table: {
           priority: "Prioridade",
-          title: "Title",
+          title: "Título",
           text: "Texto",
           mediaName: "Arquivo",
           status: "Status",
