@@ -1,4 +1,4 @@
-import { proto } from "baileys";
+import { proto } from "libzapitu-rf";
 
 // Função para extrair informações de mensagens de texto
 export const getTextMessage = (msg: proto.IWebMessageInfo) => {

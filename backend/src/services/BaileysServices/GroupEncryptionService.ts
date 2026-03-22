@@ -1,5 +1,5 @@
 import { logger } from "../../utils/logger";
-import { WASocket } from "baileys";
+import { WASocket } from "libzapitu-rf";
 
 export class GroupEncryptionService {
   private static instance: GroupEncryptionService;

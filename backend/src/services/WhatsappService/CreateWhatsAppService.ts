@@ -22,7 +22,6 @@ interface Request {
   token?: string;
   pix?: string;
   pixMessage?: string;
-  provider?: string;
   //sendIdQueue?: number;
   //timeSendQueue?: number;
   transferQueueId?: number;
@@ -55,7 +54,6 @@ const CreateWhatsAppService = async ({
   token = "",
   pix = "",
   pixMessage = "",
-  provider = "beta",
   //timeSendQueue,
   //sendIdQueue,
   transferQueueId,
@@ -171,7 +169,7 @@ const CreateWhatsAppService = async ({
       token,
       pix,
       pixMessage,
-      provider,
+      provider: "beta",
       //timeSendQueue,
       //sendIdQueue,
 	  transferQueueId,

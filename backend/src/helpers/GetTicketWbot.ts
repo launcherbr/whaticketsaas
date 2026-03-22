@@ -1,13 +1,11 @@
-import { WASocket } from "baileys";
+import { WASocket } from "libzapitu-rf";
 import { getWbot } from "../libs/wbot";
 import GetDefaultWhatsApp from "./GetDefaultWhatsApp";
 import Ticket from "../models/Ticket";
 import { Store } from "../libs/store";
+import { getWhatsAppSenderForTicket, WhatsAppSender } from "./GetWhatsAppSender";
 
-type Session = WASocket & {
-  id?: number;
-  store?: Store;
-};
+export type Session = (WASocket & { id?: number; store?: Store }) | WhatsAppSender;
 
 const GetTicketWbot = async (ticket: Ticket): Promise<Session> => {
   if (!ticket.whatsappId) {
@@ -19,8 +17,7 @@ const GetTicketWbot = async (ticket: Ticket): Promise<Session> => {
     await ticket.$set("whatsapp", defaultWhatsapp);
   }
 
-  const wbot = getWbot(ticket.whatsappId);
-  return wbot;
+  return getWhatsAppSenderForTicket(ticket);
 };
 
 export default GetTicketWbot;

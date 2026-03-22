@@ -4,20 +4,17 @@ import makeWASocket, {
   Browsers,
   WAMessage,
   DisconnectReason,
-  fetchLatestBaileysVersion,
-  makeCacheableSignalKeyStore,
   isJidBroadcast,
   WAMessageKey,
   jidNormalizedUser,
-  CacheStore,
-  fetchLatestWaWebVersion,
-  GroupMetadata
-} from "baileys";
+  GroupMetadata,
+  proto,
+  SignalDataTypeMap
+} from "libzapitu-rf";
 import { Op } from "sequelize";
 import { FindOptions } from "sequelize/types";
 import Whatsapp from "../models/Whatsapp";
 import { logger } from "../utils/logger";
-import MAIN_LOGGER from "baileys/lib/Utils/logger";
 import authState from "../helpers/authState";
 import { Boom } from "@hapi/boom";
 import AppError from "../errors/AppError";
@@ -27,13 +24,11 @@ import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSess
 import DeleteBaileysService from "../services/BaileysServices/DeleteBaileysService";
 import { wbotMessageListener } from "../services/WbotServices/wbotMessageListener";
 import wbotMonitor from "../services/WbotServices/wbotMonitor";
-import NodeCache from 'node-cache';
+import NodeCache from "node-cache";
 import Contact from "../models/Contact";
 import Ticket from "../models/Ticket";
-import { LIDMappingStore } from "baileys/lib/Signal/lid-mapping";
-import { proto } from "baileys";
-import { SignalDataTypeMap } from "baileys";
 import GroupEncryptionService from "../services/BaileysServices/GroupEncryptionService";
+import waVersion from "../waversion.json";
 
 const KEY_MAP: { [T in keyof SignalDataTypeMap]: string } = {
   "pre-key": "preKeys",
@@ -42,9 +37,7 @@ const KEY_MAP: { [T in keyof SignalDataTypeMap]: string } = {
   "app-state-sync-key": "appStateSyncKeys",
   "app-state-sync-version": "appStateVersions",
   "sender-key-memory": "senderKeyMemory",
-  "lid-mapping": "lidMapping",
-  "device-list": "deviceList",
-  tctoken: "tctoken"
+  "contacts-tc-token": "contactsTcToken"
 };
 
 // Função para extrair número de telefone do JID
@@ -58,9 +51,6 @@ const extractPhoneNumber = (jid: string): string => {
   // Limita a 15 dígitos - padrão internacional máximo para números de telefone
   return cleanNumber.slice(0, 15);
 };
-
-const loggerBaileys = MAIN_LOGGER.child({});
-loggerBaileys.level = "error";
 
 const msgRetryCounterCache = new NodeCache({
   stdTTL: 600,
@@ -120,19 +110,26 @@ const lastReconnectTime = new Map<number, number>();
 const MIN_RECONNECT_INTERVAL = 10000; // 10 segundos mínimo entre reconexões
 
 // Função helper para reconexão com rate limiting
-const scheduleReconnect = (whatsapp: Whatsapp, delay: number, reason: string) => {
+const scheduleReconnect = (
+  whatsapp: Whatsapp,
+  delay: number,
+  reason: string
+) => {
   const now = Date.now();
   const lastTime = lastReconnectTime.get(whatsapp.id) || 0;
   const timeSinceLastReconnect = now - lastTime;
-  
+
   if (timeSinceLastReconnect < MIN_RECONNECT_INTERVAL) {
-    const adjustedDelay = MIN_RECONNECT_INTERVAL - timeSinceLastReconnect + delay;
-    logger.warn(`Rate limiting: aguardando ${adjustedDelay}ms antes de reconectar ${whatsapp.name} (${reason})`);
+    const adjustedDelay =
+      MIN_RECONNECT_INTERVAL - timeSinceLastReconnect + delay;
+    logger.warn(
+      `Rate limiting: aguardando ${adjustedDelay}ms antes de reconectar ${whatsapp.name} (${reason})`
+    );
     delay = adjustedDelay;
   }
-  
+
   lastReconnectTime.set(whatsapp.id, now + delay);
-  
+
   setTimeout(() => {
     logger.info(`Iniciando reconexão para ${whatsapp.name} (${reason})`);
     StartWhatsAppSession(whatsapp, whatsapp.companyId);
@@ -196,6 +193,41 @@ export const restartWbot = async (
 
 export const msgDB = msg();
 
+const waVersionCache = new NodeCache({
+  stdTTL: 60 * 60 * 24,
+  checkperiod: 60 * 30,
+  useClones: false
+});
+
+const getAutoWAVersion = async (): Promise<[number, number, number]> => {
+  const cached = waVersionCache.get<[number, number, number]>("waVersion");
+  if (cached && cached.length === 3) return cached;
+
+  try {
+    const res = await fetch("https://waversion.ticke.tz");
+    const data = (await res.json()) as number[];
+    if (Array.isArray(data) && data.length >= 3) {
+      const version: [number, number, number] = [
+        data[0] ?? 2,
+        data[1] ?? 3000,
+        data[2] ?? 0
+      ];
+      waVersionCache.set("waVersion", version);
+      return version;
+    }
+  } catch (error) {
+    logger.warn(
+      "Failed to get current WA Version from project repository, using local waversion.json"
+    );
+  }
+
+  const fallback: [number, number, number] = Array.isArray(waVersion) && waVersion.length >= 3
+    ? [waVersion[0], waVersion[1], waVersion[2]]
+    : [2, 3000, 0];
+  waVersionCache.set("waVersion", fallback);
+  return fallback;
+};
+
 export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -234,27 +266,22 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
 
         const { id, name, provider } = whatsappUpdate;
 
-        // const { version, isLatest } = await fetchLatestWaWebVersion({});
-        const { version, isLatest } = await fetchLatestBaileysVersion();
+        const version = await getAutoWAVersion();
         const isLegacy = provider === "stable" ? true : false;
 
-        logger.info(`using WA v${version.join(".")}, isLatest: ${isLatest}`);
+        logger.info(`using WA v${version.join(".")}`);
         logger.info(`isLegacy: ${isLegacy}`);
         logger.info(`Starting session ${name}`);
         let retriesQrCode = 0;
 
-        let wsocket: Session & {
-          lidMappingStore?: LIDMappingStore;
-        } = null;
+        let wsocket: Session = null;
         
         // Removido makeInMemoryStore que não existe mais na versão 6.7.16
         // Usando apenas caches externos conforme exemplo oficial
 
         const { state, saveState } = await authState(whatsapp);
 
-        const userDevicesCache: CacheStore = new NodeCache();
-        const signalKeyStore = makeCacheableSignalKeyStore(state.keys, logger, userDevicesCache);
-
+        // libzapitu: não usar makeCacheableSignalKeyStore — passar state.keys direto (recomendação da lib)
         // Verificar e inicializar chaves Signal para grupos se necessário
         if (!state.keys) {
           logger.warn(`Chaves Signal não encontradas para ${name}, inicializando...`);
@@ -289,14 +316,11 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
           maxKeys: 10000,
           checkperiod: 600,
           useClones: false
-        })
+        });
 
-         const lidMappingStore = new LIDMappingStore(
-          signalKeyStore as any,
-          logger
-        );
-
-        const cachedGroupMetadata = async (jid: string):  Promise<GroupMetadata> => {
+        const cachedGroupMetadata = async (
+          jid: string
+        ): Promise<GroupMetadata> => {
             let data:GroupMetadata = groupCache.get(jid);
             console.log('cachedGroupMetadata jid:', jid, 'data:', !!data);
             if (data) {
@@ -309,11 +333,11 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
         };
 
         wsocket = makeWASocket({
-          logger: loggerBaileys,
+          logger,
           printQRInTerminal: false,
           auth: {
             creds: state.creds,
-            keys: signalKeyStore,
+            keys: state.keys,
           },
           version,
           browser: Browsers.appropriate("Desktop"),
@@ -409,6 +433,24 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                 logger.warn(`Erro 515 (stream) para ${name} - Reconexão rápida`);
                 removeWbot(id, false);
                 scheduleReconnect(whatsapp, 3000, "erro 515 - stream");
+                return;
+              }
+
+              // Connection Terminated (428) - WebSocket fechou (rede, servidor, idle). Reconectar.
+              if (disconect === DisconnectReason.connectionClosed) {
+                logger.warn(
+                  `Connection Terminated (428) para ${name} - Reconectando em 3s (rede/servidor/idle)`
+                );
+                removeWbot(id, false);
+                scheduleReconnect(whatsapp, 3000, "connection terminated");
+                return;
+              }
+
+              // connectionLost / timedOut (408) - conexão perdida ou timeout
+              if (disconect === DisconnectReason.connectionLost || disconect === 408) {
+                logger.warn(`Conexão perdida/timeout (408) para ${name} - Reconectando`);
+                removeWbot(id, false);
+                scheduleReconnect(whatsapp, 3000, "connection lost/timeout");
                 return;
               }
               
@@ -681,8 +723,6 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
             }
           }
         );
-
-         wsocket.lidMappingStore = lidMappingStore;
 
         // Removida a linha que vinculava o store ao socket
         // store.bind(wsocket.ev);

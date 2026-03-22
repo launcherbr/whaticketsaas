@@ -257,7 +257,7 @@ const messages = {
           importTitle: "Import contacts",
           deleteMessage: "Are you sure you want to delete this contact? All related tickets will be lost.",
           deleteAllMessage: "Are you sure you want to delete all contacts? All related tickets will be lost.",
-          importMessage: "This action will import contacts saved in WhatsApp contacts. Some models may not allow this functionality or according to your privacy settings! Check the result within 1 hour.",
+          importMessage: "This action will import contacts saved in the WhatsApp phonebook. Some models may not allow this functionality or according to your privacy settings! Check the result within 1 hour.",
         },
         buttons: {
           import: "Import Contacts",
@@ -617,9 +617,15 @@ const messages = {
           message: "Message from",
         },
         tabs: {
-          open: { title: "Open" },
-          closed: { title: "Resolved" },
-          search: { title: "Search" },
+          open: {
+            title: "Open"
+          },
+          closed: {
+            title: "Resolved"
+          },
+          search: {
+            title: "Search"
+          },
         },
         search: {
           placeholder: "Search tickets and messages",
@@ -646,7 +652,7 @@ const messages = {
         assignedUsers: "Assigned Users:",
         fieldLabel: "Select users",
         typeToSearch: "Type at least 3 characters",
-        noOptions: "No user found",
+        noOptions: "No users found",
         addUsers: "Add users",
         buttons: {
           cancel: "Cancel",
@@ -725,7 +731,7 @@ const messages = {
           prompts: "Open.Ai",
           reports: "Reports",
           queueIntegration: "Integrations",
-          languageSettings: "Language Settings",
+          languageSettings: "Language Configuration",
         },
         appBar: {
           notRegister: "No notifications",
@@ -2028,7 +2034,7 @@ const messages = {
           delivered: "Delivered",
           connection: "Connection",
           contactList: "Contact List",
-          scheduled: "Scheduling",
+          scheduled: "Schedule",
           completion: "Completion",
         },
       },
@@ -2079,7 +2085,7 @@ const messages = {
         },
       },
       languageSettings: {
-        title: "System Language Settings",
+        title: "System Language Configuration",
         subtitle: "Default Language",
         description: "Set the system's default language. All users will see this language by default, but can change it individually through the language selector at the top of the screen.",
         form: {

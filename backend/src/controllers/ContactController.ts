@@ -75,7 +75,8 @@ export const getContact = async (
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { companyId } = req.user;
   const newContact: ContactData = req.body;
-  newContact.number = newContact.number.replace("-", "").replace(" ", "");
+  // Aceita números com máscara (ex: "+55 800 042 0909") e normaliza para somente dígitos.
+  newContact.number = `${newContact.number}`.replace(/\D/g, "").slice(0, 15);
 
   const schema = Yup.object().shape({
     name: Yup.string().required(),
@@ -143,6 +144,9 @@ export const update = async (
 ): Promise<Response> => {
   const contactData: ContactData = req.body;
   const { companyId } = req.user;
+
+  // Aceita números com máscara (ex: "+55 800 042 0909") e normaliza para somente dígitos.
+  contactData.number = `${contactData.number}`.replace(/\D/g, "").slice(0, 15);
 
   const schema = Yup.object().shape({
     name: Yup.string(),

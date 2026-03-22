@@ -1,6 +1,6 @@
 {
   "name": "backend",
-  "version": "6.6.1",
+  "version": "6.6.2",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -31,7 +31,6 @@
     "archiver": "^7.0.1",
     "async-mutex": "^0.5.0",
     "aws-sdk": "^2.1692.0",
-    "baileys": "^7.0.0-rc.9",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
     "bull": "^4.10.4",
@@ -39,6 +38,7 @@
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "cron": "^2.1.0",
+    "csv": "^6.4.1",
     "date-fns": "^2.28.0",
     "dotenv": "^16.5.0",
     "express": "^4.17.3",
@@ -51,6 +51,7 @@
     "helmet": "^7.1.0",
     "http-graceful-shutdown": "^3.1.6",
     "jsonwebtoken": "^8.5.1",
+    "libzapitu-rf": "^1.0.0-alpha.10",
     "mercadopago": "^2.0.10",
     "microsoft-cognitiveservices-speech-sdk": "1.31.0",
     "mime-types": "^3.0.1",

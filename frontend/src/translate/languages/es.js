@@ -617,9 +617,15 @@ const messages = {
           message: "Mensaje de",
         },
         tabs: {
-          open: { title: "Abierto" },
-          closed: { title: "Resuelto" },
-          search: { title: "Buscar" },
+          open: {
+            title: "Abierto"
+          },
+          closed: {
+            title: "Resuelto"
+          },
+          search: {
+            title: "Buscar"
+          },
         },
         search: {
           placeholder: "Buscar tickets y mensajes",
@@ -646,7 +652,7 @@ const messages = {
         assignedUsers: "Usuarios Asignados:",
         fieldLabel: "Seleccionar usuarios",
         typeToSearch: "Escriba al menos 3 caracteres",
-        noOptions: "Ningún usuario encontrado",
+        noOptions: "No se encontraron usuarios",
         addUsers: "Agregar usuarios",
         buttons: {
           cancel: "Cancelar",
@@ -949,10 +955,10 @@ const messages = {
           filterType: "Tipo de Filtro",
           dateFilter: "Filtro de Fecha",
           periodFilter: "Filtro de Período",
-          dateFrom: "Fecha Inicial",
-          dateTo: "Fecha Final",
           startDate: "Fecha de Inicio",
           endDate: "Fecha de Fin",
+          dateFrom: "Fecha Inicial",
+          dateTo: "Fecha Final",
           period: "Período",
           noneSelected: "Ninguno seleccionado",
           last3Days: "Últimos 3 días",
@@ -1639,6 +1645,19 @@ const messages = {
         ERR_WAPP_GREETING_REQUIRED: "El mensaje de bienvenida es obligatorio cuando hay más de una cola.",
         ERR_CHECK_NUMBER: "Número inválido. Verifique el número e intente nuevamente.",
       },
+      prompts: {
+        warning: {
+          title: "Aviso Importante:",
+          message: "Para todos los usuarios de Whaticket que notaron una interrupción en el funcionamiento de OpenAI, nos gustaría aclarar que esto no es un error del sistema. OpenAI ofrece un crédito gratuito de $5 USD para nuevos registros, sin embargo, este beneficio también está sujeto a un límite de tiempo, generalmente alrededor de tres meses. Cuando el crédito disponible se agota, es necesario recargar la cuenta para continuar usando el servicio. Es importante estar al tanto de esta política para garantizar una experiencia continua e ininterrumpida en el uso de OpenAI con Whaticket. Si notó que el servicio dejó de funcionar, verifique si su crédito gratuito ha expirado y considere recargar la cuenta si es necesario. Estamos disponibles para ayudar y aclarar cualquier duda adicional que pueda surgir. Gracias por su comprensión y continuaremos trabajando para ofrecer el mejor servicio posible a nuestros usuarios.",
+          usefulLinks: "Enlaces Útiles:",
+          usage: "Uso:",
+          billing: "Facturación:",
+          api: "API:",
+        },
+        toasts: {
+          noPermission: "¡Esta empresa no tiene permiso para acceder a esta página! Lo estamos redirigiendo.",
+        },
+      },
       queueOptions: {
         title: "Título no definido",
         placeholder: {
@@ -1688,7 +1707,7 @@ const messages = {
           hour6: "6 horas",
           hour12: "12 horas",
           hour24: "24 horas (1 día)",
-          hour48: "48 hours (2 días)",
+          hour48: "48 horas (2 días)",
           hour72: "72 horas (3 días)",
         },
         dialog: {
@@ -2058,6 +2077,8 @@ const messages = {
           periodFilter: "Filtro de Período",
           startDate: "Fecha de Inicio",
           endDate: "Fecha de Fin",
+          dateFrom: "Fecha Inicial",
+          dateTo: "Fecha Final",
           period: "Período",
           noneSelected: "Ninguno seleccionado",
           last3Days: "Últimos 3 días",
@@ -2165,7 +2186,7 @@ const messages = {
       languageSettings: {
         title: "Configuración de Idioma del Sistema",
         subtitle: "Idioma Predeterminado",
-        description: "Configure el idioma predeterminado del sistema. Todos los usuarios verán este idioma por defecto, pero pueden cambiarlo individualmente a través del selector de idioma en la parte superior de la pantalla.",
+        description: "Establezca el idioma predeterminado del sistema. Todos los usuarios verán este idioma por defecto, pero pueden cambiarlo individualmente a través del selector de idioma en la parte superior de la pantalla.",
         form: {
           defaultLanguage: "Idioma Predeterminado del Sistema",
         },
@@ -2193,6 +2214,12 @@ const messages = {
           deleteMultipleTitle: "Eliminar Stickers Seleccionados",
           deleteMultipleMessage: "¿Realmente desea eliminar {{count}} sticker(s) seleccionado(s)? Esta acción no se puede deshacer.",
           loadError: "Error cargando",
+        },
+      },
+      contactListItems: {
+        tooltips: {
+          validWhatsapp: "Whatsapp Válido",
+          invalidWhatsapp: "Whatsapp Inválido",
         },
       },
     },

@@ -173,7 +173,12 @@ export const send = async (req: Request, res: Response): Promise<Response> => {
       throw new Error("O número é obrigatório");
     }
 
-    const numberToTest = messageData.number;
+    // Normaliza o número para o padrão esperado pelo WhatsApp/Baileys (somente dígitos).
+    // Evita JID inválido quando o cliente envia "+55 800 042 0909".
+    const numberToTest = `${messageData.number}`.replace(/\D/g, "").slice(0, 15);
+    if (!numberToTest) {
+      throw new Error("Número inválido");
+    }
     const body = messageData.body;
 
     const companyId = whatsapp.companyId;

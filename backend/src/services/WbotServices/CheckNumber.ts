@@ -8,7 +8,12 @@ interface IOnWhatsapp {
 }
 
 const checker = async (number: string, wbot: any) => {
-  const [validNumber] = await wbot.onWhatsApp(`${number}@s.whatsapp.net`);
+  const cleanNumber = `${number}`.replace(/\D/g, "").slice(0, 15);
+  if (!cleanNumber) {
+    throw new Error("ERR_INVALID_NUMBER");
+  }
+
+  const [validNumber] = await wbot.onWhatsApp(`${cleanNumber}@s.whatsapp.net`);
 
   logger.info(validNumber);
 
@@ -19,10 +24,15 @@ const CheckContactNumber = async (
   number: string,
   companyId: number
 ): Promise<IOnWhatsapp> => {
+  const cleanNumber = `${number}`.replace(/\D/g, "").slice(0, 15);
+  if (!cleanNumber) {
+    throw new Error("ERR_INVALID_NUMBER");
+  }
+
   const defaultWhatsapp = await GetDefaultWhatsApp(companyId);
 
   const wbot = getWbot(defaultWhatsapp.id);
-  const isNumberExit = await checker(number, wbot);
+  const isNumberExit = await checker(cleanNumber, wbot);
 
   if (!isNumberExit.exists) {
     throw new Error("ERR_CHECK_NUMBER");

@@ -39,7 +39,9 @@ const CreateService = async (data: Data): Promise<Campaign> => {
     throw new AppError(err.message);
   }
 
-  if (data.scheduledAt != null && data.scheduledAt != "") {
+  // Se tem data/hora agendada, campanha deve ser PROGRAMADA para o job de fila processar
+  const hasScheduledAt = data.scheduledAt != null && String(data.scheduledAt).trim() !== "";
+  if (hasScheduledAt) {
     data.status = "PROGRAMADA";
   }
 

@@ -1,6 +1,7 @@
-import { head } from "lodash";
+import { head, has } from "lodash";
 import XLSX from "xlsx";
-import { has } from "lodash";
+import fs from "fs";
+import { parse as csvParse } from "csv";
 import Contact from "../../models/Contact";
 import CheckContactNumber from "../WbotServices/CheckNumber";
 import { logger } from "../../utils/logger";
@@ -9,10 +10,10 @@ export async function ImportContacts(
   companyId: number,
   file: Express.Multer.File | undefined
 ) {
-  const workbook = XLSX.readFile(file?.path as string);
-  const worksheet = head(Object.values(workbook.Sheets)) as any;
-  const rows: any[] = XLSX.utils.sheet_to_json(worksheet, { header: 0 });
-  const contacts = rows.map(row => {
+  const filePath = file?.path as string;
+  const originalName = (file?.originalname || "").toLowerCase();
+
+  const mapRowToContact = (row: any) => {
     let name = "";
     let number = "";
     let email = "";
@@ -42,7 +43,39 @@ export async function ImportContacts(
     }
 
     return { name, number, email, companyId };
-  });
+  };
+
+  let contactsRaw: any[] = [];
+
+  // Suporte a CSV e a planilhas Excel (.xls, .xlsx)
+  const isCsv = originalName.endsWith(".csv");
+
+  if (isCsv) {
+    let content = fs.readFileSync(filePath, "utf8");
+    // Remove BOM UTF-8 se existir, para evitar erros "Invalid Opening Quote"
+    if (content.charCodeAt(0) === 0xfeff) {
+      content = content.slice(1);
+    }
+    await new Promise<void>((resolve, reject) => {
+      csvParse(
+        content,
+        { columns: true, delimiter: content.includes(";") ? ";" : "," },
+        (err, records: any[]) => {
+          if (err) {
+            return reject(err);
+          }
+          contactsRaw = records;
+          resolve();
+        }
+      );
+    });
+  } else {
+    const workbook = XLSX.readFile(filePath);
+    const worksheet = head(Object.values(workbook.Sheets)) as any;
+    contactsRaw = XLSX.utils.sheet_to_json(worksheet, { header: 0 });
+  }
+
+  const contacts = contactsRaw.map(mapRowToContact);
 
   const contactList: Contact[] = [];
 
@@ -71,6 +104,11 @@ export async function ImportContacts(
         logger.error(`Número de contato inválido: ${newContact.number}`);
       }
     }
+  }
+
+  // Remove arquivo temporário após o processamento
+  if (filePath && fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
   }
 
   return contactList;

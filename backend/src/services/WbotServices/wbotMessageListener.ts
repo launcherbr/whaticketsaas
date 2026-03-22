@@ -19,7 +19,7 @@ import {
   delay,
   Chat,
   WASocket,
-} from "baileys";
+} from "libzapitu-rf";
 import Contact from "../../models/Contact";
 import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
@@ -2164,7 +2164,7 @@ const verifyQueue = async (
       });
     }
 
-  {/* A DUPLICAÇÃO OCORRIA AQUI 
+  {/* A DUPLICAÇÃO OCORRIA AQUI PLW!
     
     const body = formatBody(`\u200e${choosenQueue.greetingMessage}`, ticket.contact);
     if (choosenQueue.greetingMessage) {

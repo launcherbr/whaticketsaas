@@ -2,8 +2,8 @@ import type {
   AuthenticationCreds,
   AuthenticationState,
   SignalDataTypeMap
-} from "baileys";
-import { BufferJSON, initAuthCreds, proto } from "baileys";
+} from "libzapitu-rf";
+import { BufferJSON, initAuthCreds, proto } from "libzapitu-rf";
 import Whatsapp from "../models/Whatsapp";
 
 const KEY_MAP: { [T in keyof SignalDataTypeMap]: string } = {
@@ -13,9 +13,7 @@ const KEY_MAP: { [T in keyof SignalDataTypeMap]: string } = {
   "app-state-sync-key": "appStateSyncKeys",
   "app-state-sync-version": "appStateVersions",
   "sender-key-memory": "senderKeyMemory",
-  "lid-mapping": "lidMapping",
-  "device-list": "deviceList",
-  tctoken: "tctoken"
+  "contacts-tc-token": "contactsTcToken"
 };
 
 const authState = async (

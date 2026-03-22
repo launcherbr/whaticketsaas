@@ -13,6 +13,7 @@ import formatBody from "./helpers/Mustache";
 import { MessageData, SendMessage } from "./helpers/SendMessage";
 import { getIO } from "./libs/socket";
 import { getWbot } from "./libs/wbot";
+import { getWhatsAppSenderByWhatsappId } from "./helpers/GetWhatsAppSender";
 import Campaign from "./models/Campaign";
 import CampaignSetting from "./models/CampaignSetting";
 import CampaignShipping from "./models/CampaignShipping";
@@ -136,12 +137,8 @@ async function handleSendMessageWbot(job) {
   
   	//console.log(wbotId);
   
-    const wbot = await getWbot(Number(wbotId));
-  
-  
-    
-  
-    const sentMessage = await wbot.sendMessage(number,{
+    const sender = await getWhatsAppSenderByWhatsappId(Number(wbotId));
+    const sentMessage = await sender.sendMessage(number, {
         text: text
       },
       {
@@ -352,10 +349,9 @@ async function handleSendScheduledMessage(job) {
       if (schedule?.mediaPath) {
         try {
           const mediaMessage = await prepareMediaMessage(schedule);
-          const wbot = await getWbot(whatsapp.id);
-          
-          await wbot.sendMessage(
-            `${ticket?.contact?.number}@s.whatsapp.net`, 
+          const sender = await getWhatsAppSenderByWhatsappId(whatsapp.id);
+          await sender.sendMessage(
+            `${ticket?.contact?.number}@s.whatsapp.net`,
             mediaMessage
           );
         } catch (mediaError) {
@@ -363,20 +359,20 @@ async function handleSendScheduledMessage(job) {
           throw mediaError;
         }
       } else {
-        const wbot = await getWbot(whatsapp.id);
-        await wbot.sendMessage(`${ticket?.contact?.number}@s.whatsapp.net`, {
+        const sender = await getWhatsAppSenderByWhatsappId(whatsapp.id);
+        await sender.sendMessage(`${ticket?.contact?.number}@s.whatsapp.net`, {
           text: schedule?.body
         });
       }
     } else {
-      const wbot = await getWbot(whatsapp.id);
+      const sender = await getWhatsAppSenderByWhatsappId(whatsapp.id);
       const contactNumber = schedule.contact.number;
 
       if (schedule?.mediaPath) {
         try {
           const mediaMessage = await prepareMediaMessage(schedule);
-          await wbot.sendMessage(
-            `${contactNumber}@s.whatsapp.net`, 
+          await sender.sendMessage(
+            `${contactNumber}@s.whatsapp.net`,
             mediaMessage
           );
         } catch (mediaError) {
@@ -384,7 +380,7 @@ async function handleSendScheduledMessage(job) {
           throw mediaError;
         }
       } else {
-        await wbot.sendMessage(`${contactNumber}@s.whatsapp.net`, {
+        await sender.sendMessage(`${contactNumber}@s.whatsapp.net`, {
           text: schedule.body
         });
       }
@@ -411,34 +407,34 @@ async function handleSendScheduledMessage(job) {
 
 async function handleVerifyCampaigns(job) {
   /**
-   * @todo
-   * Implementar filtro de campanhas
+   * Campanhas PROGRAMADA: pega as agendadas até 1h à frente E as que já passaram do horário (até 15 min atrás),
+   * para não perder nenhuma se o cron atrasar ou rodar após o horário.
    */
   const campaigns: { id: number; scheduledAt: string }[] =
     await sequelize.query(
-      `select id, "scheduledAt" from "Campaigns" c
-    where "scheduledAt" between now() and now() + '1 hour'::interval and status = 'PROGRAMADA'`,
+      `SELECT id, "scheduledAt" FROM "Campaigns"
+       WHERE status = 'PROGRAMADA'
+         AND "scheduledAt" <= now() + interval '1 hour'
+         AND "scheduledAt" >= now() - interval '15 minutes'`,
       { type: QueryTypes.SELECT }
     );
 
   if (campaigns.length > 0)
     logger.info(`Campanhas encontradas: ${campaigns.length}`);
-  
+
   for (let campaign of campaigns) {
     try {
       const now = moment();
       const scheduledAt = moment(campaign.scheduledAt);
-      const delay = scheduledAt.diff(now, "milliseconds");
+      const delayMs = Math.max(0, scheduledAt.diff(now, "milliseconds"));
       logger.info(
-        `Campanha enviada para a fila de processamento: Campanha=${campaign.id}, Delay Inicial=${delay}`
+        `Campanha enviada para a fila de processamento: Campanha=${campaign.id}, Delay Inicial=${delayMs}ms`
       );
       campaignQueue.add(
         "ProcessCampaign",
+        { id: campaign.id },
         {
-          id: campaign.id,
-          delay
-        },
-        {
+          delay: delayMs,
           removeOnComplete: true
         }
       );
@@ -658,56 +654,76 @@ async function verifyAndFinalizeCampaign(campaign) {
   });
 }
 
-function calculateDelay(index, baseDelay, longerIntervalAfter, greaterInterval, messageInterval) {
-  const diffSeconds = differenceInSeconds(baseDelay, new Date());
-  if (index > longerIntervalAfter) {
-    return diffSeconds * 1000 + greaterInterval
-  } else {
-    return diffSeconds * 1000 + messageInterval
-  }
+/**
+ * Calcula delay em ms para o job: tempo até baseDelay + intervalo entre mensagens.
+ * longerIntervalAfter = número de contatos após o qual usar greaterInterval (segundos).
+ * greaterInterval, messageInterval = segundos entre disparos.
+ */
+function calculateDelay(
+  index: number,
+  baseDelay: Date,
+  longerIntervalAfterCount: number,
+  greaterIntervalSec: number,
+  messageIntervalSec: number
+): number {
+  const diffMs = differenceInSeconds(baseDelay, new Date()) * 1000;
+  const intervalSec = index > longerIntervalAfterCount ? greaterIntervalSec : messageIntervalSec;
+  return Math.max(0, diffMs) + intervalSec * 1000;
 }
 
 async function handleProcessCampaign(job) {
   try {
     const { id }: ProcessCampaignData = job.data;
     const campaign = await getCampaign(id);
-    const settings = await getSettings(campaign);
-    if (campaign) {
-      const { contacts } = campaign.contactList;
-      if (isArray(contacts)) {
-        const contactData = contacts.map(contact => ({
-          contactId: contact.id,
-          campaignId: campaign.id,
-          variables: settings.variables,
-        }));
-
-        // const baseDelay = job.data.delay || 0;
-        const longerIntervalAfter = parseToMilliseconds(settings.longerIntervalAfter);
-        const greaterInterval = parseToMilliseconds(settings.greaterInterval);
-        const messageInterval = settings.messageInterval;
-
-        let baseDelay = campaign.scheduledAt;
-
-        const queuePromises = [];
-        for (let i = 0; i < contactData.length; i++) {
-          baseDelay = addSeconds(baseDelay, i > longerIntervalAfter ? greaterInterval : messageInterval);
-
-          const { contactId, campaignId, variables } = contactData[i];
-          const delay = calculateDelay(i, baseDelay, longerIntervalAfter, greaterInterval, messageInterval);
-          const queuePromise = campaignQueue.add(
-            "PrepareContact",
-            { contactId, campaignId, variables, delay },
-            { removeOnComplete: true }
-          );
-          queuePromises.push(queuePromise);
-          logger.info(`Registro enviado pra fila de disparo: Campanha=${campaign.id};Contato=${contacts[i].name};delay=${delay}`);
-        }
-        await Promise.all(queuePromises);
-        await campaign.update({ status: "EM_ANDAMENTO" });
-      }
+    if (!campaign) {
+      logger.warn(`handleProcessCampaign: campanha ${id} não encontrada`);
+      return;
     }
+    const settings = await getSettings(campaign);
+    const contactList = campaign.contactList;
+    if (!contactList) {
+      logger.warn(`handleProcessCampaign: campanha ${id} sem lista de contatos`);
+      return;
+    }
+    const contacts = contactList.contacts;
+    if (!isArray(contacts) || contacts.length === 0) {
+      logger.warn(`handleProcessCampaign: campanha ${id} sem contatos válidos (isWhatsappValid)`);
+      return;
+    }
+
+    const contactData = contacts.map(contact => ({
+      contactId: contact.id,
+      campaignId: campaign.id,
+      variables: settings.variables,
+    }));
+
+    // longerIntervalAfter = após quantos CONTATOS usar intervalo maior (em segundos no settings)
+    const longerIntervalAfterCount = Math.max(0, Number(settings.longerIntervalAfter) || 20);
+    const messageIntervalSec = settings.messageInterval;
+
+    let baseDelay = new Date(campaign.scheduledAt);
+
+    const queuePromises = [];
+    for (let i = 0; i < contactData.length; i++) {
+      const useGreaterInterval = i > longerIntervalAfterCount;
+      const intervalSec = useGreaterInterval ? settings.greaterInterval : messageIntervalSec;
+      baseDelay = addSeconds(baseDelay, intervalSec);
+
+      const { contactId, campaignId, variables } = contactData[i];
+      const delay = calculateDelay(i, baseDelay, longerIntervalAfterCount, settings.greaterInterval, messageIntervalSec);
+      const queuePromise = campaignQueue.add(
+        "PrepareContact",
+        { contactId, campaignId, variables, delay },
+        { removeOnComplete: true }
+      );
+      queuePromises.push(queuePromise);
+      logger.info(`Registro enviado pra fila de disparo: Campanha=${campaign.id};Contato=${contacts[i].name};delay=${delay}`);
+    }
+    await Promise.all(queuePromises);
+    await campaign.update({ status: "EM_ANDAMENTO" });
   } catch (err: any) {
     Sentry.captureException(err);
+    logger.error(`handleProcessCampaign error: ${err?.message}`, err);
   }
 }
 
@@ -946,8 +962,12 @@ async function handleInvoiceCreate() {
 
             	if (whatsapp.session) {
     				await whatsapp.update({ status: "DISCONNECTED", session: "" });
-    				const wbot = getWbot(whatsapp.id);
-    				await wbot.logout();
+    				try {
+    				  const sender = await getWhatsAppSenderByWhatsappId(whatsapp.id);
+    				  if (sender.logout) await sender.logout();
+    				} catch (e) {
+    				  logger.warn(`Logout conexão ${whatsapp.id} falhou:`, e);
+    				}
                 	logger.info(`EMPRESA: ${c.id} teve o WhatsApp ${whatsapp.id} desconectado...`);
   				}
     		}

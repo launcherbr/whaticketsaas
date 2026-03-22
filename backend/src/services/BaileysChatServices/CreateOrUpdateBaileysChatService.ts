@@ -1,4 +1,4 @@
-import { Chat } from "baileys";
+import { Chat } from "libzapitu-rf";
 import BaileysChats from "../../models/BaileysChats";
 
 export const CreateOrUpdateBaileysChatService = async (

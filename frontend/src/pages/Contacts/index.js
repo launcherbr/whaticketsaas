@@ -469,17 +469,17 @@ function getDateLastMessage(contact) {
         onScroll={handleScroll}
       >
         <>
-          <input
-              style={{ display: "none" }}
-              id="upload"
-              name="file"
-              type="file"
-              accept=".xls,.xlsx"
-              onChange={() => {
-                setConfirmOpen(true);
-              }}
-              ref={fileUploadRef}
-          />
+        <input
+          style={{ display: "none" }}
+          id="upload"
+          name="file"
+          type="file"
+          accept=".csv,.xls,.xlsx"
+          onChange={() => {
+            setConfirmOpen(true);
+          }}
+          ref={fileUploadRef}
+        />
         </>
         <Table size="small">
           <TableHead>

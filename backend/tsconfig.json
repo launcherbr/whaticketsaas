@@ -10,7 +10,8 @@
     "emitDecoratorMetadata": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-	"types": ["node"]
+    "types": ["node"],
+    "resolveJsonModule": true
   },
-    "exclude": ["public"]
+  "exclude": ["public"]
 }

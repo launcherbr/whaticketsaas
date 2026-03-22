@@ -60,7 +60,10 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { companyId } = req.user;
   const data = req.body as StoreData;
-  console.log('data------- store:', data);
+  const hasScheduledAt = data.scheduledAt != null && String(data.scheduledAt).trim() !== "";
+  if (hasScheduledAt) {
+    data.status = "PROGRAMADA";
+  }
 
   const schema = Yup.object().shape({
     name: Yup.string().required()
@@ -168,6 +171,10 @@ export const update = async (
 ): Promise<Response> => {
   const data = req.body as StoreData;
   const { companyId } = req.user;
+  const hasScheduledAt = data.scheduledAt != null && String(data.scheduledAt).trim() !== "";
+  if (hasScheduledAt && data.status === "INATIVA") {
+    data.status = "PROGRAMADA";
+  }
 
   const schema = Yup.object().shape({
     name: Yup.string().required()

@@ -3,7 +3,6 @@ import isAuth from "../middleware/isAuth";
 
 import * as ContactController from "../controllers/ContactController";
 import * as ImportPhoneContactsController from "../controllers/ImportPhoneContactsController";
-import routes from "./contactListRoutes";
 import uploadConfig from "../config/upload";
 import multer from "multer";
 
@@ -17,7 +16,7 @@ contactRoutes.post(
   ImportPhoneContactsController.store
 );
 
-routes.post(
+contactRoutes.post(
   "/contacts/upload",
   isAuth,
   upload.array("file"),

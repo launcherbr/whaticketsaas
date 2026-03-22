@@ -40,11 +40,9 @@ const UpdateService = async (data: Data): Promise<Campaign> => {
     );
   }
 
-  if (
-    data.scheduledAt != null &&
-    data.scheduledAt != "" &&
-    data.status === "INATIVA"
-  ) {
+  // Se tem data/hora agendada, garantir status PROGRAMADA para o job processar
+  const hasScheduledAt = data.scheduledAt != null && String(data.scheduledAt).trim() !== "";
+  if (hasScheduledAt && data.status === "INATIVA") {
     data.status = "PROGRAMADA";
   }
 

@@ -1,11 +1,11 @@
-import { proto } from "baileys";
+import { proto } from "libzapitu-rf";
 import {
   AuthenticationCreds,
   AuthenticationState,
   SignalDataTypeMap
-} from "baileys";
-import { initAuthCreds } from "baileys";
-import { BufferJSON } from "baileys";
+} from "libzapitu-rf";
+import { initAuthCreds } from "libzapitu-rf";
+import { BufferJSON } from "libzapitu-rf";
 import { cacheLayer } from "../libs/cache";
 import Whatsapp from "../models/Whatsapp";
 

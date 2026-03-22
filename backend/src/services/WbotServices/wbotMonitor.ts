@@ -2,7 +2,7 @@ import {
   WASocket,
   BinaryNode,
   Contact as BContact,
-} from "baileys";
+} from "libzapitu-rf";
 import * as Sentry from "@sentry/node";
 
 import { Op } from "sequelize";

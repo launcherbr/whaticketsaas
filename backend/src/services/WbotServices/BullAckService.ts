@@ -1,6 +1,6 @@
 import { REDIS_URI_CONNECTION } from "../../config/redis";
 import Bull from 'bull';
-import { WAMessage, WAMessageUpdate } from 'baileys';
+import { WAMessage, WAMessageUpdate } from 'libzapitu-rf';
 import { handleMsgAck } from './wbotMessageListener';
 import configLoader from '../ConfigLoaderService/configLoaderService';
 

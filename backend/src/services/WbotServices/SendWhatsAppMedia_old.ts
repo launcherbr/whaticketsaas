@@ -1,4 +1,4 @@
-import { WAMessage, AnyMessageContent } from "baileys";
+import { WAMessage, AnyMessageContent } from "libzapitu-rf";
 import * as Sentry from "@sentry/node";
 import fs from "fs";
 import { exec } from "child_process";

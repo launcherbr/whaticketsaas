@@ -1,4 +1,4 @@
-import { BaileysEventEmitter, BaileysEventMap, Chat, Contact, GroupMetadata, PresenceData, proto, WAMessageCursor, WAMessageKey, WASocket, WAConnectionState } from "baileys";
+import { BaileysEventEmitter, BaileysEventMap, Chat, Contact, GroupMetadata, PresenceData, proto, WAMessageCursor, WAMessageKey, WASocket, WAConnectionState } from "libzapitu-rf";
 // import KeyedDB from "@adiwajshing/keyed-db";
 import { logger } from "../utils/logger";
 import * as fs from "fs";
