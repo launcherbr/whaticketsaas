@@ -63,7 +63,7 @@ Se estiver migrando de outras versões ou precisar renovar seu acesso a nosso co
 
 #### **Versão 6.6.2** (`22/03/2026`)
 
-  * Bibiloteca libzapitu-rf
+  * Biblioteca libzapitu-rf
 
 #### **Versão 6.6.1** (`04/02/2026`)
 
