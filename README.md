@@ -12,7 +12,8 @@ Uma plataforma de atendimento robusta baseada no **Whaticket Gold**, aprimorada 
       * DialogFlow
       * N8N
       * TypeBot
-      * ChatGPT / Gemini
+      * ChatGPT
+      * Gemini
   * **Conectividade:** Suporte a **WebHooks** para integrações personalizadas.
 
 ### **💻 Requisitos de Sistema**
