@@ -37,8 +37,7 @@ Para garantir a melhor performance, seu servidor deve atender às seguintes espe
 
   * Adquira aqui:
   
-  [Hosteg](https://painelcliente.com.br/aff.php?aff=105) | [Platon](https://https://platon.com.br/central/aff.php?aff=58)
-  [Peramix](https://control.peramix.com/?affid=14) | [Netcup](https://www.netcup.com/en/?ref=341805)
+  [Hosteg](https://painelcliente.com.br/aff.php?aff=105) | [Platon](https://https://platon.com.br/central/aff.php?aff=58) | [Peramix](https://control.peramix.com/?affid=14) | [Netcup](https://www.netcup.com/en/?ref=341805)
 
 -----
 
