@@ -51,7 +51,7 @@
     "helmet": "^7.1.0",
     "http-graceful-shutdown": "^3.1.6",
     "jsonwebtoken": "^8.5.1",
-    "libzapitu-rf": "^1.0.0-alpha.11",
+    "libzapitu-rf": "^1.0.0-alpha.13",
     "mercadopago": "^2.0.10",
     "microsoft-cognitiveservices-speech-sdk": "1.31.0",
     "mime-types": "^3.0.1",
