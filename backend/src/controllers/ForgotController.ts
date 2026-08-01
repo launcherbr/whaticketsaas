@@ -5,8 +5,9 @@ import ResetPassword from "../services/ResetPasswordService/ResetPassword";
 type IndexQuery = { email?: string; token?: string; password?: string };
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { email } = req.params as IndexQuery;
+  const { language } = req.query as { language?: string };
   const TokenSenha = uuid();
-  const forgotPassword = await SendMail(email, TokenSenha);
+  const forgotPassword = await SendMail(email, TokenSenha, language);
   if (!forgotPassword) {
      return res.status(200).json({ message: "E-mail enviado com sucesso" });
   }

@@ -8,6 +8,54 @@ interface UserData {
   companyId: number;
 }
 
+type SupportedLanguage = "pt" | "en" | "es";
+
+const resolveLanguage = (language?: string): SupportedLanguage => {
+  if (language === "en" || language === "es") return language;
+  return "pt";
+};
+
+const emailTranslations: Record<
+  SupportedLanguage,
+  {
+    subject: (companyName: string) => string;
+    title: string;
+    welcome: (companyName: string) => string;
+    requested: (companyName: string) => string;
+    verificationCode: string;
+    questionsTitle: string;
+    questionsBody: string;
+  }
+> = {
+  pt: {
+    subject: companyName => `Redefinição de Senha - ${companyName}`,
+    title: "Redefinição de Senha",
+    welcome: companyName => `Bem-vindo à ${companyName}`,
+    requested: companyName => `Você solicitou recuperação de senha do ${companyName}!`,
+    verificationCode: "Código de Verificação:",
+    questionsTitle: "Está com dúvidas?",
+    questionsBody: "Entre em contato agora mesmo conosco."
+  },
+  en: {
+    subject: companyName => `Password Reset - ${companyName}`,
+    title: "Password Reset",
+    welcome: companyName => `Welcome to ${companyName}`,
+    requested: companyName => `You requested a password reset for ${companyName}!`,
+    verificationCode: "Verification Code:",
+    questionsTitle: "Have questions?",
+    questionsBody: "Contact us right now."
+  },
+  es: {
+    subject: companyName => `Restablecimiento de Contraseña - ${companyName}`,
+    title: "Restablecimiento de Contraseña",
+    welcome: companyName => `Bienvenido a ${companyName}`,
+    requested: companyName => `¡Has solicitado restablecer tu contraseña de ${companyName}!`,
+    verificationCode: "Código de Verificación:",
+    questionsTitle: "¿Tienes dudas?",
+    questionsBody: "Contáctanos ahora mismo."
+  }
+};
+
 // 1. Correção de Segurança: Uso de 'replacements' para evitar SQL Injection
 const filterEmail = async (email: string) => {
   const sql = `SELECT * FROM "Users" WHERE email = :email`;
@@ -28,7 +76,7 @@ const insertToken = async (email: string, tokenSenha: string) => {
   return { hasResults: results.length > 0, datas: results };
 };
 
-const SendMail = async (email: string, tokenSenha: string) => {
+const SendMail = async (email: string, tokenSenha: string, language?: string) => {
   const { hasResult, data } = await filterEmail(email);
 
   if (!hasResult) {
@@ -41,7 +89,10 @@ const SendMail = async (email: string, tokenSenha: string) => {
   }
 
   // 3. Removido o 'if (hasResult === true)' redundante. O código só chega aqui se for válido.
-  
+
+  const lang = resolveLanguage(language);
+  const t = emailTranslations[lang];
+
   const companyName = process.env.COMPANY_NAME || "Whaticket";
   const logo = `${process.env.BACKEND_URL}/public/logotipos/login.png`;
 
@@ -62,16 +113,16 @@ const SendMail = async (email: string, tokenSenha: string) => {
     const mailOptions = {
       from: process.env.MAIL_FROM,
       to: email,
-      subject: `Redefinição de Senha - ${companyName}`,
+      subject: t.subject(companyName),
       html: ` <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html dir="ltr" lang="pt">
+<html dir="ltr" lang="${lang}">
  <head>
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1" name="viewport">
   <meta name="x-apple-disable-message-reformatting">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta content="telephone=no" name="format-detection">
-  <title>Redefinição de Senha</title>
+  <title>${t.title}</title>
   <style type="text/css">
 .rollover:hover .rollover-first {
 \tmax-height:0px!important;
@@ -119,7 +170,7 @@ a[x-apple-data-detectors] {
 </style>
  </head>
  <body style="width:100%;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">
-  <div dir="ltr" class="es-wrapper-color" lang="pt" style="background-color:#F8F9FD"><!--[if gte mso 9]>
+  <div dir="ltr" class="es-wrapper-color" lang="${lang}" style="background-color:#F8F9FD"><!--[if gte mso 9]>
 \t\t<v:background xmlns:v="urn:schemas-microsoft-com:vml" fill="t">
 \t\t\t<v:fill type="tile" color="#f8f9fd"></v:fill>
 \t\t</v:background>
@@ -158,10 +209,10 @@ a[x-apple-data-detectors] {
                   <td align="center" valign="top" style="padding:0;Margin:0;width:560px">
                    <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
                      <tr>
-                      <td align="center" style="padding:0;Margin:0;padding-bottom:10px"><h1 style="Margin:0;line-height:36px;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;font-size:30px;font-style:normal;font-weight:bold;color:#212121">Bem-vindo à ${companyName}</h1></td>
+                      <td align="center" style="padding:0;Margin:0;padding-bottom:10px"><h1 style="Margin:0;line-height:36px;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;font-size:30px;font-style:normal;font-weight:bold;color:#212121">${t.welcome(companyName)}</h1></td>
                      </tr>
                      <tr>
-                      <td align="center" style="padding:0;Margin:0;padding-top:10px;padding-bottom:10px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;line-height:24px;color:#131313;font-size:16px">Você solicitou recuperação de senha do ${companyName}!</p></td>
+                      <td align="center" style="padding:0;Margin:0;padding-top:10px;padding-bottom:10px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;line-height:24px;color:#131313;font-size:16px">${t.requested(companyName)}</p></td>
                      </tr>
                    </table></td>
                  </tr>
@@ -197,7 +248,7 @@ a[x-apple-data-detectors] {
                       <td align="center" height="20" style="padding:0;Margin:0"></td>
                      </tr>
                      <tr>
-                      <td align="left" style="padding:0;Margin:0;padding-bottom:10px"><h1 style="Margin:0;line-height:36px;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;font-size:30px;font-style:normal;font-weight:bold;color:#ffffff;text-align:center">Código de Verificação:</h1></td>
+                      <td align="left" style="padding:0;Margin:0;padding-bottom:10px"><h1 style="Margin:0;line-height:36px;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;font-size:30px;font-style:normal;font-weight:bold;color:#ffffff;text-align:center">${t.verificationCode}</h1></td>
                      </tr>
                      <tr>
                       <td align="center" style="padding:0;Margin:0;padding-top:10px;padding-bottom:10px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;line-height:24px;color:#ffffff;font-size:16px">${tokenSenha}</p></td>
@@ -220,10 +271,10 @@ a[x-apple-data-detectors] {
                   <td align="center" valign="top" style="padding:0;Margin:0;width:281px">
                    <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
                      <tr>
-                      <td align="left" style="padding:0;Margin:0"><h1 style="Margin:0;line-height:36px;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;font-size:30px;font-style:normal;font-weight:bold;color:#212121;text-align:center">Está com dúvidas?</h1></td>
+                      <td align="left" style="padding:0;Margin:0"><h1 style="Margin:0;line-height:36px;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;font-size:30px;font-style:normal;font-weight:bold;color:#212121;text-align:center">${t.questionsTitle}</h1></td>
                      </tr>
                      <tr>
-                      <td align="center" class="es-m-txt-c" style="padding:0;Margin:0;padding-top:15px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;line-height:24px;color:#131313;font-size:16px">Entre em contato agora mesmo conosco.</p></td>
+                      <td align="center" class="es-m-txt-c" style="padding:0;Margin:0;padding-top:15px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;line-height:24px;color:#131313;font-size:16px">${t.questionsBody}</p></td>
                      </tr>
                    </table></td>
                  </tr>

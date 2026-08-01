@@ -177,7 +177,9 @@ const ForgetPassword = () => {
 	const handleSendEmail = async (values) => {
 		setLoading(true);
 		try {
-			const response = await api.post(`${process.env.REACT_APP_BACKEND_URL}/forgetpassword/${values.email}`);
+			const response = await api.post(
+				`${process.env.REACT_APP_BACKEND_URL}/forgetpassword/${values.email}?language=${i18n.language}`
+			);
 			if (response.data.status === 404) {
 				toast.error("Email não encontrado");
 			} else {
