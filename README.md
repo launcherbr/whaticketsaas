@@ -59,6 +59,7 @@ Para uso comercial, revenda ou exploração da plataforma como SaaS, é obrigat�
 **🔄 Ver Histórico de Versões (Changelog)**
 
 #### **Versão 6.6.3** (`01/08/2026`)
+  * Correções e Melhorias
 
 #### **Versão 6.6.2** (`22/03/2026`)
 
