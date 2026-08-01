@@ -229,8 +229,10 @@ const messages = {
           attachImage: "Adjuntar Imagen",
           transferAfterMinutes: "Transferir después de x (minutos)",
           transferQueue: "Cola de Transferencia",
-          expiresTicket: "Cerrar chats abiertos después de x minutos",
+          expiresTicket: "Cerrar chats abiertos después de X horas",
           expiresInactiveMessage: "Mensaje de cierre por inactividad",
+          //maxUseBotQueues: "Enviar bot x veces",
+          //timeUseBotQueues: "Intervalo en minutos entre envíos del bot",
           greetingMessage: "Mensaje de bienvenida",
           complationMessage: "Mensaje de finalización",
         },
@@ -947,9 +949,9 @@ const messages = {
           inConversation: "En Conversación",
           waiting: "Esperando",
           newContacts: "Nuevos Contactos",
-          avgConversationTime: "Tiempo Prom. Conversación",
+          avgConversationTime: "T.M. de Conversación",
           finished: "Finalizados",
-          avgWaitTime: "Tiempo Prom. Espera",
+          avgWaitTime: "T.M. de Espera",
         },
         filters: {
           filterType: "Tipo de Filtro",
@@ -1310,6 +1312,10 @@ const messages = {
           time: "Hora",
           event: "Evento",
           showMore: "más",
+        },
+        tooltips: {
+          edit: "Editar",
+          delete: "Eliminar",
         },
       },
       tags: {
@@ -1876,6 +1882,31 @@ const messages = {
         table: {
           shortcut: "Atajo",
           content: "Contenido",
+        },
+      },
+      campaignReport: {
+        titles: {
+          validContacts: "Contactos Válidos",
+          requestedConfirmations: "Confirmaciones Solicitadas",
+          confirmations: "Confirmaciones",
+          delivered: "Entregado",
+          connection: "Conexión",
+          contactList: "Lista de Contactos",
+          scheduled: "Programación",
+          completion: "Finalización",
+        },
+      },
+       
+      contactListItems: {
+        tooltips: {
+          validWhatsapp: "Whatsapp Válido",
+          invalidWhatsapp: "Whatsapp Inválido",
+        },
+      },
+      announcementModal: {
+        validation: {
+          titleRequired: "Requerido",
+          textRequired: "Requerido",
         },
       },
       financeiro: {

@@ -1,7 +1,7 @@
 {
   "name": "frontend",
-  "version": "6.6.2",
-  "versionSystem": "v6.6.2",
+  "version": "6.6.3",
+  "versionSystem": "v6.6.3",
   "nomeEmpresa": "Whaticket",
   "private": true,
   "dependencies": {
@@ -25,6 +25,7 @@
     "bootstrap": "^5.2.3",
     "chart.js": "^3.9.1",
     "chartjs-plugin-datalabels": "^2.1.0",
+    "compression": "^1.7.4",
     "compressorjs": "^1.2.1",
     "context": "^4.0.0",
     "date-fns": "^2.30.0",
@@ -33,6 +34,7 @@
     "formik": "^2.4.0",
     "formik-material-ui": "^3.0.1",
     "gn-api-sdk-node": "^3.0.2",
+    "helmet": "^6.1.5",
     "html2pdf.js": "^0.10.2",
     "i18next": "^19.8.2",
     "i18next-browser-languagedetector": "^6.0.1",
@@ -77,13 +79,11 @@
     "uuid": "^8.3.2",
     "vcard-parser": "^1.0.0",
     "xlsx": "^0.18.5",
-    "yup": "^0.32.8",
-    "compression": "^1.7.4",
-    "helmet": "^6.1.5"
+    "yup": "^0.32.8"
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "GENERATE_SOURCEMAP=false INLINE_RUNTIME_CHUNK=false react-scripts build",
+    "build": "cross-env GENERATE_SOURCEMAP=false INLINE_RUNTIME_CHUNK=false NODE_OPTIONS=--no-deprecation react-scripts build",
     "build:analyze": "source-map-explorer 'build/static/js/*.js'",
     "build:prod": "npm run build && npm run build:analyze",
     "builddev": "export NODE_OPTIONS=\"--max-old-space-size=8192\" && react-scripts build",
@@ -109,6 +109,7 @@
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "cache-loader": "^4.1.0",
+    "cross-env": "^7.0.3",
     "hard-source-webpack-plugin": "^0.13.1",
     "react-refresh": "^0.14.0",
     "source-map-explorer": "^2.5.3",

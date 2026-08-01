@@ -43,61 +43,104 @@ const extractPhoneNumber = (jid: string): string => {
   return cleanNumber.slice(0, 15);
 };
 
-export const getJidFromMessage = async (message: WAMessage | proto.IWebMessageInfo, wbot: Session): Promise<string> => {
-  // Garantir que a mensagem tem a propriedade key
-  if (!message || !message.key) {
-    throw new Error('Mensagem inválida: propriedade key não encontrada');
-  }
-  
-  const { key } = message;
-  const keyAny = key as { remoteJid?: string; participant?: string; sender_pn?: string };
-  const { remoteJid, participant } = keyAny;
-  let jid = '';
+const normalizeJid = (jid: string): string => {
+  if (!jid || typeof jid !== "string") return "";
+  const trimmed = jid.trim();
+  if (!trimmed.includes("@")) return trimmed;
+  const [localPart, domain] = trimmed.split("@");
+  return `${localPart.split(":")[0]}@${domain}`;
+};
 
-  // Quando remoteJid é LID (@lid), usar sender_pn como JID (número real do contato)
-  if (remoteJid && remoteJid.includes('@lid') && keyAny.sender_pn && keyAny.sender_pn.includes('@s.whatsapp.net')) {
-    jid = keyAny.sender_pn;
+const resolvePnFromLid = async (
+  lid: string,
+  wbot: Session
+): Promise<string> => {
+  if (!lid || !lid.includes("@lid")) return "";
+
+  try {
+    const lidMappingStore = (wbot as any)?.lidMappingStore;
+    if (lidMappingStore?.getPNForLID) {
+      const mappedJid = await lidMappingStore.getPNForLID(lid);
+      if (typeof mappedJid === "string" && mappedJid.includes("@s.whatsapp.net")) {
+        return normalizeJid(mappedJid);
+      }
+    }
+  } catch (error) {
+    logger.warn(`Falha ao resolver PN a partir do LID ${lid}: ${(error as Error).message}`);
   }
-  // Conversa direta: JID no remoteJid
-  else if (remoteJid && remoteJid.includes('@s.whatsapp.net')) {
+
+  return "";
+};
+
+export const getJidFromMessage = async (message: WAMessage | proto.IWebMessageInfo, wbot: Session): Promise<string> => {
+  if (!message || !message.key) {
+    throw new Error("Mensagem inválida: propriedade key não encontrada");
+  }
+
+  const { key } = message;
+  const keyAny = key as {
+    remoteJid?: string;
+    participant?: string;
+    sender_pn?: string;
+    peer_recipient_pn?: string;
+  };
+
+  const remoteJid = normalizeJid(keyAny.remoteJid || "");
+  const participant = normalizeJid(keyAny.participant || "");
+  const senderPn = normalizeJid(keyAny.sender_pn || "");
+  const peerRecipientPn = normalizeJid(keyAny.peer_recipient_pn || "");
+
+  let jid = "";
+
+  if (remoteJid.includes("@s.whatsapp.net") || remoteJid.includes("@g.us")) {
     jid = remoteJid;
-  }
-  // Grupo: participante tem o JID do usuário
-  else if (participant && participant.includes('@s.whatsapp.net')) {
+  } else if (participant.includes("@s.whatsapp.net")) {
     jid = participant;
+  } else if (senderPn.includes("@s.whatsapp.net")) {
+    jid = senderPn;
+  } else if (peerRecipientPn.includes("@s.whatsapp.net")) {
+    jid = peerRecipientPn;
+  } else if (remoteJid.includes("@lid")) {
+    jid = await resolvePnFromLid(remoteJid, wbot);
+  } else if (participant.includes("@lid")) {
+    jid = await resolvePnFromLid(participant, wbot);
   }
 
   if (!jid) {
-    console.log('JID final para envio: (vazio - remoteJid/participant/sender_pn não disponíveis)', { remoteJid, participant, sender_pn: keyAny.sender_pn });
-    throw new Error('Não foi possível obter JID da mensagem (remoteJid pode ser LID sem sender_pn)');
+    console.log("JID final para envio: (vazio - remoteJid/participant/sender_pn/peer_recipient_pn não disponíveis)", {
+      remoteJid,
+      participant,
+      sender_pn: senderPn,
+      peer_recipient_pn: peerRecipientPn
+    });
+    throw new Error("Não foi possível obter JID da mensagem");
   }
 
-  const jidSplitedPontos = jid.split(':')[0];
-  const jidSplitedArroba = jid.split('@')[1];
-  jid = jidSplitedPontos.includes('@') ? jid : `${jidSplitedPontos}@${jidSplitedArroba}`;
-  console.log('JID final para envio:', jid);
-  return jid;
+  const normalizedJid = normalizeJid(jid);
+  console.log("JID final para envio:", normalizedJid);
+  return normalizedJid;
 };
 
 export const getLidFromMessage = async (message: WAMessage | proto.IWebMessageInfo, wbot: Session): Promise<string> => {
-  // Garantir que a mensagem tem a propriedade key
   if (!message || !message.key) {
-    throw new Error('Mensagem inválida: propriedade key não encontrada');
+    throw new Error("Mensagem inválida: propriedade key não encontrada");
   }
-  
-  const { key } = message;
-  const { remoteJid, participant } = key;
-  let lid = '';
 
-  // Prioridade: LID > JID > PN
-  if (remoteJid && remoteJid.includes('@lid')) {
-    lid = remoteJid;
-  }else {
-    console.log('RemoteJid nao contem @lid:', remoteJid);
-    return ''; // retorna vazio porque só é lid quando vem lid no remoteJid
+  const keyAny = message.key as {
+    remoteJid?: string;
+    participant?: string;
+  };
+
+  const participant = normalizeJid(keyAny.participant || "");
+  const remoteJid = normalizeJid(keyAny.remoteJid || "");
+
+  if (participant.includes("@lid")) {
+    return participant;
   }
-  if (participant && participant.includes('@lid')) {
-    lid = participant;
+
+  if (remoteJid.includes("@lid")) {
+    return remoteJid;
   }
-  return lid;
+
+  return "";
 };

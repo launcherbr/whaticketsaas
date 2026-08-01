@@ -19,6 +19,7 @@ import ShowSettingsService from "../services/SettingServices/ShowSettingsService
 import MercadoPagoService from "../services/PaymentProvider/MercadoPagoService";
 import User from "../models/User";
 import { logger } from "../utils/logger";
+import { renewCompanyAfterPayment } from "../services/InvoicesService/CompanyInvoiceService";
 
 const app = express();
 
@@ -910,22 +911,7 @@ export const webhook = async (
       const company = await Company.findByPk(invoice.companyId);
 
       if (company) {
-        let dueDateBase = company.dueDate ? new Date(company.dueDate) : new Date();
-        if (Number.isNaN(dueDateBase.getTime())) {
-          dueDateBase = new Date();
-        }
-        dueDateBase.setDate(dueDateBase.getDate() + 30);
-        const date = dueDateBase.toISOString().split("T")[0];
-
-        await company.update({
-          dueDate: date
-        });
-
-        await invoice.update({
-          status: "paid"
-        });
-
-        await company.reload();
+        await renewCompanyAfterPayment(company, invoice);
 
         logger.info({
           message: "Pagamento Mercado Pago processado com sucesso.",
@@ -933,7 +919,7 @@ export const webhook = async (
           companyId: company.id,
           paymentId: payment.id,
           paymentStatus: payment.status,
-          newDueDate: date
+          newDueDate: company.dueDate
         });
 
         const io = getIO();
@@ -1063,29 +1049,14 @@ export const webhook = async (
           continue;
         }
 
-        let dueDateBase = company.dueDate ? new Date(company.dueDate) : new Date();
-        if (Number.isNaN(dueDateBase.getTime())) {
-          dueDateBase = new Date();
-        }
-        dueDateBase.setDate(dueDateBase.getDate() + 30);
-        const date = dueDateBase.toISOString().split("T")[0];
-
-        await company.update({
-          dueDate: date
-        });
-
-        await invoice.update({
-          status: "paid"
-        });
-
-        await company.reload();
+        await renewCompanyAfterPayment(company, invoice);
         
         logger.info({
           message: "Pagamento Gerencianet processado com sucesso.",
           invoiceId: invoice.id,
           companyId: company.id,
           pixTxid: pix.txid,
-          newDueDate: date
+          newDueDate: company.dueDate
         });
 
         const io = getIO();

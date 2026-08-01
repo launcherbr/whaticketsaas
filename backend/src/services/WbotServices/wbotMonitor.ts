@@ -34,72 +34,117 @@ const wbotMonitor = async (
 ): Promise<void> => {
   try {
     wbot.ws.on("CB:call", async (node: BinaryNode) => {
-      const content = node.content[0] as any;
+      try {
+        const content = node.content?.[0] as any;
+        const from = node.attrs?.from;
 
-      if (content.tag === "offer") {
-        const { from, id } = node.attrs;
+        if (!content?.tag) {
+          logger.warn({ node }, "CB:call recebido sem content.tag");
+          return;
+        }
 
-      }
+        if (content.tag === "offer") {
+          return;
+        }
 
-      if (content.tag === "terminate") {
+        if (content.tag !== "terminate") {
+          return;
+        }
+
         const sendMsgCall = await Setting.findOne({
           where: { key: "call", companyId },
         });
 
-        if (sendMsgCall.value === "disabled") {
-          await wbot.sendMessage(node.attrs.from, {
-            text:
-              "*Mensagem Automática:*\n\nAs chamadas de voz e vídeo estão desabilitadas para esse WhatsApp, favor enviar uma mensagem de texto. Obrigado",
-          });
-
-          // Suporta números de qualquer país (até 15 dígitos conforme padrão internacional)
-          const number = node.attrs.from.replace(/\D/g, "").slice(0, 15);
-
-          const contact = await Contact.findOne({
-            where: { companyId, number },
-          });
-
-          const ticket = await Ticket.findOne({
-            where: {
-              contactId: contact.id,
-              whatsappId: wbot.id,
-              //status: { [Op.or]: ["close"] },
-              companyId
-            },
-          });
-          // se não existir o ticket não faz nada.
-          if (!ticket) return;
-
-          const date = new Date();
-          const hours = date.getHours();
-          const minutes = date.getMinutes();
-
-          const body = `Chamada de voz/vídeo perdida às ${hours}:${minutes}`;
-          const messageData = {
-            id: content.attrs["call-id"],
-            ticketId: ticket.id,
-            contactId: contact.id,
-            body,
-            fromMe: false,
-            mediaType: "call_log",
-            read: true,
-            quotedMsgId: null,
-            ack: 1,
-          };
-
-          await ticket.update({
-            lastMessage: body,
-          });
-
-
-          if(ticket.status === "closed") {
-            await ticket.update({
-              status: "pending",
-            });
-          }
-
-          return CreateMessageService({ messageData, companyId: companyId });
+        if (sendMsgCall?.value !== "disabled") {
+          return;
         }
+
+        if (!from) {
+          logger.warn({ node }, "CB:call terminate recebido sem remetente");
+          return;
+        }
+
+        await wbot.sendMessage(from, {
+          text:
+            "*Mensagem Automática:*\n\nAs chamadas de voz e vídeo estão desabilitas para esse WhatsApp, favor enviar uma mensagem de texto. Obrigado",
+        });
+
+        // Suporta números de qualquer país (até 15 dígitos conforme padrão internacional)
+        const number = from.replace(/\D/g, "").slice(0, 15);
+
+        if (!number) {
+          logger.warn({ from }, "CB:call terminate sem numero valido");
+          return;
+        }
+
+        const contact = await Contact.findOne({
+          where: { companyId, number },
+        });
+
+        if (!contact) {
+          logger.warn(
+            { companyId, number },
+            "CB:call terminate sem contato correspondente"
+          );
+          return;
+        }
+
+        if (!wbot.id) {
+          logger.warn(
+            { companyId, contactId: contact.id },
+            "CB:call terminate sem sessao WhatsApp inicializada"
+          );
+          return;
+        }
+
+        const ticket = await Ticket.findOne({
+          where: {
+            contactId: contact.id,
+            whatsappId: wbot.id,
+            companyId
+          },
+        });
+
+        // se não existir o ticket não faz nada.
+        if (!ticket) {
+          logger.warn(
+            { companyId, contactId: contact.id, whatsappId: wbot.id },
+            "CB:call terminate sem ticket correspondente"
+          );
+          return;
+        }
+
+        const date = new Date();
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+
+        const body = `Chamada de voz/vídeo perdida às ${hours}:${minutes}`;
+        const messageData = {
+          id: content.attrs?.["call-id"] || `call-${Date.now()}`,
+          ticketId: ticket.id,
+          contactId: contact.id,
+          body,
+          fromMe: false,
+          mediaType: "call_log",
+          read: true,
+          quotedMsgId: null,
+          ack: 1,
+        };
+
+        await ticket.update({
+          lastMessage: body,
+        });
+
+        if (ticket.status === "closed") {
+          await ticket.update({
+            status: "pending",
+          });
+        }
+
+        return CreateMessageService({ messageData, companyId });
+      } catch (error) {
+        Sentry.captureException(error);
+        logger.error({ error, node }, "Erro ao processar evento CB:call");
       }
     });
 

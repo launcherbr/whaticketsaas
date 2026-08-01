@@ -221,14 +221,19 @@ const getAutoWAVersion = async (): Promise<[number, number, number]> => {
     );
   }
 
-  const fallback: [number, number, number] = Array.isArray(waVersion) && waVersion.length >= 3
-    ? [waVersion[0], waVersion[1], waVersion[2]]
+  const localWaVersion = Array.isArray(waVersion)
+    ? waVersion
+    : (waVersion as unknown as { version?: number[] })?.version;
+  const fallback: [number, number, number] = Array.isArray(localWaVersion) && localWaVersion.length >= 3
+    ? [localWaVersion[0], localWaVersion[1], localWaVersion[2]]
     : [2, 3000, 0];
   waVersionCache.set("waVersion", fallback);
   return fallback;
 };
 
-export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
+export const initWASocket = async (
+  whatsapp: Whatsapp
+): Promise<Session> => {
   return new Promise(async (resolve, reject) => {
     try {
       (async () => {
@@ -354,9 +359,6 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
           cachedGroupMetadata,
         });
 
-
-        
-
         // PATCH ESPECÍFICO - Converter objetos Object() para Buffer
         const originalBufferFrom = Buffer.from;
         Buffer.from = function(value: any, ...args: any[]) {
@@ -418,7 +420,7 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
 
               // Tratamento específico para erros de stream do Baileys
               if (statusCode === 515) {
-                logger.warn(`Erro 515 (stream errored) para ${name} - Problema de rede, tentando reconexão rápida`);
+                logger.warn(`Erro 515 (restart required) para ${name} - Pareamento aceito, reiniciando conexao sem limpar a sessao`);
               } else if (statusCode === 401) {
                 logger.warn(`Erro 401 (device_removed) para ${name} - Dispositivo removido, aguardando QR`);
               }
@@ -429,10 +431,11 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
             if (connection === "close") {
               // Tratamento específico para diferentes tipos de erro
               if (disconect === 515) {
-                // Erro 515: stream errored - problema de rede, reconexão rápida
-                logger.warn(`Erro 515 (stream) para ${name} - Reconexão rápida`);
-                removeWbot(id, false);
-                scheduleReconnect(whatsapp, 3000, "erro 515 - stream");
+                // Erro 515: restart required apos pareamento. Preserva credenciais e reconecta.
+                logger.warn(`Erro 515 (restart required) para ${name} - Reconectando com a sessao pareada`);
+                await saveState();
+                await removeWbot(id, false);
+                scheduleReconnect(whatsapp, 1000, "erro 515 - restart required");
                 return;
               }
 
@@ -457,7 +460,7 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
               if (disconect === 401) {
                 // Erro 401: device_removed - dispositivo foi removido, precisa de novo QR
                 logger.warn(`Erro 401 (device_removed) para ${name} - Limpando sessão para novo QR`);
-                await whatsapp.update({ status: "PENDING", session: "", number: "" });
+                await whatsapp.update({ status: "PENDING", qrcode: "", session: "", number: "" });
                 removeWbot(id, false);
                 await DeleteBaileysService(whatsapp.id);
                 
@@ -466,7 +469,6 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                   session: whatsapp
                 });
                 
-                scheduleReconnect(whatsapp, 5000, "erro 401 - device_removed");
                 return;
               }
               
@@ -488,7 +490,7 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                 } else {
                   // Após 5 tentativas, então deletar dados
                   logger.error(`Máximo de tentativas atingido para ${name}. Deletando sessão.`);
-                  await whatsapp.update({ status: "PENDING", session: "", number: "" });
+                  await whatsapp.update({ status: "PENDING", qrcode: "", session: "", number: "" });
                   removeWbot(id, false);
                   await DeleteBaileysService(whatsapp.id);
                   reconnectAttempts.delete(id);
@@ -497,6 +499,7 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                     action: "update",
                     session: whatsapp
                   });
+                  return;
                 }
               }
 
@@ -504,7 +507,7 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                 removeWbot(id, false);
                 scheduleReconnect(whatsapp, 2000, "disconnect geral");
               } else {
-                await whatsapp.update({ status: "PENDING", session: "", number: "" });
+                await whatsapp.update({ status: "PENDING", qrcode: "", session: "", number: "" });
                 await DeleteBaileysService(whatsapp.id);
 
                 io.emit(`company-${whatsapp.companyId}-whatsappSession`, {
@@ -512,7 +515,6 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                   session: whatsapp
                 });
                 removeWbot(id, false);
-                scheduleReconnect(whatsapp, 2000, "loggedOut");
               }
             }
 

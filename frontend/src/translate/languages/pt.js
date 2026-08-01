@@ -199,7 +199,7 @@ const messages = {
         },
         table: {
           name: "Nome",
-		      number: "Número",
+		  number: "Número",
           status: "Status",
           lastUpdate: "Última atualização",
           default: "Padrão",
@@ -212,32 +212,35 @@ const messages = {
           add: "Adicionar WhatsApp",
           edit: "Editar WhatsApp",
         },		
-		    tabs: {
+		 tabs: {
           general: "Geral",
           messages: "Mensagens",
           assessments: "Avaliações",
           integrations: "Integrações",
           schedules: "Horário de expediente",
-		    },
+		 },
         form: {
           name: "Nome",
           default: "Padrão",
           sendIdQueue: "Fila",
           timeSendQueue: "Redirecionar para fila em X minutos",
           queueRedirection: "Redirecionamento de Fila",
-		      outOfHoursMessage: "Mensagem de fora de expediente",
+		  outOfHoursMessage: "Mensagem de fora de expediente",
           queueRedirectionDesc: "Selecione uma fila para os contatos que não possuem fila serem redirecionados",
           prompt: "Prompt",
           greetingMedia: "Mídia de Saudação (Opcional)",
           attachImage: "Anexar Imagem",
           transferAfterMinutes: "Transferir após x (minutos)",
           transferQueue: "Fila de Transferência",
-          // maxUseBotQueues: "Enviar bot x vezes",
-          // timeUseBotQueues: "Intervalo em minutos entre envio de bot",
+          expiresTicket: "Encerrar chats abertos após X horas",
+          expiresInactiveMessage: "Mensagem por Inatividade",
+          //maxUseBotQueues: "Enviar bot x vezes",
+          //timeUseBotQueues: "Intervalo em minutos entre envio de bot",
           expiresTicket: "Encerrar chats abertos após x minutos",
           expiresInactiveMessage: "Mensagem de encerramento por inatividade",
-		      greetingMessage: "Mensagem de saudação",
+		  greetingMessage: "Mensagem de saudação",
           complationMessage: "Mensagem de conclusão",
+		  sendIdQueue: "Fila",
         },
         buttons: {
           okAdd: "Adicionar",
@@ -255,18 +258,24 @@ const messages = {
           deleted: "Contato excluído com sucesso!",
 		      deletedAll: "Todos contatos excluídos com sucesso!",
         },
-		    searchPlaceholder: "Pesquisar...",
-        confirmationModal: {
-          deleteTitle: "Deletar",
+		  searchPlaceholder: "Pesquisar...",
+          confirmationModal: {
+          deleteTitle: "Deletar ",
           deleteAllTitle: "Deletar Todos",
           importTitle: "Importar contatos",
-          deleteMessage: "Tem certeza que deseja deletar este contato? Todos os atendimentos relacionados serão perdidos.",
+          deleteMessage: "Tem certeza que deseja deletar este contato? Todos os tickets relacionados serão perdidos.",
           deleteAllMessage: "Tem certeza que deseja deletar todos os contatos? Todos os tickets relacionados serão perdidos.",
-          importMessage: "Esta ação irá importar os contatos salvos na agenda do WhatsApp. Alguns modelos podem não permitir essa funcionalidade ou de acordo com sua configuração de privacidade! Verifique em até 1 hora o resultado.",
+          importMessage: "Deseja importar todos os contatos do telefone?",
         },
+		confirmationModal:{
+			importTitlte: "Importar contatos",
+			importMessage: "Esta ação irá importar os contatos salvos na agenda do WhatsApp. Alguns modelos podem não permitir essa funcionalidade ou de acordo com sua configuração de privacidade! Verifique em até 1 hora o resultado.",
+			deleteTitle:"Deletar",
+			deleteMessage:"Tem certeza que deseja deletar este contato? Todos os atendimentos relacionados serão perdidos.",
+		},
         buttons: {
           import: "Importar Contatos",
-		      importSheet: "Import. Excel",
+		  importSheet: "Import. Excel",
           add: "Adicionar Contato",
           export: "Exportar Contatos",
           delete: "Excluir Todos Contatos",
@@ -320,14 +329,14 @@ const messages = {
           editSuccess: "Integração editada com sucesso.",
         },
       },
-	    sideMenu: {
-        name: "Menu Lateral Inicial",
-        note: "Se habilitado, o menu lateral irá iniciar fechado",
-        options: {
-          enabled: "Aberto",
-          disabled: "Fechado",
-        },
-      },
+	  sideMenu: {
+            name: "Menu Lateral Inicial",
+            note: "Se habilitado, o menu lateral irá iniciar fechado",
+            options: {
+              enabled: "Aberto",
+              disabled: "Fechado",
+            },
+          },
       promptModal: {
         form: {
           name: "Nome",
@@ -452,7 +461,7 @@ const messages = {
           queueData: "Dados da Fila",
           serviceHours: "Horários de Atendimento",
         },
-	      toasts: {
+	toasts: {
           deleted: "Registro excluído",
         },      
         confirmationModal: {
@@ -475,9 +484,9 @@ const messages = {
           okAdd: "Adicionar",
           okEdit: "Salvar",
           cancel: "Cancelar",
-		      attach: "Anexar Arquivo",
+		  attach: "Anexar Arquivo",
         },
-		    serviceHours: {
+		 serviceHours: {
           dayWeek: "Dia da semana",
           startTimeA: "Hora Inicial - 1",
           endTimeA: "Hora Final - 1",
@@ -679,9 +688,9 @@ const messages = {
         buttons: {
           accept: "Aceitar",
           closed: "Finalizar",
-		      transfer: "Transferir",
+		  transfer: "Transferir",
           reopen: "Reabrir",
-		      exportAsPDF: "Exportar em PDF"
+		  exportAsPDF: "Exportar em PDF"
         },
       },
       newTicketModal: {
@@ -729,7 +738,7 @@ const messages = {
           financeiro: "Financeiro",
           files: "Lista de arquivos",
           prompts: "Open.Ai",
-		      reports: "Relatórios",
+		  reports: "Relatórios",
           queueIntegration: "Integrações",
           languageSettings: "Configuração de Idioma",
         },
@@ -762,7 +771,7 @@ const messages = {
             "Você tem certeza? Essa ação não pode ser revertida! e será removida das filas e conexões vinculadas",
         },
       },
-	    reports: {
+	reports: {
         title: "Relatórios de Atendimentos",
         labels: {
           contact: "Contato",
@@ -1222,7 +1231,7 @@ const messages = {
       queues: {
         title: "Filas & Chatbot",
         table: {
-		      id:"ID",
+		  id:"ID",
           name: "Nome",
           color: "Cor",
           greeting: "Mensagem de saudação",
@@ -1244,14 +1253,14 @@ const messages = {
       users: {
         title: "Usuários",
         table: {
-		      id: "ID",
+		  id: "ID",
           name: "Nome",
-		      status: "Status",
+		  status: "Status",
           email: "Email",
           profile: "Perfil",
           actions: "Ações",
         },
-		    status: {
+		status: {
           online: "Usuários online",
           offline: "Usuários offline",
         },
@@ -1314,14 +1323,18 @@ const messages = {
           event: "Evento",
           showMore: "mais",
         },
+        tooltips: {
+          edit: "Editar",
+          delete: "Excluir",
+        },
       },
       tags: {
         title: "Tags",
         confirmationModal: {
           deleteTitle: "Você tem certeza que quer excluir esta Tag?",
           deleteMessage: "Esta ação não pode ser revertida.",
-		      deleteAllMessage: "Tem certeza que deseja deletar todas as Tags?",
-		      deleteAllTitle: "Deletar Todos",
+		  deleteAllMessage: "Tem certeza que deseja deletar todas as Tags?",
+		  deleteAllTitle: "Deletar Todos",
         },
         table: {
           name: "Nome",
@@ -1331,10 +1344,10 @@ const messages = {
         },
         buttons: {
           add: "Nova Tag",
-		      deleteAll: "Deletar Todas",
+		  deleteAll: "Deletar Todas",
         },
         toasts: {
-		      deletedAll: "Todas Tags excluídas com sucesso!",
+		  deletedAll: "Todas Tags excluídas com sucesso!",
           deleted: "Tag excluído com sucesso.",
         },
       },
@@ -1595,7 +1608,7 @@ const messages = {
         },
         confirmationModal: {
           title: "Deletar o ticket",
-		      titleFrom: "do contato ",
+		  titleFrom: "do contato ",
           message:
             "Atenção! Todas as mensagens relacionadas ao ticket serão perdidas.",
         },
@@ -1612,12 +1625,12 @@ const messages = {
       },
       messageOptionsMenu: {
         delete: "Deletar",
-		    reactionSuccess: "Reação add",
+		reactionSuccess: "Reação add",
         reply: "Responder",
-		    edit: 'Editar Mensagem',
-		    forward: "Encaminhar",
+		edit: 'Editar Mensagem',
+		forward: "Encaminhar",
         toForward: "Encaminhar",
-		    react: "Reagir",
+		react: "Reagir",
         confirmationModal: {
           title: "Apagar mensagem?",
           message: "Esta ação não pode ser revertida.",
@@ -1659,6 +1672,19 @@ const messages = {
         ERR_WAPP_GREETING_REQUIRED:
           "A mensagem de saudação é obrigatório quando há mais de uma fila.",
         ERR_CHECK_NUMBER: "Número inválido. Verifique o número e tente novamente.",
+      },
+      prompts: {
+        warning: {
+          title: "Aviso Importante:",
+          message: "Para todos os usuários do Whaticket que notaram uma interrupção no funcionamento do OpenAI, gostaríamos de esclarecer que isso não se trata de um erro do sistema. O OpenAI oferece um crédito gratuito de $5 USD para novos cadastros, porém, este benefício também está sujeito a um limite de tempo, geralmente em torno de três meses. Quando o crédito disponibilizado se esgota, é necessário recarregar a conta para continuar utilizando o serviço. É importante estar ciente dessa política para garantir uma experiência contínua e sem interrupções no uso do OpenAI com o Whaticket. Se você notou que o serviço parou de funcionar, verifique se seu crédito gratuito expirou e considere a recarga da conta, se necessário. Estamos à disposição para ajudar e esclarecer quaisquer dúvidas adicionais que possam surgir. Obrigado pela compreensão e continuaremos trabalhando para oferecer o melhor serviço possível aos nossos usuários.",
+          usefulLinks: "Links Úteis:",
+          usage: "Uso:",
+          billing: "Fatura:",
+          api: "API:",
+        },
+        toasts: {
+          noPermission: "Esta empresa não possui permissão para acessar essa página! Estamos lhe redirecionando.",
+        },
       },
       queueOptions: {
         title: "Título não definido",
@@ -1880,6 +1906,27 @@ const messages = {
           content: "Conteúdo",
         },
       },
+      campaignReport: {
+        titles: {
+          validContacts: "Contatos Válidos",
+          requestedConfirmations: "Confirmações Solicitadas",
+          confirmations: "Confirmações",
+          connection: "Conexão",
+          completion: "Conclusão",
+        },
+      },
+      contactListItems: {
+        tooltips: {
+          validWhatsapp: "Whatsapp Válido",
+          invalidWhatsapp: "Whatsapp Inválido",
+        },
+      },
+      announcementModal: {
+        validation: {
+          titleRequired: "Obrigatório",
+          textRequired: "Obrigatório",
+        },
+      },
       financeiro: {
         title: "Faturas",
         table: {
@@ -2060,6 +2107,81 @@ const messages = {
         errors: {
           getTicketsInfo: "Erro ao obter informações dos atendimentos",
           getConversationInfo: "Erro ao obter informações da conversa",
+        },
+      },
+      dashboard: {
+        cards: {
+          activeConnections: "Conexões Ativas",
+          companies: "Empresas",
+          inConversation: "Em Conversa",
+          waiting: "Aguardando",
+          newContacts: "Novos Contatos",
+          avgConversationTime: "T.M. de Conversa",
+          finished: "Finalizados",
+          avgWaitTime: "T.M. de Espera",
+        },
+        filters: {
+          filterType: "Tipo de Filtro",
+          dateFilter: "Filtro por Data",
+          periodFilter: "Filtro por Período",
+          startDate: "Data Inicial",
+          endDate: "Data Final",
+          period: "Período",
+          noneSelected: "Nenhum selecionado",
+          last3Days: "Últimos 3 dias",
+          last7Days: "Últimos 7 dias",
+          last15Days: "Últimos 15 dias",
+          last30Days: "Últimos 30 dias",
+          last60Days: "Últimos 60 dias",
+          last90Days: "Últimos 90 dias",
+          filter: "Filtrar",
+          configureFilter: "Parametrize o filtro",
+        },
+        table: {
+          name: "Nome",
+          ratings: "Avaliações",
+          avgServiceTime: "T.M. de Atendimento",
+          currentStatus: "Status (Atual)",
+        },
+        charts: {
+          perDay: {
+            title: "Atendimentos hoje: ",
+          },
+          user: {
+            title: "Gráfico de Conversas",
+            totalConversationsByUsers: "Total de Conversas por Usuários",
+          },
+          date: {
+            total: "Total",
+            title: "Gráfico de Conversas",
+            error: "Erro ao buscar informações dos tickets",
+          },
+          appointmentsAtendent: {
+            label: "Número de Atendimentos",
+            title: "Atendimentos por Atendentes",
+            description: "Saiba quais são os atendentes mais produtivos",
+            byDepartments: "Atendimentos por Departamentos/Filas",
+            departmentsDescription: "Saiba quais são os departamentos mais procurados",
+          },
+          rushHour: {
+            title: "Horário de Pico - Troca de mensagens",
+            description: "Quantidade de mensagens recebidas e enviados em cada hora do dia.",
+            hourOfDay: "Hora do Dia",
+            quantity: "Quantidade",
+          },
+          departamentRatings: {
+            title: "Avaliações por Departamento/Fila",
+            description: "Veja as avaliações médias de cada departamento/fila.",
+            quantity: "Quantidade",
+          },
+          dateLabels: {
+            start: "Inicio",
+            end: "Fim",
+          },
+          common: {
+            filter: "Filtrar",
+            quantity: "Quantidade",
+          },
         },
       },
       announcementModal: {

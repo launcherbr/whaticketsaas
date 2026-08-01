@@ -3554,7 +3554,9 @@ const handleMessage = async (
           !isNil(currentSchedule) &&
           (!currentSchedule || currentSchedule.inActivity === false)
         ) {
-          const body = formatBody(`\u200e${whatsapp.outOfHoursMessage}`, ticket.contact);
+          const body = formatBody(`\u200e${whatsapp.outOfHoursMessage}`, ticket.contact)
+            .replace(/,\s*contact\b/gi, "")
+            .trim();
 
           console.log('body9341023', body)
           const debouncedSentMessage = debounce(
@@ -3612,7 +3614,7 @@ const handleMessage = async (
             const endTimeB = moment(schedule.endTimeB, "HH:mm");
 
             if (now.isBefore(startTimeA) || now.isAfter(endTimeA) && (now.isBefore(startTimeB) || now.isAfter(endTimeB))) {
-			  const body = queue.outOfHoursMessage;
+			  const body = queue.outOfHoursMessage.replace(/,\s*contact\b/gi, "").trim();
               console.log('body:23801', body)
               const debouncedSentMessage = debounce(
                 async () => {

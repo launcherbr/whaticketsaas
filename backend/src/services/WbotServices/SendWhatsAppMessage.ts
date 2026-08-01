@@ -7,7 +7,6 @@ import Ticket from "../../models/Ticket";
 import { logger } from "../../utils/logger";
 import formatBody from "../../helpers/Mustache";
 
-import Queue from "bull";
 import { map_msg, buildContactAddress } from "../../utils/global";
 
 interface Request {
@@ -47,24 +46,6 @@ const SendWhatsAppMessage = async ({
     }
 
   }
-
-  const connection = process.env.REDIS_URI || "";
-
-  const sendScheduledMessagesWbot = new Queue(
-    "SendWbotMessages",
-    connection
-  );
-
-  const messageData = {
-    wbotId: wbot.id,
-  number: number,
-  text: formatBody(body, ticket.contact),
-  options: { ...options }
-};
-
-
-  const sentMessage = sendScheduledMessagesWbot.add("SendMessageWbot", { messageData }, { delay: 500 });
-  logger.info("Mensagem enviada via REDIS...");
 
   try {
     console.log('body:::::::::::::::::::::::::::', body)

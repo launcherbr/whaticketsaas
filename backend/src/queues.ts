@@ -29,6 +29,7 @@ import ShowFileService from "./services/FileServices/ShowService";
 import SendWhatsAppMedia, { getMessageOptions } from "./services/WbotServices/SendWhatsAppMedia";
 import { ClosedAllOpenTickets } from "./services/WbotServices/wbotClosedTickets";
 import FindOrCreateTicketService from "./services/TicketServices/FindOrCreateTicketService";
+import { ensureOpenInvoiceForCompany } from "./services/InvoicesService/CompanyInvoiceService";
 const fs = require('fs');
 const mime = require('mime-types');
 const chardet = require('chardet');
@@ -980,40 +981,10 @@ async function handleInvoiceCreate() {
 
         
         }else{ // ELSE if(dias <= -3){
-        
-          const plan = await Plan.findByPk(c.planId);
-        
-          const sql = `SELECT * FROM "Invoices" WHERE "companyId" = ${c.id} AND "status" = 'open';`
-          const openInvoices = await sequelize.query(sql, { type: QueryTypes.SELECT }) as { id: number, dueDate: Date }[];
-
-          const existingInvoice = openInvoices.find(invoice => moment(invoice.dueDate).format("DD/MM/yyyy") === vencimento);
-        
-          if (existingInvoice) {
-            // Due date already exists, no action needed
-            //logger.info(`Fatura Existente`);
-        
-          } else if (openInvoices.length > 0) {
-            const updateSql = `UPDATE "Invoices" SET "dueDate" = '${date}', "updatedAt" = '${timestamp}' WHERE "id" = ${openInvoices[0].id};`;
-
-            await sequelize.query(updateSql, { type: QueryTypes.UPDATE });
-        
-            logger.info(`Fatura Atualizada ID: ${openInvoices[0].id}`);
-        
-          } else {
-          
-            const sql = `INSERT INTO "Invoices" (detail, status, value, "updatedAt", "createdAt", "dueDate", "companyId")
-            VALUES ('${plan.name}', 'open', '${plan.value}', '${timestamp}', '${timestamp}', '${date}', ${c.id});`
-
-            const invoiceInsert = await sequelize.query(sql, { type: QueryTypes.INSERT });
-        
-            logger.info(`Fatura Gerada para o cliente: ${c.id}`);
-
-            // Rest of the code for sending email
+          const invoice = await ensureOpenInvoiceForCompany(c);
+          if (invoice) {
+            logger.info(`Fatura aberta sincronizada para o cliente: ${c.id}`);
           }
-        
-          
-        
-        
         } // if(dias <= -6){
         
 

@@ -241,7 +241,6 @@ const StatusIndicator = ({ status }) => {
           progress: 30,
         };
       case "TIMEOUT":
-      case "PAIRING":
         return {
           icon: <SignalCellularConnectedNoInternet2Bar className={classes.statusIcon} />,
           text: "Timeout",
@@ -416,7 +415,7 @@ const Connections = () => {
             {i18n.t("connections.buttons.qrcode")}
           </Button>
         )}
-        {whatsApp.status === "DISCONNECTED" && (
+        {(whatsApp.status === "DISCONNECTED" || whatsApp.status === "PENDING") && (
           <Grid container spacing={1}>
             <Grid item xs={6}>
               <Button
@@ -445,7 +444,6 @@ const Connections = () => {
           </Grid>
         )}
         {(whatsApp.status === "CONNECTED" ||
-          whatsApp.status === "PAIRING" ||
           whatsApp.status === "TIMEOUT") && (
           <Button
             size="small"

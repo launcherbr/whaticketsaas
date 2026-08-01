@@ -20,6 +20,7 @@ import ButtonWithSpinner from "../ButtonWithSpinner";
 import ConfirmationModal from "../ConfirmationModal";
 
 import { Edit as EditIcon } from "@material-ui/icons";
+import NumberFormat from "react-number-format";
 
 import { toast } from "react-toastify";
 import usePlans from "../../hooks/usePlans";
@@ -63,6 +64,50 @@ const useStyles = makeStyles(theme => ({
     }
 }));
 
+function CurrencyFormatCustom(props) {
+    const { inputRef, onChange, ...other } = props;
+
+    return (
+        <NumberFormat
+            {...other}
+            getInputRef={inputRef}
+            onValueChange={(values) => {
+                onChange({
+                    target: {
+                        name: props.name,
+                        value: values.formattedValue
+                    }
+                });
+            }}
+            thousandSeparator="."
+            decimalSeparator=","
+            decimalScale={2}
+            fixedDecimalScale
+            allowNegative={false}
+            prefix="R$ "
+        />
+    );
+}
+
+const parseCurrencyValue = (value) => {
+    if (typeof value === "number") return value;
+    if (!value) return 0;
+
+    return Number(
+        String(value)
+            .replace(/[^\d,.-]/g, "")
+            .replace(/\./g, "")
+            .replace(",", ".")
+    ) || 0;
+};
+
+const formatCurrencyValue = (value) => {
+    return Number(value || 0).toLocaleString("pt-br", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+};
+
 export function PlanManagerForm(props) {
     const { onSubmit, onDelete, onCancel, initialValue, loading } = props;
     const classes = useStyles()
@@ -88,7 +133,10 @@ export function PlanManagerForm(props) {
     }, [initialValue])
 
     const handleSubmit = async (data) => {
-        onSubmit(data)
+        onSubmit({
+            ...data,
+            value: parseCurrencyValue(data.value)
+        })
     }
 
     return (
@@ -167,6 +215,9 @@ export function PlanManagerForm(props) {
                                 className={classes.fullWidth}
                                 margin="dense"
                                 type="text"
+                                InputProps={{
+                                    inputComponent: CurrencyFormatCustom
+                                }}
                             />
                         </Grid>
 
@@ -544,7 +595,7 @@ export default function PlansManager() {
             users: data.users || 0,
             connections: data.connections || 0,
             queues: data.queues || 0,
-            value: data.value?.toLocaleString('pt-br', { minimumFractionDigits: 0 }) || 0,
+            value: formatCurrencyValue(data.value),
             useCampaigns,
             useSchedules,
             useInternalChat,

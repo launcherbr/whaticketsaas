@@ -32,6 +32,7 @@ import EditWhatsAppMessage from "../services/WbotServices/EditWhatsAppMessage";
 import ShowMessageService, { GetWhatsAppFromMessage } from "../services/MessageServices/ShowMessageService";
 import GetTicketWbot from "../helpers/GetTicketWbot";
 import { buildContactAddress } from "../utils/global";
+import CreateMessageService from "../services/MessageServices/CreateMessageService";
 type IndexQuery = {
   pageNumber: string;
 };
@@ -132,6 +133,23 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     );
   } else {
     const send = await SendWhatsAppMessage({ body, ticket, quotedMsg });
+    const message = await CreateMessageService({
+      messageData: {
+        id: send.key.id,
+        ticketId: ticket.id,
+        body: formatBody(body, ticket.contact),
+        fromMe: true,
+        read: true,
+        quotedMsgId: quotedMsg?.id,
+        ack: send.status || 0,
+        remoteJid: send.key.remoteJid,
+        participant: send.key.participant,
+        dataJson: JSON.stringify(send)
+      } as any,
+      companyId
+    });
+
+    return res.status(200).json(message);
   }
 
   return res.send();

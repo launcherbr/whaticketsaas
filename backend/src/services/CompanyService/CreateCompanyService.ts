@@ -3,6 +3,7 @@ import AppError from "../../errors/AppError";
 import Company from "../../models/Company";
 import Setting from "../../models/Setting";
 import User from "../../models/User";
+import { ensureOpenInvoiceForCompany } from "../InvoicesService/CompanyInvoiceService";
 
 interface CompanyData {
   name: string;
@@ -324,6 +325,8 @@ const CreateCompanyService = async (
       await setting.update({ value: `${campaignsEnabled}` });
     }
   }
+
+  await ensureOpenInvoiceForCompany(company);
 
   return company;
 };
