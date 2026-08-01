@@ -257,6 +257,7 @@ const messages = {
           deleteTitle: "Delete",
           deleteAllTitle: "Delete All",
           importTitle: "Import contacts",
+          importTitlte: "Import contacts",
           deleteMessage: "Are you sure you want to delete this contact? All related tickets will be lost.",
           deleteAllMessage: "Are you sure you want to delete all contacts? All related tickets will be lost.",
           importMessage: "This action will import contacts saved in WhatsApp contacts. Some models may not allow this functionality or according to your privacy settings! Check the result within 1 hour.",
@@ -1313,10 +1314,6 @@ const messages = {
           event: "Event",
           showMore: "more",
         },
-        tooltips: {
-          edit: "Edit",
-          delete: "Delete",
-        },
       },
       tags: {
         title: "Tags",
@@ -1651,19 +1648,6 @@ const messages = {
         ERR_WAPP_GREETING_REQUIRED: "Greeting message is required when there is more than one queue.",
         ERR_CHECK_NUMBER: "Invalid number. Check the number and try again.",
       },
-      prompts: {
-        warning: {
-          title: "Important Warning:",
-          message: "For all Whaticket users who noticed an interruption in OpenAI operation, we would like to clarify that this is not a system error. OpenAI offers a free credit of $5 USD for new registrations, however, this benefit is also subject to a time limit, usually around three months. When the available credit runs out, it is necessary to recharge the account to continue using the service. It is important to be aware of this policy to ensure a continuous and uninterrupted experience in using OpenAI with Whaticket. If you noticed that the service stopped working, check if your free credit has expired and consider recharging the account if necessary. We are available to help and clarify any additional questions that may arise. Thank you for your understanding and we will continue working to offer the best possible service to our users.",
-          usefulLinks: "Useful Links:",
-          usage: "Usage:",
-          billing: "Billing:",
-          api: "API:",
-        },
-        toasts: {
-          noPermission: "This company does not have permission to access this page! We are redirecting you.",
-        },
-      },
       queueOptions: {
         title: "Title not defined",
         placeholder: {
@@ -1884,31 +1868,6 @@ const messages = {
           content: "Content",
         },
       },
-      campaignReport: {
-        titles: {
-          validContacts: "Valid Contacts",
-          requestedConfirmations: "Requested Confirmations",
-          confirmations: "Confirmations",
-          delivered: "Delivered",
-          connection: "Connection",
-          contactList: "Contact List",
-          scheduled: "Scheduling",
-          completion: "Completion",
-        },
-      },
-      
-      contactListItems: {
-        tooltips: {
-          validWhatsapp: "Valid Whatsapp",
-          invalidWhatsapp: "Invalid Whatsapp",
-        },
-      },
-      announcementModal: {
-        validation: {
-          titleRequired: "Required",
-          textRequired: "Required",
-        },
-      },
       financeiro: {
         title: "Invoices",
         table: {
@@ -2070,18 +2029,6 @@ const messages = {
           location: "Location",
         },
       },
-      campaignReport: {
-        titles: {
-          validContacts: "Valid Contacts",
-          requestedConfirmations: "Requested Confirmations",
-          confirmations: "Confirmations",
-          delivered: "Delivered",
-          connection: "Connection",
-          contactList: "Contact List",
-          scheduled: "Schedule",
-          completion: "Completion",
-        },
-      },
       pages: {
         toasts: {
           noPermission: "This company does not have permission to access this page! We are redirecting you.",
@@ -2089,81 +2036,6 @@ const messages = {
         errors: {
           getTicketsInfo: "Error getting ticket information",
           getConversationInfo: "Error getting conversation information",
-        },
-      },
-      dashboard: {
-        cards: {
-          activeConnections: "Active Connections",
-          companies: "Companies",
-          inConversation: "In Conversation",
-          waiting: "Waiting",
-          newContacts: "New Contacts",
-          avgConversationTime: "Avg. Conversation Time",
-          finished: "Finished",
-          avgWaitTime: "Avg. Wait Time",
-        },
-        filters: {
-          filterType: "Filter Type",
-          dateFilter: "Date Filter",
-          periodFilter: "Period Filter",
-          startDate: "Start Date",
-          endDate: "End Date",
-          period: "Period",
-          noneSelected: "None selected",
-          last3Days: "Last 3 days",
-          last7Days: "Last 7 days",
-          last15Days: "Last 15 days",
-          last30Days: "Last 30 days",
-          last60Days: "Last 60 days",
-          last90Days: "Last 90 days",
-          filter: "Filter",
-          configureFilter: "Configure the filter",
-        },
-        table: {
-          name: "Name",
-          ratings: "Ratings",
-          avgServiceTime: "Avg. Service Time",
-          currentStatus: "Status (Current)",
-        },
-        charts: {
-          perDay: {
-            title: "Tickets today: ",
-          },
-          user: {
-            title: "Conversations Chart",
-            totalConversationsByUsers: "Total Conversations by Users",
-          },
-          date: {
-            total: "Total",
-            title: "Conversations Chart",
-            error: "Error fetching ticket information",
-          },
-          appointmentsAtendent: {
-            label: "Number of Tickets",
-            title: "Tickets by Attendants",
-            description: "Find out which attendants are most productive",
-            byDepartments: "Tickets by Departments/Queues",
-            departmentsDescription: "Find out which departments are most sought after",
-          },
-          rushHour: {
-            title: "Peak Hours - Message Exchange",
-            description: "Number of messages received and sent each hour of the day.",
-            hourOfDay: "Hour of Day",
-            quantity: "Quantity",
-          },
-          departamentRatings: {
-            title: "Ratings by Department/Queue",
-            description: "See the average ratings for each department/queue.",
-            quantity: "Quantity",
-          },
-          dateLabels: {
-            start: "Start",
-            end: "End",
-          },
-          common: {
-            filter: "Filter",
-            quantity: "Quantity",
-          },
         },
       },
       announcementModal: {

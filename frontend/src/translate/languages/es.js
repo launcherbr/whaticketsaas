@@ -257,6 +257,7 @@ const messages = {
           deleteTitle: "Eliminar",
           deleteAllTitle: "Eliminar Todos",
           importTitle: "Importar contactos",
+          importTitlte: "Importar contactos",
           deleteMessage: "¿Está seguro de que desea eliminar este contacto? Todos los tickets relacionados se perderán.",
           deleteAllMessage: "¿Está seguro de que desea eliminar todos los contactos? Todos los tickets relacionados se perderán.",
           importMessage: "Esta acción importará los contactos guardados en WhatsApp. ¡Algunos modelos pueden no permitir esta funcionalidad o depender de su configuración de privacidad! Verifique el resultado dentro de 1 hora.",
@@ -949,9 +950,9 @@ const messages = {
           inConversation: "En Conversación",
           waiting: "Esperando",
           newContacts: "Nuevos Contactos",
-          avgConversationTime: "T.M. de Conversación",
+          avgConversationTime: "Tiempo Prom. Conversación",
           finished: "Finalizados",
-          avgWaitTime: "T.M. de Espera",
+          avgWaitTime: "Tiempo Prom. Espera",
         },
         filters: {
           filterType: "Tipo de Filtro",
@@ -1313,10 +1314,6 @@ const messages = {
           event: "Evento",
           showMore: "más",
         },
-        tooltips: {
-          edit: "Editar",
-          delete: "Eliminar",
-        },
       },
       tags: {
         title: "Etiquetas",
@@ -1651,19 +1648,6 @@ const messages = {
         ERR_WAPP_GREETING_REQUIRED: "El mensaje de bienvenida es obligatorio cuando hay más de una cola.",
         ERR_CHECK_NUMBER: "Número inválido. Verifique el número e intente nuevamente.",
       },
-      prompts: {
-        warning: {
-          title: "Aviso Importante:",
-          message: "Para todos los usuarios de Whaticket que notaron una interrupción en el funcionamiento de OpenAI, nos gustaría aclarar que esto no es un error del sistema. OpenAI ofrece un crédito gratuito de $5 USD para nuevos registros, sin embargo, este beneficio también está sujeto a un límite de tiempo, generalmente alrededor de tres meses. Cuando el crédito disponible se agota, es necesario recargar la cuenta para continuar usando el servicio. Es importante estar al tanto de esta política para garantizar una experiencia continua e ininterrumpida en el uso de OpenAI con Whaticket. Si notó que el servicio dejó de funcionar, verifique si su crédito gratuito ha expirado y considere recargar la cuenta si es necesario. Estamos disponibles para ayudar y aclarar cualquier duda adicional que pueda surgir. Gracias por su comprensión y continuaremos trabajando para ofrecer el mejor servicio posible a nuestros usuarios.",
-          usefulLinks: "Enlaces Útiles:",
-          usage: "Uso:",
-          billing: "Facturación:",
-          api: "API:",
-        },
-        toasts: {
-          noPermission: "¡Esta empresa no tiene permiso para acceder a esta página! Lo estamos redirigiendo.",
-        },
-      },
       queueOptions: {
         title: "Título no definido",
         placeholder: {
@@ -1884,31 +1868,6 @@ const messages = {
           content: "Contenido",
         },
       },
-      campaignReport: {
-        titles: {
-          validContacts: "Contactos Válidos",
-          requestedConfirmations: "Confirmaciones Solicitadas",
-          confirmations: "Confirmaciones",
-          delivered: "Entregado",
-          connection: "Conexión",
-          contactList: "Lista de Contactos",
-          scheduled: "Programación",
-          completion: "Finalización",
-        },
-      },
-       
-      contactListItems: {
-        tooltips: {
-          validWhatsapp: "Whatsapp Válido",
-          invalidWhatsapp: "Whatsapp Inválido",
-        },
-      },
-      announcementModal: {
-        validation: {
-          titleRequired: "Requerido",
-          textRequired: "Requerido",
-        },
-      },
       financeiro: {
         title: "Facturas",
         table: {
@@ -2091,92 +2050,6 @@ const messages = {
           getConversationInfo: "Error obteniendo información de la conversación",
         },
       },
-      dashboard: {
-        cards: {
-          activeConnections: "Conexiones Activas",
-          companies: "Empresas",
-          inConversation: "En Conversación",
-          waiting: "Esperando",
-          newContacts: "Nuevos Contactos",
-          avgConversationTime: "Tiempo Prom. Conversación",
-          finished: "Finalizados",
-          avgWaitTime: "Tiempo Prom. Espera",
-        },
-        filters: {
-          filterType: "Tipo de Filtro",
-          dateFilter: "Filtro de Fecha",
-          periodFilter: "Filtro de Período",
-          startDate: "Fecha de Inicio",
-          endDate: "Fecha de Fin",
-          dateFrom: "Fecha Inicial",
-          dateTo: "Fecha Final",
-          period: "Período",
-          noneSelected: "Ninguno seleccionado",
-          last3Days: "Últimos 3 días",
-          last7Days: "Últimos 7 días",
-          last15Days: "Últimos 15 días",
-          last30Days: "Últimos 30 días",
-          last60Days: "Últimos 60 días",
-          last90Days: "Últimos 90 días",
-          filter: "Filtrar",
-          configureFilter: "Configurar el filtro",
-        },
-        messages: {
-          parameterizeFilter: "Configure los parámetros del filtro",
-        },
-        table: {
-          name: "Nombre",
-          ratings: "Evaluaciones",
-          avgServiceTime: "Tiempo Prom. Servicio",
-          currentStatus: "Estado (Actual)",
-        },
-        charts: {
-          ticketsCreated: "Tickets Creados: ",
-          tickets: "Tickets",
-          conversationsChart: "Gráfico de Conversaciones",
-          quantity: "Cantidad",
-          hourOfDay: "Hora del Día",
-          errorLoadingData: "Error al obtener información de los tickets",
-          perDay: {
-            title: "Tickets hoy: ",
-          },
-          user: {
-            title: "Gráfico de Conversaciones",
-            totalConversationsByUsers: "Total de Conversaciones por Usuarios",
-          },
-          date: {
-            total: "Total",
-            title: "Gráfico de Conversaciones",
-            error: "Error obteniendo información de tickets",
-          },
-          appointmentsAtendent: {
-            label: "Número de Tickets",
-            title: "Tickets por Atendentes",
-            description: "Descubra qué atendentes son más productivos",
-            byDepartments: "Tickets por Departamentos/Colas",
-            departmentsDescription: "Descubra qué departamentos son los más solicitados",
-          },
-          rushHour: {
-            title: "Horas Pico - Intercambio de Mensajes",
-            description: "Número de mensajes recibidos y enviados cada hora del día.",
-            hourOfDay: "Hora del Día",
-            quantity: "Cantidad",
-          },
-          departamentRatings: {
-            title: "Evaluaciones por Departamento/Cola",
-            description: "Vea las evaluaciones promedio para cada departamento/cola.",
-            quantity: "Cantidad",
-          },
-          dateLabels: {
-            start: "Inicio",
-            end: "Fin",
-          },
-          common: {
-            filter: "Filtrar",
-            quantity: "Cantidad",
-          },
-        },
-      },
       announcementModal: {
         form: {
           sendToAllCompanies: "Enviar a todas las empresas",
@@ -2245,12 +2118,6 @@ const messages = {
           deleteMultipleTitle: "Eliminar Stickers Seleccionados",
           deleteMultipleMessage: "¿Realmente desea eliminar {{count}} sticker(s) seleccionado(s)? Esta acción no se puede deshacer.",
           loadError: "Error cargando",
-        },
-      },
-      contactListItems: {
-        tooltips: {
-          validWhatsapp: "Whatsapp Válido",
-          invalidWhatsapp: "Whatsapp Inválido",
         },
       },
     },
