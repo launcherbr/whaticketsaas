@@ -1,5 +1,5 @@
 import { head, has } from "lodash";
-import XLSX from "xlsx";
+import XLSX from "@e965/xlsx";
 import fs from "fs";
 import { parse as csvParse } from "csv";
 import Contact from "../../models/Contact";

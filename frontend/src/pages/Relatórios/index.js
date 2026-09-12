@@ -21,7 +21,7 @@ import {
 // import Paper from "@mui/material/Paper";
 // import Button from "@mui/material/Button";
 // import Pagination from '@mui/material/Pagination';
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 
 import api from "../../services/api";
 import TableRowSkeleton from "../../components/TableRowSkeleton";

@@ -1,5 +1,5 @@
 import { head } from "lodash";
-import XLSX from "xlsx";
+import XLSX from "@e965/xlsx";
 import { has } from "lodash";
 import ContactListItem from "../../models/ContactListItem";
 import CheckContactNumber from "../WbotServices/CheckNumber";
