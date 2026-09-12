@@ -79,6 +79,9 @@
     "xlsx": "^0.18.3",
     "yup": "^0.32.11"
   },
+  "overrides": {
+    "qs": "^6.16.0"
+  },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.2",
     "@types/bluebird": "^3.5.36",
@@ -110,7 +113,7 @@
     "eslint-plugin-prettier": "^4.0.0",
     "factory-girl": "^5.0.4",
     "jest": "^27.5.1",
-    "nodemon": "^2.0.15",
+    "nodemon": "^3.1.7",
     "prettier": "^2.5.1",
     "supertest": "^6.2.2",
     "ts-jest": "^27.1.3",
