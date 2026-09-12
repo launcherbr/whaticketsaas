@@ -87,7 +87,7 @@ const CreateQueueService = async (queueData: QueueData): Promise<Queue> => {
     throw new AppError(err.message);
   }
 
-  const queue = await Queue.create(queueData);
+  const queue = await Queue.create(queueData as any);
 
   return queue;
 };

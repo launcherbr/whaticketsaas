@@ -10,7 +10,8 @@ export default {
     }
 
     // Adicionar uma nova constraint única usando array de campos e objeto separado
-    return queryInterface.addConstraint("Whatsapps", ["companyId", "name"], {
+    return queryInterface.addConstraint("Whatsapps", {
+      fields: ["companyId", "name"],
       type: "unique",
       name: "company_name_constraint"
     });
@@ -19,7 +20,8 @@ export default {
   down: async (queryInterface: QueryInterface) => {
     try {
       // Adicionar a constraint única de volta
-      await queryInterface.addConstraint("Whatsapps", ["name"], {
+      await queryInterface.addConstraint("Whatsapps", {
+        fields: ["name"],
         type: "unique",
         name: "Whatsapps_name_key"
       });

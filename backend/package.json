@@ -68,9 +68,9 @@
     "qrcode-terminal": "^0.12.0",
     "reflect-metadata": "^0.1.13",
     "request": "2.88.2",
-    "sequelize": "^5.22.3",
-    "sequelize-cli": "^5.5.1",
-    "sequelize-typescript": "^1.1.0",
+    "sequelize": "^6.37.8",
+    "sequelize-cli": "^6.6.5",
+    "sequelize-typescript": "^2.1.6",
     "socket.io": "^4.8.1",
     "uuid": "^14.0.2",
     "validator": "^13.15.35",
@@ -81,6 +81,9 @@
   "overrides": {
     "qs": "^6.16.0",
     "bull": {
+      "uuid": "^14.0.2"
+    },
+    "sequelize": {
       "uuid": "^14.0.2"
     }
   },

@@ -135,7 +135,7 @@ const UpdateWhatsAppService = async ({
     timeUseBotQueues,
     expiresTicket,
     expiresInactiveMessage
-  });
+  } as any);
 
   await AssociateWhatsappQueue(whatsapp, queueIds);
 

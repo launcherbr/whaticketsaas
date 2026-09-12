@@ -92,7 +92,7 @@ const typebotListener = async ({
             await ticket.update({
                 typebotSessionId: null,
                 isBot: true
-            });
+            } as any);
 
             await ticket.reload();
         }
@@ -245,7 +245,7 @@ const typebotListener = async ({
                                     await ticket.update({
                                         useIntegration: false,
                                         isBot: false
-                                    })
+                                    } as any)
 
                                     return;
                                 }
@@ -381,7 +381,7 @@ const typebotListener = async ({
                 isBot: true,
                 typebotSessionId: null
 
-            })
+            } as any)
 
             await ticket.reload();
 

@@ -13,7 +13,8 @@ module.exports = {
     }
     
     // Adicionar a nova constraint com whatsappId
-    return queryInterface.addConstraint("Tickets", ["contactId", "companyId", "whatsappId"], {
+    return queryInterface.addConstraint("Tickets", {
+      fields: ["contactId", "companyId", "whatsappId"],
       type: "unique",
       name: "contactid_companyid_unique"
     });

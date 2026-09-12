@@ -10,11 +10,13 @@ module.exports = {
 
   down: async (queryInterface: QueryInterface) => {
     return Promise.all([
-      queryInterface.addConstraint("QueueIntegrations", ["name"], {
+      queryInterface.addConstraint("QueueIntegrations", {
+        fields: ["name"],
         name: "QueueIntegrations_name_key",
         type: 'unique'
       }),
-      queryInterface.addConstraint("QueueIntegrations", ["projectName"], {
+      queryInterface.addConstraint("QueueIntegrations", {
+        fields: ["projectName"],
         name: "QueueIntegrations_projectName_key",
         type: 'unique'
       }),

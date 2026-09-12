@@ -244,7 +244,7 @@ const UpdateTicketService = async ({
       chatbot,
       queueOptionId,
       lastMessage: lastMessage !== null ? lastMessage : ticket.lastMessage
-    });
+    } as any);
 
     await ticket.reload();
 
@@ -254,7 +254,7 @@ const UpdateTicketService = async ({
         queuedAt: moment().toDate(),
         startedAt: null,
         userId: null,
-      });
+      } as any);
     }
 
     if (status !== undefined && ["open"].indexOf(status) > -1) {
@@ -265,7 +265,7 @@ const UpdateTicketService = async ({
         whatsappId,
         lastMessage: lastMessage !== null ? lastMessage : ticket.lastMessage,
         userId: ticket.userId
-      });
+      } as any);
     }
 
     await ticketTraking.save();

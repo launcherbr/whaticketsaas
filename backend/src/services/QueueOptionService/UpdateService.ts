@@ -19,7 +19,7 @@ const UpdateService = async (
 
   const queueOption = await ShowService(queueOptionId);
 
-  await queueOption.update(queueOptionData);
+  await queueOption.update(queueOptionData as any);
 
   return queueOption;
 };

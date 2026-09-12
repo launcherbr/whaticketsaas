@@ -26,7 +26,7 @@ const CreateTicketNoteService = async (
     throw new AppError(err.message);
   }
 
-  const ticketNote = await TicketNote.create(ticketNoteData);
+  const ticketNote = await TicketNote.create(ticketNoteData as any);
 
   return ticketNote;
 };

@@ -25,7 +25,7 @@ const UpdateService = async (data: Data): Promise<QuickMessage> => {
     userId,
     geral,
     editBeforeSend: editBeforeSend !== undefined ? editBeforeSend : false
-  });
+  } as any);
 
   return record;
 };

@@ -32,7 +32,7 @@ const FindOrCreateATicketTrakingService = async ({
     companyId,
     whatsappId,
     userId
-  });
+  } as any);
 
   return newRecord;
 };

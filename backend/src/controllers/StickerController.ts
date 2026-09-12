@@ -101,7 +101,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     
     const sticker = await Sticker.create({
       companyId,
-      userId: isShared === "true" || isShared === true ? null : userId,
+      userId: isShared === "true" || isShared === true ? null : Number(userId),
       name: file.originalname,
       path: relativePath,
       mimetype

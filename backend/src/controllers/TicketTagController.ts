@@ -7,7 +7,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const { ticketId, tagId } = req.params;
 
   try {
-    const ticketTag = await TicketTag.create({ ticketId, tagId });
+    const ticketTag = await TicketTag.create({ ticketId: Number(ticketId), tagId: Number(tagId) });
     return res.status(201).json(ticketTag);
   } catch (error) {
     return res.status(500).json({ error: 'Failed to store ticket tag.' });

@@ -32,7 +32,7 @@ const CreateService = async (data: Data): Promise<QuickMessage> => {
   const record = await QuickMessage.create({
     ...data,
     editBeforeSend: data.editBeforeSend !== undefined ? data.editBeforeSend : false
-  });
+  } as any);
 
   return record;
 };

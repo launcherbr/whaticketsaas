@@ -83,7 +83,7 @@ const UpdateUserService = async ({
     repeatEvery,
     selectDaysRecorrenci,
     repeatCount,
-  });
+  } as any);
 
   await schedule.reload();
   return schedule;

@@ -295,7 +295,7 @@ export const addReaction = async (req: Request, res: Response): Promise<Response
 
     // Atualiza a mensagem com a nova reação no banco de dados (opcional, dependendo da necessidade)
     const updatedMessage = await message.update({
-      reactions: [...message.reactions, {type: type, userId: id}]
+      reactions: [...message.reactions, {type: type, userId: Number(id)}]
     });
 
     const io = getIO();

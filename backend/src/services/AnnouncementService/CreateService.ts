@@ -49,7 +49,7 @@ const CreateService = async (data: Data): Promise<CreateResult> => {
         Announcement.create({
           ...data,
           companyId: company.id
-        })
+        } as any)
       )
     );
 
@@ -60,7 +60,7 @@ const CreateService = async (data: Data): Promise<CreateResult> => {
     };
   } else {
     // Criar anúncio apenas para a empresa atual
-    const record = await Announcement.create(data);
+    const record = await Announcement.create(data as any);
     return {
       announcement: record,
       companiesCount: 1

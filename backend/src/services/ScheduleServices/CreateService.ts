@@ -64,7 +64,7 @@ const CreateService = async ({
       repeatEvery,
       selectDaysRecorrenci,
       repeatCount,
-    }
+    } as any
   );
 
   await schedule.reload({ include: [Contact] });

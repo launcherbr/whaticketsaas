@@ -99,7 +99,7 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
               closedAt: moment().toDate(),
               whatsappId: ticket.whatsappId,
               userId: ticket.userId,
-            })
+            } as any)
 
             io.to("open").emit(`company-${companyId}-ticket`, {
               action: "delete",

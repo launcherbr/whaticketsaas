@@ -58,7 +58,7 @@ export const TransferTicketQueue = async (): Promise<void> => {
       await ticketTraking.update({
         queuedAt: moment().toDate(),
         queueId: wpp.transferQueueId,
-      });
+      } as any);
 
       const currentTicket = await ShowTicketService(ticket.id, ticket.companyId);
 

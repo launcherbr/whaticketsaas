@@ -179,7 +179,7 @@ const CreateWhatsAppService = async ({
       timeUseBotQueues,
       expiresTicket,
       expiresInactiveMessage
-    },
+    } as any,
     { include: ["queues"] }
   );
 

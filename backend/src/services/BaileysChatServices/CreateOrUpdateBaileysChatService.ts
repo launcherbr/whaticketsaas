@@ -15,7 +15,7 @@ export const CreateOrUpdateBaileysChatService = async (
 
   if (baileysChat) {
     const baileysChats = await baileysChat.update({
-      conversationTimestamp,
+      conversationTimestamp: conversationTimestamp as any,
       unreadCount: unreadCount ? baileysChat.unreadCount + unreadCount : 0
     });
 
@@ -29,9 +29,9 @@ export const CreateOrUpdateBaileysChatService = async (
   const conversationTimestampNumber = Number(timestamp);
 
   const baileysChats = await BaileysChats.create({
-    whatsappId,
-    jid: id,
-    conversationTimestamp: conversationTimestamp || conversationTimestampNumber,
+    whatsappId: whatsappId as any,
+    jid: id as any,
+    conversationTimestamp: (conversationTimestamp || conversationTimestampNumber) as any,
     unreadCount: unreadCount || 1,
   });
 

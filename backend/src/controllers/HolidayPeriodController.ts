@@ -91,8 +91,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     const holidayPeriod = await HolidayPeriod.create({
       whatsappId: parseInt(whatsappId),
       companyId,
-      startDate: startDateStr,
-      endDate: endDateStr,
+      startDate: new Date(startDateStr),
+      endDate: new Date(endDateStr),
       message,
       active: active !== undefined ? active : true,
       repeatIntervalHours: repeatIntervalHours || 24,
