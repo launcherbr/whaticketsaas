@@ -31,7 +31,7 @@ import {
   SpeechSynthesizer
 } from "microsoft-cognitiveservices-speech-sdk";
 import moment from "moment";
-import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
+import OpenAI from "openai";
 import { Op } from "sequelize";
 import { debounce } from "../../helpers/Debounce";
 import formatBody from "../../helpers/Mustache";
@@ -85,7 +85,7 @@ type Session = WASocket & {
   lidMappingStore?: any; // LIDMappingStore da v7.0.0-rc.2
 };
 
-interface SessionOpenAi extends OpenAIApi {
+interface SessionOpenAi extends OpenAI {
   id?: number;
 }
 
@@ -890,10 +890,9 @@ const handleOpenAi = async (
 
 
   if (openAiIndex === -1) {
-    const configuration = new Configuration({
+    openai = new OpenAI({
       apiKey: prompt.apiKey
-    });
-    openai = new OpenAIApi(configuration);
+    }) as SessionOpenAi;
     openai.id = wbot.id;
     sessionsOpenAi.push(openai);
   } else {
@@ -912,7 +911,7 @@ const handleOpenAi = async (
     } tokens e cuide para não truncar o final.\nSempre que possível, mencione o nome dele para ser mais personalizado o atendimento e mais educado. Quando a resposta requer uma transferência para o setor de atendimento, comece sua resposta com 'Ação: Transferir para o setor de atendimento'.\n
   ${prompt.prompt}\n`;
 
-  let messagesOpenAi: ChatCompletionRequestMessage[] = [];
+  let messagesOpenAi: OpenAI.Chat.ChatCompletionMessageParam[] = [];
 
   if (msg.message?.conversation || msg.message?.extendedTextMessage?.text) {
     messagesOpenAi = [];
@@ -933,14 +932,14 @@ const handleOpenAi = async (
     }
     messagesOpenAi.push({ role: "user", content: bodyMessage! });
 
-    const chat = await openai.createChatCompletion({
+    const chat = await openai.chat.completions.create({
       model: "gpt-3.5-turbo-1106",
       messages: messagesOpenAi,
       max_tokens: prompt.maxTokens,
       temperature: prompt.temperature
     });
 
-    let response = chat.data.choices[0].message?.content;
+    let response = chat.choices[0].message?.content;
 
     if (response?.includes("Ação: Transferir para o setor de atendimento")) {
       await transferQueue(prompt.queueId, ticket, contact);
@@ -981,7 +980,10 @@ const handleOpenAi = async (
   } else if (msg.message?.audioMessage) {
     const mediaUrl = mediaSent!.mediaUrl!.split("/").pop();
     const file = fs.createReadStream(`${publicFolder}/${mediaUrl}`) as any;
-    const transcription = await openai.createTranscription(file, "whisper-1");
+    const transcription = await openai.audio.transcriptions.create({
+      file,
+      model: "whisper-1"
+    });
 
     messagesOpenAi = [];
     messagesOpenAi.push({ role: "system", content: promptSystem });
@@ -999,14 +1001,14 @@ const handleOpenAi = async (
         }
       }
     }
-    messagesOpenAi.push({ role: "user", content: transcription.data.text });
-    const chat = await openai.createChatCompletion({
+    messagesOpenAi.push({ role: "user", content: transcription.text });
+    const chat = await openai.chat.completions.create({
       model: "gpt-3.5-turbo-1106",
       messages: messagesOpenAi,
       max_tokens: prompt.maxTokens,
       temperature: prompt.temperature
     });
-    let response = chat.data.choices[0].message?.content;
+    let response = chat.choices[0].message?.content;
 
     if (response?.includes("Ação: Transferir para o setor de atendimento")) {
       await transferQueue(prompt.queueId, ticket, contact);
