@@ -121,7 +121,7 @@ Para uso comercial, revenda ou exploração da plataforma como SaaS, é obrigat�
 O **WhaTicket SaaS | Gold Edition**, distribuído pela **Launcher Tech**, é um software derivado de projetos de código aberto. No entanto, esta versão específica, com suas modificações, integrações e funcionalidades agregadas, é regida pelos seguintes termos:
 
   * **Uso Pessoal e para Estudos:** Você tem a liberdade de baixar, instalar e utilizar o software para fins estritamente pessoais e de aprendizado. Esta modalidade **NÃO** concede o direito de uso comercial, revenda ou oferta do sistema como um serviço (SaaS).
-  * **Uso Comercial, Revenda e SaaS:** Para utilizar o software em um ambiente comercial, revendê-lo (modificado ou em sua forma original) ou explorá-lo como uma plataforma de serviço (SaaS), é **obrigatória a aquisição de uma Licença Comercial** junto à Launcher & Co. A licença garante o direito de exploração comercial e o acesso ao suporte técnico oficial.
+  * **Uso Comercial, Revenda e SaaS:** Para utilizar o software em um ambiente comercial, revendê-lo (modificado ou em sua forma original) ou explorá-lo como uma plataforma de serviço (SaaS), é **obrigatória a aquisição de uma Licença Comercial** junto à Launcher Tech A licença garante o direito de exploração comercial e o acesso ao suporte técnico oficial.
 
 A exploração comercial não autorizada do software constitui uma violação destes termos e da propriedade intelectual sobre as modificações e materiais agregados.
 
