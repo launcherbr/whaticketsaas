@@ -51,7 +51,6 @@ Para garantir a melhor performance, seu servidor deve atender às seguintes espe
 Para uso comercial, revenda ou exploração da plataforma como SaaS, é obrigatória a aquisição de uma licença.
 
   * [Loja InfinitePay](https://loja.infinitepay.io/launcher-tecnologia/aep0253-script-crm-whaticket-gold-com-saas-e-kanba/)
-  * [Checkout Kirvano](https://pay.kirvano.com/a5103244-08d5-418f-8221-7172849dd65f)
   * [Anúncio DFG](https://www.dfg.com.br/pt/outros/script-crm-whaticket-gold-com-saas-e-kanban-inclusos-939289065)
 
 -----
@@ -119,7 +118,7 @@ Para uso comercial, revenda ou exploração da plataforma como SaaS, é obrigat�
 
 **1. Licença de Uso do Software WhaTicket SaaS | Gold Edition**
 
-O **WhaTicket SaaS | Gold Edition**, distribuído pela **Launcher & Co.**, é um software derivado de projetos de código aberto. No entanto, esta versão específica, com suas modificações, integrações e funcionalidades agregadas, é regida pelos seguintes termos:
+O **WhaTicket SaaS | Gold Edition**, distribuído pela **Launcher Tech**, é um software derivado de projetos de código aberto. No entanto, esta versão específica, com suas modificações, integrações e funcionalidades agregadas, é regida pelos seguintes termos:
 
   * **Uso Pessoal e para Estudos:** Você tem a liberdade de baixar, instalar e utilizar o software para fins estritamente pessoais e de aprendizado. Esta modalidade **NÃO** concede o direito de uso comercial, revenda ou oferta do sistema como um serviço (SaaS).
   * **Uso Comercial, Revenda e SaaS:** Para utilizar o software em um ambiente comercial, revendê-lo (modificado ou em sua forma original) ou explorá-lo como uma plataforma de serviço (SaaS), é **obrigatória a aquisição de uma Licença Comercial** junto à Launcher & Co. A licença garante o direito de exploração comercial e o acesso ao suporte técnico oficial.
