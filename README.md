@@ -1,6 +1,6 @@
 # **WhaTicket SaaS | Gold Edition**
 
-Uma plataforma de atendimento robusta baseada no **Whaticket Gold**, aprimorada com um módulo Kanban, modo noturno e integrações avançadas para otimizar a comunicação com seus clientes. Distribuído por **Launcher & Co.**
+Uma plataforma de atendimento robusta baseada no **Whaticket Gold**, aprimorada com um módulo Kanban, modo noturno e integrações avançadas para otimizar a comunicação com seus clientes. Distribuído por **Launcher Tech.**
 
 -----
 
@@ -127,7 +127,7 @@ A exploração comercial não autorizada do software constitui uma violação de
 
 **2. Sobre o Material de Apoio e Tutoriais (Conteúdo Autoral)**
 
-Todo e qualquer material de apoio (videoaulas, guias, tutoriais, manuais e documentações) desenvolvido pela **Launcher Tecnologia Ltda ME** (CNPJ: **26.651.889/0001-60**, nome fantasia **Launcher Tech**, nome comercial **Launcher & Co.**) é classificado como conteúdo autoral e propriedade intelectual da empresa.
+Todo e qualquer material de apoio (videoaulas, guias, tutoriais, manuais e documentações) desenvolvido pela **Launcher Tecnologia Ltda ME** (CNPJ: **26.651.889/0001-60**, nome fantasia **Launcher Tech**, nome comercial **Launcher Tech**) é classificado como conteúdo autoral e propriedade intelectual da empresa.
 
 Estes materiais são destinados exclusivamente para o estudo e uso pessoal do comprador original. Portanto, é **ESTRITAMENTE PROIBIDO**:
 
@@ -139,6 +139,6 @@ Estes materiais são destinados exclusivamente para o estudo e uso pessoal do co
 
 **3. Proteção Legal e Penalidades**
 
-Os materiais de apoio, tutoriais e as modificações autorais presentes nesta versão do software, distribuídos pela Launcher & Co., são juridicamente protegidos pela **Avctoris**. A violação dos direitos autorais e dos termos de licenciamento é crime. O infrator está sujeito às penalidades legais previstas na **Lei nº 9.610/98** (Lei de Direitos Autorais), na **Lei nº 9.279/96** (Lei de Propriedade Industrial) e no **art. 184 do Código Penal Brasileiro**, além de estar sujeito ao pagamento de indenização pelos prejuízos materiais e morais causados.
+Os materiais de apoio, tutoriais e as modificações autorais presentes nesta versão do software, distribuídos pela Launcher Tech, são juridicamente protegidos pela **Avctoris**. A violação dos direitos autorais e dos termos de licenciamento é crime. O infrator está sujeito às penalidades legais previstas na **Lei nº 9.610/98** (Lei de Direitos Autorais), na **Lei nº 9.279/96** (Lei de Propriedade Industrial) e no **art. 184 do Código Penal Brasileiro**, além de estar sujeito ao pagamento de indenização pelos prejuízos materiais e morais causados.
 
 Ao adquirir e utilizar nosso software e material de apoio, você concorda integralmente com os termos aqui estabelecidos.
