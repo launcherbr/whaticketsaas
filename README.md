@@ -37,7 +37,7 @@ Para garantir a melhor performance, seu servidor deve atender às seguintes espe
 | **Netcup** | VPS 1000 G11 | 4 | 8 GB | 256 GB | €5.75 | `36nc17691773970` (voucher de 5 euros) |
 | **Netcup** | VPS 2000 G11 | 8 | 16 GB | 512 GB | €12.60 USD | `36nc17691773970` (voucher de 5 euros) |
 
-  * Adquira aqui: [Hosteg](https://painelcliente.com.br/aff.php?aff=105) | [Platon](https://platon.com.br/central/aff.php?aff=58) | [Peramix](https://control.peramix.com/?affid=14) | [Netcup](https://www.netcup.com/en/?ref=341805)
+  * Adquira aqui: [Hosteg](https://painelcliente.com.br/aff.php?aff=34) | [Platon](https://platon.com.br/central/aff.php?aff=58) | [Peramix](https://control.peramix.com/?affid=14) | [Netcup](https://www.netcup.com/en/?ref=341805)
 
 -----
 
