@@ -32,12 +32,11 @@ Para garantir a melhor performance, seu servidor deve atender às seguintes espe
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Hosteg** | Cloud - 8GB | 4 | 8 GB | 150 GB | R$129.90 |  |
 | **Platon** | VPS 8GB | 4 | 8 GB | 100 GB | R$114.90 | `20OFFVPS` (20% OFF no 1º pagamento) |
+| **Hostinger** | KVM 4 | 4 | 16 GB | 200 GB | R$129.90 |  |
 | **Peramix** | Basic | 4 | 8 GB | 80 GB | $4.99 USD | `WHATICKET` (25% OFF no 1º pagamento) |
 | **Peramix** | Standard | 6 | 12 GB | 120 GB | $9.99 USD | `WHATICKET` (25% OFF no 1º pagamento) |
-| **Netcup** | VPS 1000 G11 | 4 | 8 GB | 256 GB | €5.75 | `36nc17691773970` (voucher de 5 euros) |
-| **Netcup** | VPS 2000 G11 | 8 | 16 GB | 512 GB | €12.60 USD | `36nc17691773970` (voucher de 5 euros) |
 
-  * Adquira aqui: [Hosteg](https://painel.hosteg.com.br/aff.php?aff=34) | [Platon](https://platon.com.br/central/aff.php?aff=58) | [Peramix](https://control.peramix.com/?affid=14) | [Netcup](https://www.netcup.com/en/?ref=341805)
+  * Adquira aqui: [Hosteg](https://painelcliente.com.br/aff.php?aff=34) | [Platon](https://platon.com.br/central/aff.php?aff=58) | [Hostinger](https://www.hostinger.com/br?REFERRALCODE=4IWLEANDRWQD) | [Peramix](https://control.peramix.com/?affid=14)
 
 -----
 
