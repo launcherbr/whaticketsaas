@@ -50,7 +50,7 @@ Para garantir a melhor performance, seu servidor deve atender às seguintes espe
 
 Para uso comercial, revenda ou exploração da plataforma como SaaS, é obrigatória a aquisição de uma licença.
 
-  * [Loja InfinitePay](https://loja.infinitepay.io/launcher-tecnologia/aep0253-script-crm-whaticket-gold-com-saas-e-kanba/)
+  * [Loja InfinitePay](https://loja.infinitepay.io/launchertech/aep0253-script-crm-whaticket-gold-com-saas-e-kanba/)
   * [Anúncio DFG](https://www.dfg.com.br/pt/outros/script-crm-whaticket-gold-com-saas-e-kanban-inclusos-939289065)
 
 -----
