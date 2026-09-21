@@ -37,7 +37,7 @@ Para garantir a melhor performance, seu servidor deve atender às seguintes espe
 | **Netcup** | VPS 1000 G11 | 4 | 8 GB | 256 GB | €5.75 | `36nc17691773970` (voucher de 5 euros) |
 | **Netcup** | VPS 2000 G11 | 8 | 16 GB | 512 GB | €12.60 USD | `36nc17691773970` (voucher de 5 euros) |
 
-  * Adquira aqui: [Hosteg](https://painelcliente.com.br/aff.php?aff=34) | [Platon](https://platon.com.br/central/aff.php?aff=58) | [Peramix](https://control.peramix.com/?affid=14) | [Netcup](https://www.netcup.com/en/?ref=341805)
+  * Adquira aqui: [Hosteg](https://painel.hosteg.com.br/aff.php?aff=34) | [Platon](https://platon.com.br/central/aff.php?aff=58) | [Peramix](https://control.peramix.com/?affid=14) | [Netcup](https://www.netcup.com/en/?ref=341805)
 
 -----
 
@@ -127,7 +127,7 @@ A exploração comercial não autorizada do software constitui uma violação de
 
 **2. Sobre o Material de Apoio e Tutoriais (Conteúdo Autoral)**
 
-Todo e qualquer material de apoio (videoaulas, guias, tutoriais, manuais e documentações) desenvolvido pela **Launcher Tecnologia Ltda ME** (CNPJ: **26.651.889/0001-60**, nome fantasia **Launcher Tech**, nome comercial **Launcher Tech**) é classificado como conteúdo autoral e propriedade intelectual da empresa.
+Todo e qualquer material de apoio (videoaulas, guias, tutoriais, manuais e documentações) desenvolvido pela **Launcher Tecnologia Ltda ME** (CNPJ: **26.651.889/0001-60**, nome fantasia **Launcher Tech**) é classificado como conteúdo autoral e propriedade intelectual da empresa.
 
 Estes materiais são destinados exclusivamente para o estudo e uso pessoal do comprador original. Portanto, é **ESTRITAMENTE PROIBIDO**:
 
