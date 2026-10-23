@@ -36,7 +36,7 @@ Para garantir a melhor performance, seu servidor deve atender às seguintes espe
 | **Peramix** | Basic | 4 | 8 GB | 80 GB | $4.99 USD | `WHATICKET` (25% OFF no 1º pagamento) |
 | **Peramix** | Standard | 6 | 12 GB | 120 GB | $9.99 USD | `WHATICKET` (25% OFF no 1º pagamento) |
 
-  * Adquira aqui: [Hosteg](https://painelcliente.com.br/aff.php?aff=34) | [Platon](https://platon.com.br/central/aff.php?aff=58) | [Hostinger](https://www.hostinger.com/br?REFERRALCODE=4IWLEANDRWQD) | [Peramix](https://control.peramix.com/?affid=14)
+  * Adquira aqui: [Hosteg](https://painel.hosteg.com.br/aff.php?aff=34) | [Platon](https://platon.com.br/central/aff.php?aff=58) | [Hostinger](https://www.hostinger.com/br?REFERRALCODE=4IWLEANDRWQD) | [Peramix](https://control.peramix.com/?affid=14)
 
 -----
 
