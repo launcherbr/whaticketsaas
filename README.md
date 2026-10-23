@@ -43,14 +43,13 @@ Para garantir a melhor performance, seu servidor deve atender às seguintes espe
 ### **📚 Documentação e Suporte**
 
   * **Documentação Completa:** Acesse nosso guia de instalação e configuração em: [launcher-and-co.gitbook.io/whaticketsaas/](https://launcher-and-co.gitbook.io/whaticketsaas/).
-  * **Suporte Técnico:** O suporte técnico é um serviço exclusivo, vinculado à aquisição da Licença Comercial. Após a compra, entre em contato via WhatsApp para obter seu acesso.
 
-#### **🛒 Adquira sua Licença Comercial e Acesso ao Suporte**
+### 🛠️ Suporte Técnico
 
-Para uso comercial, revenda ou exploração da plataforma como SaaS, é obrigatória a aquisição de uma licença.
+A comercialização do código-fonte foi descontinuada. Entretanto, continuamos oferecendo suporte técnico profissional, consultoria e serviços especializados mediante contratação.
 
-  * [Loja InfinitePay](https://loja.infinitepay.io/launchertech/aep0253-script-crm-whaticket-gold-com-saas-e-kanba/)
-  * [Anúncio DFG](https://www.dfg.com.br/pt/outros/script-crm-whaticket-gold-com-saas-e-kanban-inclusos-939289065)
+📱 **Entre em contato pelo WhatsApp:**  
+[https://wa.me/launchertech](https://wa.me/launchertech)
 
 -----
 
@@ -113,31 +112,76 @@ Para uso comercial, revenda ou exploração da plataforma como SaaS, é obrigat�
       * Agendamento agora envia imagem com texto e suporta ciclos.
       * Correção de vazamento no WebSocket.
 
-# **⚖️ Termos de Uso e Licenciamento**
+<br>
 
-**1. Licença de Uso do Software WhaTicket SaaS | Gold Edition**
+# ⚖️ Termos de Uso
 
-O **WhaTicket SaaS | Gold Edition**, distribuído pela **Launcher Tech**, é um software derivado de projetos de código aberto. No entanto, esta versão específica, com suas modificações, integrações e funcionalidades agregadas, é regida pelos seguintes termos:
+## 1. Sobre o Projeto
 
-  * **Uso Pessoal e para Estudos:** Você tem a liberdade de baixar, instalar e utilizar o software para fins estritamente pessoais e de aprendizado. Esta modalidade **NÃO** concede o direito de uso comercial, revenda ou oferta do sistema como um serviço (SaaS).
-  * **Uso Comercial, Revenda e SaaS:** Para utilizar o software em um ambiente comercial, revendê-lo (modificado ou em sua forma original) ou explorá-lo como uma plataforma de serviço (SaaS), é **obrigatória a aquisição de uma Licença Comercial** junto à Launcher Tech A licença garante o direito de exploração comercial e o acesso ao suporte técnico oficial.
+O **WhaTicket SaaS | Gold Edition**, disponibilizado pela **Launcher Tech**, é baseado em projetos de código aberto e contém adaptações, integrações, configurações e materiais complementares desenvolvidos pela equipe da Launcher Tech.
 
-A exploração comercial não autorizada do software constitui uma violação destes termos e da propriedade intelectual sobre as modificações e materiais agregados.
+Este repositório é disponibilizado para fins de estudo, desenvolvimento e contribuições da comunidade, respeitando as licenças dos projetos originais que compõem a solução.
 
-**2. Sobre o Material de Apoio e Tutoriais (Conteúdo Autoral)**
+## 2. Código-Fonte
 
-Todo e qualquer material de apoio (videoaulas, guias, tutoriais, manuais e documentações) desenvolvido pela **Launcher Tecnologia Ltda ME** (CNPJ: **26.651.889/0001-60**, nome fantasia **Launcher Tech**) é classificado como conteúdo autoral e propriedade intelectual da empresa.
+A **Launcher Tech não realiza mais a comercialização do código-fonte deste projeto**.
 
-Estes materiais são destinados exclusivamente para o estudo e uso pessoal do comprador original. Portanto, é **ESTRITAMENTE PROIBIDO**:
+O uso do código disponibilizado neste repositório deve respeitar as licenças aplicáveis aos componentes e dependências de código aberto utilizados pelo projeto.
 
-  * A revenda ou qualquer outra forma de comercialização deste material.
-  * O compartilhamento público do conteúdo em qualquer plataforma.
-  * A realização de modificações, traduções, ou qualquer alteração que vise se apropriar da autoria do material.
-  * A utilização do conteúdo para criar produtos derivados ou concorrentes.
-  * Apresentar o material, no todo ou em parte, como se fosse de sua própria autoria.
+Quaisquer modificações realizadas por terceiros são de sua exclusiva responsabilidade.
 
-**3. Proteção Legal e Penalidades**
+## 3. Suporte Técnico
 
-Os materiais de apoio, tutoriais e as modificações autorais presentes nesta versão do software, distribuídos pela Launcher Tech, são juridicamente protegidos pela **Avctoris**. A violação dos direitos autorais e dos termos de licenciamento é crime. O infrator está sujeito às penalidades legais previstas na **Lei nº 9.610/98** (Lei de Direitos Autorais), na **Lei nº 9.279/96** (Lei de Propriedade Industrial) e no **art. 184 do Código Penal Brasileiro**, além de estar sujeito ao pagamento de indenização pelos prejuízos materiais e morais causados.
+O suporte técnico não está incluído com a utilização deste repositório.
 
-Ao adquirir e utilizar nosso software e material de apoio, você concorda integralmente com os termos aqui estabelecidos.
+A **Launcher Tech** oferece serviços opcionais de:
+
+- Suporte técnico especializado;
+- Consultoria;
+- Implantação e configuração;
+- Correção de problemas;
+- Desenvolvimento de customizações.
+
+Os serviços são contratados separadamente e possuem condições comerciais próprias.
+
+📱 **Contato para suporte e consultoria:**
+https://wa.me/launchertech
+
+## 4. Material de Apoio e Conteúdo Autoral
+
+Todo material complementar desenvolvido pela **Launcher Tecnologia Ltda.**, incluindo, mas não se limitando a:
+
+- Videoaulas;
+- Tutoriais;
+- Guias;
+- Manuais;
+- Documentações;
+- Treinamentos;
+- Materiais de suporte;
+
+constitui propriedade intelectual exclusiva da empresa.
+
+É expressamente proibido, sem autorização formal da Launcher Tech:
+
+- Revender ou comercializar os materiais;
+- Compartilhar o conteúdo publicamente;
+- Reproduzir integral ou parcialmente os materiais para fins comerciais;
+- Remover créditos ou reivindicar autoria sobre o conteúdo;
+- Utilizar os materiais para criação de produtos concorrentes.
+
+## 5. Propriedade Intelectual
+
+As marcas, logotipos, identidade visual, conteúdos educacionais e demais materiais autorais produzidos pela Launcher Tech permanecem protegidos pela legislação brasileira de propriedade intelectual e direitos autorais.
+
+O uso não autorizado desses materiais poderá resultar na adoção das medidas administrativas e judiciais cabíveis.
+
+## 6. Disposições Gerais
+
+A Launcher Tech poderá alterar estes termos a qualquer momento, sem aviso prévio.
+
+Ao utilizar os materiais, documentações ou serviços disponibilizados pela Launcher Tech, você declara estar ciente e concordar com os presentes Termos de Uso.
+
+---
+
+**Launcher Tecnologia Ltda.**
+CNPJ: **26.651.889/0001-60**
